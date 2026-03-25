@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useMemo, useCallback } from "react";
 import { Language, detectLanguage, t as translate } from "@/lib/i18n";
 
 interface LanguageContextType {
@@ -7,23 +7,33 @@ interface LanguageContextType {
   t: (key: string) => string;
 }
 
-const LanguageContext = createContext<LanguageContextType | null>(null);
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Language>(() => {
-    const saved = localStorage.getItem("drdata-lang") as Language | null;
-    return saved ?? detectLanguage();
+    try {
+      const saved = localStorage.getItem("drdata-lang") as Language | null;
+      return saved ?? detectLanguage();
+    } catch {
+      return detectLanguage();
+    }
   });
 
-  const setLang = (l: Language) => {
+  const setLang = useCallback((l: Language) => {
     setLangState(l);
-    localStorage.setItem("drdata-lang", l);
-  };
+    try {
+      localStorage.setItem("drdata-lang", l);
+    } catch {
+      // localStorage unavailable
+    }
+  }, []);
 
-  const t = (key: string) => translate(key, lang);
+  const t = useCallback((key: string) => translate(key, lang), [lang]);
+
+  const value = useMemo(() => ({ lang, setLang, t }), [lang, setLang, t]);
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   );
@@ -31,6 +41,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
 export function useLanguage() {
   const ctx = useContext(LanguageContext);
-  if (!ctx) throw new Error("useLanguage must be used within LanguageProvider");
+  if (ctx === undefined) {
+    throw new Error("useLanguage must be used within LanguageProvider");
+  }
   return ctx;
 }
