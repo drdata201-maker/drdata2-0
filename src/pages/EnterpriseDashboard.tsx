@@ -22,6 +22,7 @@ export default function EnterpriseDashboard() {
   const [userCountry, setUserCountry] = useState("");
   const [industry, setIndustry] = useState("");
   const [companySize, setCompanySize] = useState("");
+  const [companyType, setCompanyType] = useState<"sme" | "enterprise">("sme");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -34,7 +35,11 @@ export default function EnterpriseDashboard() {
       setCompanyName(meta?.org_name || meta?.full_name || session.user.email?.split("@")[0] || "");
       setUserCountry(meta?.country || "");
       setIndustry(meta?.sector || "");
-      setCompanySize(meta?.org_size || meta?.org_type || "");
+      setCompanySize(meta?.org_size || "");
+
+      // Determine company type from Block 1 registration data
+      const orgType = meta?.org_type || "";
+      setCompanyType(orgType === "enterprise" ? "enterprise" : "sme");
 
       if (!meta?.profile_completed && !meta?.user_type) {
         navigate("/complete-profile");
@@ -60,6 +65,8 @@ export default function EnterpriseDashboard() {
       ? t("settings.title")
       : t(`enterprise.sidebar.${activeItem === "dashboard" ? "dashboard" : activeItem}`);
 
+  const companyTypeLabel = companyType === "enterprise" ? t("auth.orgType.enterprise") : t("auth.orgType.sme");
+
   return (
     <div className="flex min-h-screen bg-background">
       <EnterpriseSidebar
@@ -72,7 +79,7 @@ export default function EnterpriseDashboard() {
         <DashboardHeader
           title={headerTitle}
           userName={companyName}
-          userLevel={t("enterprise.userType")}
+          userLevel={companyTypeLabel}
         />
 
         <main className="flex-1 overflow-y-auto p-6 lg:p-8">
@@ -87,21 +94,36 @@ export default function EnterpriseDashboard() {
             />
           ) : (
             <>
-              {/* Welcome */}
+              {/* Personalized Welcome */}
               <div className="mb-8">
                 <h1 className="text-2xl font-bold text-foreground">
                   {t("dashboard.welcomeName").replace("{name}", companyName || "—")}
                 </h1>
                 <p className="mt-1 text-muted-foreground">{t("enterprise.subtitle")}</p>
+                <div className="mt-2 flex items-center gap-3">
+                  {industry && (
+                    <span className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
+                      {industry}
+                    </span>
+                  )}
+                  {userCountry && (
+                    <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                      {userCountry}
+                    </span>
+                  )}
+                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                    {companyTypeLabel}
+                  </span>
+                </div>
               </div>
 
               <EnterpriseQuickActions />
-              <EnterpriseKPIs />
-              <EnterpriseCharts />
-              <EnterpriseInsights />
+              <EnterpriseKPIs companyType={companyType} />
+              <EnterpriseCharts companyType={companyType} />
+              <EnterpriseInsights companyType={companyType} companyName={companyName} />
               <EnterpriseStats />
               <EnterpriseRecentProjects />
-              <EnterpriseAnalytics />
+              <EnterpriseAnalytics companyType={companyType} />
             </>
           )}
         </main>
