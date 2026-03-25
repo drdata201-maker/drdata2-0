@@ -36,6 +36,11 @@ export default function Dashboard() {
         navigate("/login");
       } else {
         setUserEmail(session.user.email ?? "");
+        // Redirect to profile completion if Google user without profile
+        const meta = session.user.user_metadata;
+        if (!meta?.profile_completed && !meta?.user_type) {
+          navigate("/complete-profile");
+        }
       }
     });
 
