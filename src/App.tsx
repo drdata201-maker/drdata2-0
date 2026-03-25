@@ -9,6 +9,7 @@ import SignUp from "./pages/SignUp";
 import CompleteProfile from "./pages/CompleteProfile";
 import Dashboard from "./pages/Dashboard";
 import FreelanceDashboard from "./pages/FreelanceDashboard";
+import EnterpriseDashboard from "./pages/EnterpriseDashboard";
 import About from "./pages/About";
 import Features from "./pages/Features";
 import Pricing from "./pages/Pricing";
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/complete-profile" element={<CompleteProfile />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/freelance" element={<FreelanceDashboard />} />
+          <Route path="/dashboard/enterprise" element={<EnterpriseDashboard />} />
           <Route path="/about" element={<About />} />
           <Route path="/features" element={<Features />} />
           <Route path="/pricing" element={<Pricing />} />
