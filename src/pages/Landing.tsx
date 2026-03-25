@@ -12,17 +12,13 @@ import {
   Building2,
   Building,
   FlaskConical,
-  Sparkles,
   Eraser,
-  TestTube2,
-  Brain,
   FileBarChart,
   LineChart,
   Zap,
   Award,
   BookOpen,
   TrendingUp,
-  Globe,
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
@@ -39,12 +35,12 @@ export default function Landing() {
   ];
 
   const features = [
-    { icon: Sparkles, key: "landing.feat.smartAnalysis" },
+    { icon: BarChart3, key: "landing.feat.dataAnalysis" },
     { icon: Eraser, key: "landing.feat.dataCleaning" },
-    { icon: TestTube2, key: "landing.feat.statTests" },
-    { icon: Brain, key: "landing.feat.aiInterpretation" },
-    { icon: FileBarChart, key: "landing.feat.reportGen" },
     { icon: LineChart, key: "landing.feat.dataViz" },
+    { icon: FileBarChart, key: "landing.feat.reportGen" },
+    { icon: BookOpen, key: "landing.feat.academicAnalysis" },
+    { icon: TrendingUp, key: "landing.feat.businessAnalysis" },
   ];
 
   const whyItems = [
@@ -52,15 +48,7 @@ export default function Landing() {
     { icon: FileText, key: "landing.why.reports" },
     { icon: BookOpen, key: "landing.why.academic" },
     { icon: TrendingUp, key: "landing.why.business" },
-    { icon: Brain, key: "landing.why.ai" },
-  ];
-
-  const languages = [
-    { flag: "🇫🇷", name: "Français" },
-    { flag: "🇬🇧", name: "English" },
-    { flag: "🇪🇸", name: "Español" },
-    { flag: "🇵🇹", name: "Português" },
-    { flag: "🇩🇪", name: "Deutsch" },
+    { icon: Award, key: "landing.why.advanced" },
   ];
 
   return (
@@ -75,42 +63,49 @@ export default function Landing() {
               <Link to="/login">{t("landing.login")}</Link>
             </Button>
             <Button asChild>
-              <Link to="/signup">{t("landing.signup")}</Link>
+              <Link to="/signup">{t("landing.hero.cta")}</Link>
             </Button>
           </div>
         </div>
       </header>
 
       {/* HERO */}
-      <section className="container flex flex-col items-center py-28 text-center">
-        <span className="mb-5 inline-flex items-center gap-2 rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-foreground">
-          <Sparkles className="h-4 w-4" />
-          {t("landing.hero.badge")}
-        </span>
-        <h1 className="mb-5 max-w-3xl text-5xl font-bold leading-tight tracking-tight lg:text-6xl">
-          {t("landing.title")}
-        </h1>
-        <p className="mb-3 max-w-2xl text-lg text-muted-foreground">
-          {t("landing.subtitle")}
-        </p>
-        <p className="mb-10 max-w-2xl text-base text-muted-foreground">
-          {t("landing.subtitle2")}
-        </p>
-        <div className="flex gap-4">
-          <Button size="lg" className="gap-2" asChild>
-            <Link to="/signup">
-              {t("landing.signup")}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-          <Button size="lg" variant="outline" asChild>
-            <Link to="/login">{t("landing.login")}</Link>
-          </Button>
+      <section className="relative overflow-hidden border-b bg-muted/30">
+        <div className="container flex flex-col items-center py-28 text-center">
+          <span className="mb-5 inline-flex items-center gap-2 rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-accent-foreground">
+            <BarChart3 className="h-4 w-4" />
+            {t("landing.hero.badge")}
+          </span>
+          <h1 className="mb-5 max-w-3xl text-5xl font-bold leading-tight tracking-tight lg:text-6xl">
+            {t("landing.title")}
+          </h1>
+          <p className="mb-3 max-w-2xl text-lg text-muted-foreground">
+            {t("landing.subtitle")}
+          </p>
+          <p className="mb-10 max-w-2xl text-base text-muted-foreground">
+            {t("landing.subtitle2")}
+          </p>
+          <div className="flex gap-4">
+            <Button size="lg" className="gap-2" asChild>
+              <Link to="/signup">
+                {t("landing.hero.cta")}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
+              <Link to="/login">{t("landing.login")}</Link>
+            </Button>
+          </div>
+        </div>
+        {/* Decorative background */}
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
+          <div className="absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-primary/5 blur-3xl" />
         </div>
       </section>
 
       {/* SECTION 2 — WHO IS THIS FOR */}
-      <section className="border-t bg-muted/40 py-20">
+      <section className="py-20">
         <div className="container">
           <h2 className="mb-12 text-center text-3xl font-bold">{t("landing.audience.title")}</h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
@@ -128,7 +123,7 @@ export default function Landing() {
       </section>
 
       {/* SECTION 3 — FEATURES */}
-      <section className="py-20">
+      <section className="border-t bg-muted/40 py-20">
         <div className="container">
           <h2 className="mb-12 text-center text-3xl font-bold">{t("landing.features.title")}</h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -145,26 +140,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* SECTION 4 — LANGUAGES */}
-      <section className="border-t bg-muted/40 py-20">
-        <div className="container text-center">
-          <div className="mx-auto mb-4 inline-flex rounded-lg bg-accent p-3">
-            <Globe className="h-6 w-6 text-primary" />
-          </div>
-          <h2 className="mb-4 text-3xl font-bold">{t("landing.lang.title")}</h2>
-          <p className="mb-10 text-muted-foreground">{t("landing.lang.desc")}</p>
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            {languages.map((l) => (
-              <div key={l.name} className="flex items-center gap-2 rounded-full border bg-card px-5 py-2.5 text-sm font-medium shadow-sm">
-                <span className="text-xl">{l.flag}</span>
-                {l.name}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 5 — WHY DR DATA */}
+      {/* SECTION 4 — WHY DR DATA */}
       <section className="py-20">
         <div className="container">
           <h2 className="mb-12 text-center text-3xl font-bold">{t("landing.why.title")}</h2>
@@ -184,14 +160,14 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* SECTION 6 — CTA */}
+      {/* SECTION 5 — CTA */}
       <section className="border-t bg-primary py-16">
         <div className="container text-center">
           <h2 className="mb-4 text-3xl font-bold text-primary-foreground">{t("landing.cta.title")}</h2>
           <p className="mb-8 text-primary-foreground/80">{t("landing.cta.desc")}</p>
           <Button size="lg" variant="secondary" className="gap-2" asChild>
             <Link to="/signup">
-              {t("landing.signup")}
+              {t("landing.hero.cta")}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>

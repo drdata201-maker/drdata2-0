@@ -1,6 +1,5 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Language, languageLabels } from "@/lib/i18n";
-import { Globe } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +8,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 
+const flags: Record<Language, string> = {
+  fr: "🇫🇷",
+  en: "🇬🇧",
+  es: "🇪🇸",
+  pt: "🇵🇹",
+  de: "🇩🇪",
+};
+
 export function LanguageSwitcher() {
   const { lang, setLang } = useLanguage();
 
@@ -16,7 +23,7 @@ export function LanguageSwitcher() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-2">
-          <Globe className="h-4 w-4" />
+          <span className="text-base">{flags[lang]}</span>
           <span className="hidden sm:inline">{languageLabels[lang]}</span>
         </Button>
       </DropdownMenuTrigger>
@@ -27,6 +34,7 @@ export function LanguageSwitcher() {
             onClick={() => setLang(l)}
             className={lang === l ? "bg-accent font-medium" : ""}
           >
+            <span className="mr-2">{flags[l]}</span>
             {languageLabels[l]}
           </DropdownMenuItem>
         ))}
