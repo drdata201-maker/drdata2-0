@@ -32,8 +32,16 @@ export default function Dashboard() {
       const meta = session.user.user_metadata;
       setUserEmail(session.user.email ?? "");
       setUserName(meta?.full_name || meta?.name || session.user.email?.split("@")[0] || "");
-      setUserLevel(meta?.level || "licence");
+      const resolvedLevel = urlLevel || meta?.level || "licence";
+      setUserLevel(resolvedLevel);
       setUserCountry(meta?.country || "");
+
+      // Redirect non-student users to correct dashboard
+      const userType = meta?.user_type;
+      if (userType && userType !== "student") {
+        navigate(getDashboardRoute(meta), { replace: true });
+        return;
+      }
 
       if (!meta?.profile_completed && !meta?.user_type) {
         navigate("/complete-profile");
