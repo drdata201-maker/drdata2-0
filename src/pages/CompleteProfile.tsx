@@ -143,7 +143,10 @@ export default function CompleteProfile() {
             )}
 
             <div className="flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={() => navigate("/dashboard")}>
+              <Button variant="outline" className="flex-1" onClick={async () => {
+                const { data: { session } } = await supabase.auth.getSession();
+                navigate(getDashboardRoute(session?.user?.user_metadata));
+              }}>
                 {t("profile.skip")}
               </Button>
               <Button className="flex-1" onClick={handleSave} disabled={loading}>
