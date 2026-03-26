@@ -42,6 +42,13 @@ export default function EnterpriseDashboard() {
       const orgType = meta?.org_type || "";
       setCompanyType(orgType === "enterprise" ? "enterprise" : "sme");
 
+      // Redirect non-organisation users
+      const userType = meta?.user_type;
+      if (userType && userType !== "organisation") {
+        navigate(getDashboardRoute(meta), { replace: true });
+        return;
+      }
+
       if (!meta?.profile_completed && !meta?.user_type) {
         navigate("/complete-profile");
       }

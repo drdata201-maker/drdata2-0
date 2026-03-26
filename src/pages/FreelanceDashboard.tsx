@@ -33,6 +33,13 @@ export default function FreelanceDashboard() {
       setUserCountry(meta?.country || "");
       setFreelanceDomain(meta?.freelance_domain || "");
 
+      // Redirect non-freelance users
+      const userType = meta?.user_type;
+      if (userType && userType !== "freelance") {
+        navigate(getDashboardRoute(meta), { replace: true });
+        return;
+      }
+
       if (!meta?.profile_completed && !meta?.user_type) {
         navigate("/complete-profile");
       }
