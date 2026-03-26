@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+import { getDashboardRoute } from "@/lib/getDashboardRoute";
 import { EnterpriseSidebar } from "@/components/enterprise/EnterpriseSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { EnterpriseQuickActions } from "@/components/enterprise/EnterpriseQuickActions";
