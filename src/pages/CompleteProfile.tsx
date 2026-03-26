@@ -65,7 +65,9 @@ export default function CompleteProfile() {
       toast.error(error.message);
     } else {
       toast.success(t("profile.save") + " ✓");
-      navigate("/dashboard");
+      // Re-fetch session to get updated metadata
+      const { data: { session } } = await supabase.auth.getSession();
+      navigate(getDashboardRoute(session?.user?.user_metadata));
     }
   };
 
