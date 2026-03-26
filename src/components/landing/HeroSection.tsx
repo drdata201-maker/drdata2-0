@@ -22,16 +22,14 @@ export function HeroSection() {
         <p className="mb-10 max-w-2xl text-base text-muted-foreground">
           {t("landing.subtitle2")}
         </p>
-        <div className="flex gap-4">
+        <div className="flex flex-col items-center gap-3">
           <Button size="lg" className="gap-2" asChild>
             <Link to="/signup">
               {t("landing.hero.cta")}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
-          <Button size="lg" variant="outline" asChild>
-            <Link to="/login">{t("landing.login")}</Link>
-          </Button>
+          <p className="text-sm text-muted-foreground">{t("landing.hero.subCta")}</p>
         </div>
       </div>
       {/* Decorative background */}
