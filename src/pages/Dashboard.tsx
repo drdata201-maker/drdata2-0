@@ -16,10 +16,11 @@ import { SettingsView } from "@/components/dashboard/SettingsView";
 export default function Dashboard() {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { level: urlLevel } = useParams<{ level?: string }>();
   const [activeItem, setActiveItem] = useState("dashboard");
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
-  const [userLevel, setUserLevel] = useState("licence");
+  const [userLevel, setUserLevel] = useState(urlLevel || "licence");
   const [userCountry, setUserCountry] = useState("");
 
   useEffect(() => {
