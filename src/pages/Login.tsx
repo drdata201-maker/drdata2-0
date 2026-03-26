@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { toast } from "sonner";
+import { getDashboardRoute } from "@/lib/getDashboardRoute";
 
 export default function Login() {
   const { t } = useLanguage();
@@ -20,12 +21,17 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
       toast.error(error.message);
     } else {
-      navigate("/dashboard");
+      const meta = data.session?.user?.user_metadata;
+      if (!meta?.profile_completed && !meta?.user_type) {
+        navigate("/complete-profile");
+      } else {
+        navigate(getDashboardRoute(meta));
+      }
     }
   };
 

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getDashboardRoute } from "@/lib/getDashboardRoute";
 
 export default function CompleteProfile() {
   const { t } = useLanguage();
@@ -64,7 +65,9 @@ export default function CompleteProfile() {
       toast.error(error.message);
     } else {
       toast.success(t("profile.save") + " ✓");
-      navigate("/dashboard");
+      // Re-fetch session to get updated metadata
+      const { data: { session } } = await supabase.auth.getSession();
+      navigate(getDashboardRoute(session?.user?.user_metadata));
     }
   };
 
@@ -140,7 +143,10 @@ export default function CompleteProfile() {
             )}
 
             <div className="flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={() => navigate("/dashboard")}>
+              <Button variant="outline" className="flex-1" onClick={async () => {
+                const { data: { session } } = await supabase.auth.getSession();
+                navigate(getDashboardRoute(session?.user?.user_metadata));
+              }}>
                 {t("profile.skip")}
               </Button>
               <Button className="flex-1" onClick={handleSave} disabled={loading}>

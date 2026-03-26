@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+import { getDashboardRoute } from "@/lib/getDashboardRoute";
 import { EnterpriseSidebar } from "@/components/enterprise/EnterpriseSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { EnterpriseQuickActions } from "@/components/enterprise/EnterpriseQuickActions";
@@ -40,6 +41,13 @@ export default function EnterpriseDashboard() {
       // Determine company type from Block 1 registration data
       const orgType = meta?.org_type || "";
       setCompanyType(orgType === "enterprise" ? "enterprise" : "sme");
+
+      // Redirect non-organisation users
+      const userType = meta?.user_type;
+      if (userType && userType !== "organisation") {
+        navigate(getDashboardRoute(meta), { replace: true });
+        return;
+      }
 
       if (!meta?.profile_completed && !meta?.user_type) {
         navigate("/complete-profile");

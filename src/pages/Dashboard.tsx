@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+import { getDashboardRoute } from "@/lib/getDashboardRoute";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { WelcomeSection } from "@/components/dashboard/WelcomeSection";
@@ -15,10 +16,11 @@ import { SettingsView } from "@/components/dashboard/SettingsView";
 export default function Dashboard() {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { level: urlLevel } = useParams<{ level?: string }>();
   const [activeItem, setActiveItem] = useState("dashboard");
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
-  const [userLevel, setUserLevel] = useState("licence");
+  const [userLevel, setUserLevel] = useState(urlLevel || "licence");
   const [userCountry, setUserCountry] = useState("");
 
   useEffect(() => {
@@ -30,8 +32,16 @@ export default function Dashboard() {
       const meta = session.user.user_metadata;
       setUserEmail(session.user.email ?? "");
       setUserName(meta?.full_name || meta?.name || session.user.email?.split("@")[0] || "");
-      setUserLevel(meta?.level || "licence");
+      const resolvedLevel = urlLevel || meta?.level || "licence";
+      setUserLevel(resolvedLevel);
       setUserCountry(meta?.country || "");
+
+      // Redirect non-student users to correct dashboard
+      const userType = meta?.user_type;
+      if (userType && userType !== "student") {
+        navigate(getDashboardRoute(meta), { replace: true });
+        return;
+      }
 
       if (!meta?.profile_completed && !meta?.user_type) {
         navigate("/complete-profile");
