@@ -12,6 +12,8 @@ import { EnterpriseInsights } from "@/components/enterprise/EnterpriseInsights";
 import { EnterpriseRecentProjects } from "@/components/enterprise/EnterpriseRecentProjects";
 import { EnterpriseAnalytics } from "@/components/enterprise/EnterpriseAnalytics";
 import { EnterpriseStats } from "@/components/enterprise/EnterpriseStats";
+import { EnterpriseDepartments } from "@/components/enterprise/EnterpriseDepartments";
+import { EnterpriseTeams } from "@/components/enterprise/EnterpriseTeams";
 import { EnterpriseSettingsView } from "@/components/enterprise/EnterpriseSettingsView";
 
 export default function EnterpriseDashboard() {
@@ -23,7 +25,7 @@ export default function EnterpriseDashboard() {
   const [userCountry, setUserCountry] = useState("");
   const [industry, setIndustry] = useState("");
   const [companySize, setCompanySize] = useState("");
-  const [companyType, setCompanyType] = useState<"sme" | "enterprise">("sme");
+  const [companyType, setCompanyType] = useState<"sme" | "enterprise">("enterprise");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -38,11 +40,9 @@ export default function EnterpriseDashboard() {
       setIndustry(meta?.sector || "");
       setCompanySize(meta?.org_size || "");
 
-      // Determine company type from Block 1 registration data
       const orgType = meta?.org_type || "";
       setCompanyType(orgType === "enterprise" ? "enterprise" : "sme");
 
-      // Redirect non-organisation users
       const userType = meta?.user_type;
       if (userType && userType !== "organisation") {
         navigate(getDashboardRoute(meta), { replace: true });
@@ -68,12 +68,81 @@ export default function EnterpriseDashboard() {
     navigate("/");
   };
 
-  const headerTitle =
-    activeItem === "settings"
-      ? t("settings.title")
-      : t(`enterprise.sidebar.${activeItem === "dashboard" ? "dashboard" : activeItem}`);
+  const sidebarLabelMap: Record<string, string> = {
+    dashboard: "enterprise.sidebar.dashboard",
+    newAnalysis: "enterprise.sidebar.newAnalysis",
+    departments: "enterprise.sidebar.departments",
+    teams: "enterprise.sidebar.teams",
+    projects: "enterprise.sidebar.projects",
+    advancedAnalysis: "enterprise.sidebar.advancedAnalysis",
+    charts: "enterprise.sidebar.charts",
+    reports: "enterprise.sidebar.reports",
+    history: "enterprise.sidebar.history",
+    settings: "settings.title",
+  };
+
+  const headerTitle = t(sidebarLabelMap[activeItem] || "enterprise.sidebar.dashboard");
 
   const companyTypeLabel = companyType === "enterprise" ? t("auth.orgType.enterprise") : t("auth.orgType.sme");
+
+  const renderContent = () => {
+    switch (activeItem) {
+      case "settings":
+        return (
+          <EnterpriseSettingsView
+            companyName={companyName}
+            userEmail={userEmail}
+            userCountry={userCountry}
+            industry={industry}
+            companySize={companySize}
+            onLogout={handleLogout}
+          />
+        );
+      case "departments":
+        return <EnterpriseDepartments />;
+      case "teams":
+        return <EnterpriseTeams />;
+      case "charts":
+        return <EnterpriseCharts companyType={companyType} />;
+      case "projects":
+        return <EnterpriseRecentProjects />;
+      default:
+        return (
+          <>
+            {/* Welcome */}
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold text-foreground">
+                {t("dashboard.welcomeName").replace("{name}", companyName || "—")}
+              </h1>
+              <p className="mt-1 text-muted-foreground">{t("enterprise.subtitle.advanced")}</p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {industry && (
+                  <span className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
+                    {industry}
+                  </span>
+                )}
+                {userCountry && (
+                  <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                    {userCountry}
+                  </span>
+                )}
+                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                  {companyTypeLabel}
+                </span>
+              </div>
+            </div>
+
+            <EnterpriseQuickActions />
+            <EnterpriseKPIs companyType={companyType} />
+            <EnterpriseCharts companyType={companyType} />
+            <EnterpriseInsights companyType={companyType} companyName={companyName} />
+            <EnterpriseStats />
+            <EnterpriseRecentProjects />
+            <EnterpriseAnalytics companyType={companyType} />
+          </>
+        );
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -91,49 +160,7 @@ export default function EnterpriseDashboard() {
         />
 
         <main className="flex-1 overflow-y-auto p-6 lg:p-8">
-          {activeItem === "settings" ? (
-            <EnterpriseSettingsView
-              companyName={companyName}
-              userEmail={userEmail}
-              userCountry={userCountry}
-              industry={industry}
-              companySize={companySize}
-              onLogout={handleLogout}
-            />
-          ) : (
-            <>
-              {/* Personalized Welcome */}
-              <div className="mb-8">
-                <h1 className="text-2xl font-bold text-foreground">
-                  {t("dashboard.welcomeName").replace("{name}", companyName || "—")}
-                </h1>
-                <p className="mt-1 text-muted-foreground">{t("enterprise.subtitle")}</p>
-                <div className="mt-2 flex items-center gap-3">
-                  {industry && (
-                    <span className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
-                      {industry}
-                    </span>
-                  )}
-                  {userCountry && (
-                    <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-                      {userCountry}
-                    </span>
-                  )}
-                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                    {companyTypeLabel}
-                  </span>
-                </div>
-              </div>
-
-              <EnterpriseQuickActions />
-              <EnterpriseKPIs companyType={companyType} />
-              <EnterpriseCharts companyType={companyType} />
-              <EnterpriseInsights companyType={companyType} companyName={companyName} />
-              <EnterpriseStats />
-              <EnterpriseRecentProjects />
-              <EnterpriseAnalytics companyType={companyType} />
-            </>
-          )}
+          {renderContent()}
         </main>
       </div>
     </div>
