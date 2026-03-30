@@ -1,5 +1,6 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { GraduationCap, Briefcase, Building2, Building } from "lucide-react";
+import { motion } from "framer-motion";
 
 export function AudienceSection() {
   const { t } = useLanguage();
@@ -14,16 +15,31 @@ export function AudienceSection() {
   return (
     <section className="py-20">
       <div className="container">
-        <h2 className="mb-12 text-center text-3xl font-bold">{t("landing.audience.title")}</h2>
+        <motion.h2
+          className="mb-12 text-center text-3xl font-bold"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.6 }}
+        >
+          {t("landing.audience.title")}
+        </motion.h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {audiences.map((a) => (
-            <div key={a.titleKey} className="rounded-xl border bg-card p-6 text-center transition-shadow hover:shadow-md">
+          {audiences.map((a, i) => (
+            <motion.div
+              key={a.titleKey}
+              className="rounded-xl border bg-card p-6 text-center transition-shadow hover:shadow-md"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+            >
               <div className="mx-auto mb-4 inline-flex rounded-lg bg-accent p-3">
                 <a.icon className="h-6 w-6 text-primary" />
               </div>
               <h3 className="mb-2 font-semibold">{t(a.titleKey)}</h3>
               <p className="text-sm text-muted-foreground">{t(a.descKey)}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
