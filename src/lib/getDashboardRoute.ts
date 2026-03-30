@@ -13,7 +13,9 @@ export function getDashboardRoute(meta: Record<string, any> | undefined): string
     case "freelance":
       return "/dashboard/freelance";
     case "organisation":
-      return "/dashboard/enterprise";
+      return meta.org_type === "enterprise"
+        ? "/dashboard/enterprise"
+        : "/dashboard/pme";
     default:
       return "/dashboard";
   }
