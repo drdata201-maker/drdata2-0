@@ -44,8 +44,13 @@ export default function EnterpriseDashboard() {
       setCompanyType(orgType === "enterprise" ? "enterprise" : "sme");
 
       const userType = meta?.user_type;
-      if (userType && userType !== "organisation") {
+      if (userType && userType !== "enterprise" && userType !== "organisation") {
         navigate(getDashboardRoute(meta), { replace: true });
+        return;
+      }
+      // Redirect PME users to their dedicated dashboard
+      if (userType === "pme" || (userType === "organisation" && orgType !== "enterprise")) {
+        navigate("/dashboard/pme", { replace: true });
         return;
       }
 
