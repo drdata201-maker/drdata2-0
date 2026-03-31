@@ -38,7 +38,10 @@ export default function CompleteProfile() {
         return;
       }
       const ut = session.user.user_metadata?.user_type || "";
-      setUserType(ut);
+      // Normalize for form display
+      if (ut.startsWith("student_")) setUserType("student");
+      else if (ut === "pme" || ut === "enterprise") setUserType("organisation");
+      else setUserType(ut);
     });
   }, [navigate]);
 
