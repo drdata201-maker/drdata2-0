@@ -60,13 +60,24 @@ export default function SignUp() {
     }
     setLoading(true);
 
+    // Build flat user_type value
+    let flatUserType = userType as string;
+    if (userType === "student") {
+      const levelMap: Record<string, string> = {
+        licence: "student_license",
+        master: "student_master",
+        doctorat: "student_doctorate",
+      };
+      flatUserType = levelMap[level] || "student_license";
+    } else if (userType === "organisation") {
+      flatUserType = orgType === "enterprise" ? "enterprise" : "pme";
+    }
+
     const metadata: Record<string, string> = {
       full_name: userType === "organisation" ? orgName : fullName,
-      user_type: userType,
+      user_type: flatUserType,
       country,
     };
-    if (userType === "student") metadata.level = level;
-    if (userType === "organisation") metadata.org_type = orgType;
 
     const { error } = await supabase.auth.signUp({
       email,

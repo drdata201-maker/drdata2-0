@@ -30,7 +30,9 @@ const App = () => (
           <Route path="/signup" element={<SignUp />} />
           <Route path="/complete-profile" element={<CompleteProfile />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/dashboard/student/:level" element={<Dashboard />} />
+          <Route path="/dashboard/student-license" element={<Dashboard />} />
+          <Route path="/dashboard/student-master" element={<Dashboard />} />
+          <Route path="/dashboard/student-doctorate" element={<Dashboard />} />
           <Route path="/dashboard/freelance" element={<FreelanceDashboard />} />
           <Route path="/dashboard/pme" element={<EnterpriseDashboard />} />
           <Route path="/dashboard/enterprise" element={<EnterpriseDashboard />} />
