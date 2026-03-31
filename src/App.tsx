@@ -10,6 +10,7 @@ import CompleteProfile from "./pages/CompleteProfile";
 import Dashboard from "./pages/Dashboard";
 import FreelanceDashboard from "./pages/FreelanceDashboard";
 import EnterpriseDashboard from "./pages/EnterpriseDashboard";
+import PmeDashboard from "./pages/PmeDashboard";
 import About from "./pages/About";
 import Features from "./pages/Features";
 import Pricing from "./pages/Pricing";
