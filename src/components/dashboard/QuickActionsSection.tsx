@@ -6,7 +6,7 @@ export function QuickActionsSection() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
-  const baseRoute = location.pathname.match(/^\/dashboard\/student-(license|master|doctorate)/)?.[0] || "/dashboard";
+  const baseRoute = location.pathname.match(/^\/dashboard\/student-(license|licence|master|doctorate|doctorat)/)?.[0] || "/dashboard";
 
   const actions = [
     { key: "newThesis", icon: FileText, label: "dashboard.action.newThesis", desc: "dashboard.action.newThesis.desc", route: `${baseRoute}/new-project` },

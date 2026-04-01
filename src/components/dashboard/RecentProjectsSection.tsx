@@ -18,7 +18,7 @@ export function RecentProjectsSection() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
-  const baseRoute = location.pathname.match(/^\/dashboard\/student-(license|master|doctorate)/)?.[0] || "/dashboard";
+  const baseRoute = location.pathname.match(/^\/dashboard\/student-(license|licence|master|doctorate|doctorat)/)?.[0] || "/dashboard";
 
   const [projects, setProjects] = useState<ProjectRow[]>([]);
 

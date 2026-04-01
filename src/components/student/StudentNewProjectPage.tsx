@@ -11,20 +11,20 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { BookOpen, FileUp, BarChart3, ChevronRight, ChevronLeft, CheckCircle2, Upload } from "lucide-react";
 
-const PROJECT_TYPES: Record<string, string[]> = {
-  student_license: [
-    "memoir_licence", "academic_project", "questionnaire_analysis",
-    "field_survey_analysis", "descriptive_analysis",
-  ],
-  student_master: [
-    "memoir_master", "research_project", "scientific_article",
-    "advanced_analysis", "multivariate_analysis", "comparative_study",
-  ],
-  student_doctorate: [
-    "phd_thesis", "scientific_research", "scientific_publication",
-    "doctoral_advanced_analysis", "scientific_modeling", "predictive_analysis",
-  ],
-};
+const licenceProjectTypes = [
+  "memoir_licence", "academic_project", "questionnaire_analysis",
+  "field_survey_analysis", "descriptive_analysis",
+];
+
+const masterProjectTypes = [
+  "memoir_master", "research_project", "scientific_article",
+  "comparative_analysis", "quantitative_research", "qualitative_research",
+];
+
+const doctoratProjectTypes = [
+  "phd_thesis", "scientific_research", "scientific_publication",
+  "advanced_analysis", "scientific_modeling", "experimental_research",
+];
 
 const ANALYSIS_OPTIONS: Record<string, string[]> = {
   student_license: [
@@ -57,8 +57,26 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const types = PROJECT_TYPES[userType] || PROJECT_TYPES.student_license;
-  const analyses = ANALYSIS_OPTIONS[userType] || ANALYSIS_OPTIONS.student_license;
+  const resolveStudentUserType = (): "student_license" | "student_master" | "student_doctorate" => {
+    const routeLevel = baseRoute.match(/student-(license|licence|master|doctorate|doctorat)$/)?.[1];
+    if (routeLevel === "master") return "student_master";
+    if (routeLevel === "doctorate" || routeLevel === "doctorat") return "student_doctorate";
+    if (routeLevel === "license" || routeLevel === "licence") return "student_license";
+
+    const normalized = (userType || "").toLowerCase();
+    if (normalized.includes("master")) return "student_master";
+    if (normalized.includes("doctorat") || normalized.includes("doctorate")) return "student_doctorate";
+    return "student_license";
+  };
+
+  const resolvedUserType = resolveStudentUserType();
+  const types =
+    resolvedUserType === "student_master"
+      ? masterProjectTypes
+      : resolvedUserType === "student_doctorate"
+      ? doctoratProjectTypes
+      : licenceProjectTypes;
+  const analyses = ANALYSIS_OPTIONS[resolvedUserType] || ANALYSIS_OPTIONS.student_license;
 
   const toggleAnalysis = (key: string) => {
     setSelectedAnalyses((prev) =>
@@ -92,7 +110,7 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
         description: description.trim() || null,
         domain: domain.trim() || null,
         status: "created",
-        user_type: userType,
+        user_type: resolvedUserType,
       });
       if (error) throw error;
       toast.success(t("student.newProject.success"));

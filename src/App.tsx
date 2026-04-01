@@ -36,10 +36,14 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/student-license" element={<Dashboard />} />
           <Route path="/dashboard/student-license/*" element={<Dashboard />} />
+          <Route path="/dashboard/student-licence" element={<Dashboard />} />
+          <Route path="/dashboard/student-licence/*" element={<Dashboard />} />
           <Route path="/dashboard/student-master" element={<Dashboard />} />
           <Route path="/dashboard/student-master/*" element={<Dashboard />} />
           <Route path="/dashboard/student-doctorate" element={<Dashboard />} />
           <Route path="/dashboard/student-doctorate/*" element={<Dashboard />} />
+          <Route path="/dashboard/student-doctorat" element={<Dashboard />} />
+          <Route path="/dashboard/student-doctorat/*" element={<Dashboard />} />
 
           {/* Freelance dashboard */}
           <Route path="/dashboard/freelance" element={<FreelanceDashboard />} />

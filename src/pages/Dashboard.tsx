@@ -26,12 +26,17 @@ export default function Dashboard() {
   const [userEmail, setUserEmail] = useState("");
   const [userLevel, setUserLevel] = useState("licence");
   const [userCountry, setUserCountry] = useState("");
-  const baseRoute = location.pathname.match(/^\/dashboard\/student-(license|master|doctorate)/)?.[0] || "/dashboard";
+  const baseRoute = location.pathname.match(/^\/dashboard\/student-(license|licence|master|doctorate|doctorat)/)?.[0] || "/dashboard";
   const subPage = location.pathname.replace(baseRoute, "").replace(/^\//, "");
 
-  // Derive userType from route as primary source
-  const routeLevelMatch = baseRoute.match(/student-(license|master|doctorate)$/);
-  const routeUserType = routeLevelMatch ? `student_${routeLevelMatch[1]}` : "student_license";
+  const routeLevelMatch = baseRoute.match(/student-(license|licence|master|doctorate|doctorat)$/);
+  const routeLevel = routeLevelMatch?.[1] ?? "license";
+  const routeUserType =
+    routeLevel === "master"
+      ? "student_master"
+      : routeLevel === "doctorate" || routeLevel === "doctorat"
+      ? "student_doctorate"
+      : "student_license";
   const [userType, setUserType] = useState(routeUserType);
 
   useEffect(() => {
@@ -42,7 +47,24 @@ export default function Dashboard() {
       setUserName(meta?.full_name || meta?.name || session.user.email?.split("@")[0] || "");
       setUserLevel(meta?.level || "licence");
       setUserCountry(meta?.country || "");
-      setUserType(meta?.user_type || routeUserType);
+      const normalizedMetaUserType = (() => {
+        const metaType = String(meta?.user_type || "").toLowerCase();
+        const metaLevel = String(meta?.level || "").toLowerCase();
+
+        if (metaType === "student_master") return "student_master";
+        if (metaType === "student_doctorate" || metaType === "student_doctorat") return "student_doctorate";
+        if (metaType === "student_license" || metaType === "student_licence") return "student_license";
+
+        if (metaType === "student") {
+          if (metaLevel === "master") return "student_master";
+          if (metaLevel === "doctorat" || metaLevel === "doctorate") return "student_doctorate";
+          return "student_license";
+        }
+
+        return routeUserType;
+      })();
+
+      setUserType(normalizedMetaUserType);
       if (meta?.user_type && !meta.user_type.startsWith("student")) { navigate(getDashboardRoute(meta), { replace: true }); return; }
       if (!meta?.profile_completed && !meta?.user_type) navigate("/complete-profile");
     });
