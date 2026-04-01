@@ -8,7 +8,6 @@ import {
   Zap,
   Clock,
   Settings,
-  LogOut,
 } from "lucide-react";
 
 interface DashboardSidebarProps {
@@ -25,7 +24,7 @@ const sidebarItems = [
   { key: "settings", icon: Settings, label: "dashboard.settings" },
 ];
 
-export function DashboardSidebar({ baseRoute, onLogout }: DashboardSidebarProps) {
+export function DashboardSidebar({ baseRoute }: DashboardSidebarProps) {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
@@ -63,15 +62,6 @@ export function DashboardSidebar({ baseRoute, onLogout }: DashboardSidebarProps)
           );
         })}
       </nav>
-      <div className="border-t border-border p-3">
-        <button
-          onClick={onLogout}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <LogOut className="h-4 w-4" />
-          {t("dashboard.logout")}
-        </button>
-      </div>
     </aside>
   );
 }

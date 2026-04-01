@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -13,79 +13,37 @@ import { BookOpen, FileUp, BarChart3, ChevronRight, ChevronLeft, CheckCircle2, U
 
 const PROJECT_TYPES: Record<string, string[]> = {
   student_license: [
-    "memoir_licence",
-    "academic_project",
-    "questionnaire_analysis",
-    "field_survey_analysis",
-    "secondary_data_analysis",
-    "end_of_cycle_project",
-    "descriptive_study",
+    "memoir_licence", "academic_project", "questionnaire_analysis",
+    "field_survey_analysis", "secondary_data_analysis", "end_of_cycle_project", "descriptive_study",
   ],
   student_master: [
-    "memoir_master",
-    "academic_research",
-    "scientific_article",
-    "dataset_analysis",
-    "comparative_study",
-    "quantitative_research",
-    "qualitative_research",
-    "mixed_research",
+    "memoir_master", "academic_research", "scientific_article", "dataset_analysis",
+    "comparative_study", "quantitative_research", "qualitative_research", "mixed_research",
   ],
   student_doctorate: [
-    "phd_thesis",
-    "scientific_article",
-    "scientific_publication",
-    "advanced_research",
-    "longitudinal_study",
-    "experimental_study",
-    "advanced_quantitative_research",
-    "advanced_qualitative_research",
-    "advanced_mixed_research",
+    "phd_thesis", "scientific_article", "scientific_publication", "advanced_research",
+    "longitudinal_study", "experimental_study", "advanced_quantitative_research",
+    "advanced_qualitative_research", "advanced_mixed_research",
   ],
 };
 
 const ANALYSIS_OPTIONS: Record<string, string[]> = {
   student_license: [
-    "descriptive_stats",
-    "frequencies",
-    "mean",
-    "median",
-    "simple_correlation",
-    "t_test",
-    "chi_square",
-    "crosstab",
-    "histogram",
-    "simple_charts",
+    "descriptive_stats", "frequencies", "mean", "median",
+    "simple_correlation", "t_test", "chi_square", "crosstab",
   ],
   student_master: [
-    "descriptive_stats",
-    "correlation",
-    "simple_regression",
-    "multiple_regression",
-    "anova",
-    "t_test",
-    "chi_square",
-    "factor_analysis",
-    "pca",
-    "cronbach_alpha",
-    "cluster_analysis",
+    "descriptive_stats", "correlation", "simple_regression", "multiple_regression",
+    "anova", "t_test", "chi_square", "factor_analysis", "pca", "cronbach_alpha",
   ],
   student_doctorate: [
-    "multiple_regression",
-    "panel_data",
-    "time_series",
-    "sem",
-    "advanced_factor_analysis",
-    "machine_learning",
-    "logistic_regression",
-    "survival_analysis",
-    "multilevel_modeling",
-    "advanced_pca",
-    "advanced_cluster",
+    "multiple_regression", "panel_data", "time_series", "sem",
+    "advanced_factor_analysis", "machine_learning", "logistic_regression",
+    "survival_analysis", "multilevel_modeling",
   ],
 };
 
-const ACCEPTED_FORMATS = ".xlsx,.xls,.csv,.sav,.dta,.txt,.json,.ods";
+const ACCEPTED_FORMATS = ".xlsx,.xls,.csv,.sav,.dta,.txt";
 
 export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: string; userType: string }) {
   const { t } = useLanguage();
@@ -94,9 +52,9 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [projectType, setProjectType] = useState("");
-  const [domain, setDomain] = useState("");
   const [selectedAnalyses, setSelectedAnalyses] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const types = PROJECT_TYPES[userType] || PROJECT_TYPES.student_license;
@@ -110,10 +68,17 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
 
   const canNext = () => {
     if (step === 1) return title.trim() && projectType;
-    if (step === 2) return true; // file is optional
+    if (step === 2) return true;
     if (step === 3) return selectedAnalyses.length > 0;
     return false;
   };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile) setFile(droppedFile);
+  }, []);
 
   const handleCreate = async () => {
     if (!title.trim()) return;
@@ -145,7 +110,7 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">{t("dashboard.newProject")}</h1>
-        <p className="mt-1 text-muted-foreground">{t("student.newProject.desc")}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t("student.newProject.desc")}</p>
       </div>
 
       {/* Stepper */}
@@ -197,10 +162,6 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">{t("student.wizard.domain")}</label>
-              <Input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder={t("student.wizard.domainPlaceholder")} />
-            </div>
-            <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">{t("pme.newAnalysis.description")}</label>
               <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("student.newProject.descPlaceholder")} rows={3} />
             </div>
@@ -208,7 +169,7 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
         </Card>
       )}
 
-      {/* Step 2: Data Import */}
+      {/* Step 2: Data Import with drag-and-drop */}
       {step === 2 && (
         <Card>
           <CardHeader>
@@ -217,8 +178,15 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
           </CardHeader>
           <CardContent className="space-y-4">
             <div
-              className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-muted-foreground/30 p-8 text-center transition-colors hover:border-primary/50 cursor-pointer"
+              className={`flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 text-center transition-colors cursor-pointer ${
+                isDragging
+                  ? "border-primary bg-primary/5"
+                  : "border-muted-foreground/30 hover:border-primary/50"
+              }`}
               onClick={() => document.getElementById("file-upload")?.click()}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDrop}
             >
               <Upload className="h-10 w-10 text-muted-foreground" />
               <div>
@@ -239,11 +207,10 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
               />
             </div>
             <div className="flex flex-wrap gap-2">
-              {["xlsx", "xls", "csv", "sav", "dta", "txt", "json", "ods"].map((fmt) => (
+              {["xlsx", "csv", "sav", "dta", "txt"].map((fmt) => (
                 <Badge key={fmt} variant="outline" className="text-xs">.{fmt}</Badge>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground">{t("student.wizard.googleSheets")}</p>
           </CardContent>
         </Card>
       )}
