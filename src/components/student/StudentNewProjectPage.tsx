@@ -11,20 +11,20 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { BookOpen, FileUp, BarChart3, ChevronRight, ChevronLeft, CheckCircle2, Upload } from "lucide-react";
 
-const PROJECT_TYPES: Record<string, string[]> = {
-  student_license: [
-    "memoir_licence", "academic_project", "questionnaire_analysis",
-    "field_survey_analysis", "descriptive_analysis",
-  ],
-  student_master: [
-    "memoir_master", "research_project", "scientific_article",
-    "advanced_analysis", "multivariate_analysis", "comparative_study",
-  ],
-  student_doctorate: [
-    "phd_thesis", "scientific_research", "scientific_publication",
-    "doctoral_advanced_analysis", "scientific_modeling", "predictive_analysis",
-  ],
-};
+const licenceProjectTypes = [
+  "memoir_licence", "academic_project", "questionnaire_analysis",
+  "field_survey_analysis", "descriptive_analysis",
+];
+
+const masterProjectTypes = [
+  "memoir_master", "research_project", "scientific_article",
+  "comparative_analysis", "quantitative_research", "qualitative_research",
+];
+
+const doctoratProjectTypes = [
+  "phd_thesis", "scientific_research", "scientific_publication",
+  "advanced_analysis", "scientific_modeling", "experimental_research",
+];
 
 const ANALYSIS_OPTIONS: Record<string, string[]> = {
   student_license: [

@@ -26,12 +26,17 @@ export default function Dashboard() {
   const [userEmail, setUserEmail] = useState("");
   const [userLevel, setUserLevel] = useState("licence");
   const [userCountry, setUserCountry] = useState("");
-  const baseRoute = location.pathname.match(/^\/dashboard\/student-(license|master|doctorate)/)?.[0] || "/dashboard";
+  const baseRoute = location.pathname.match(/^\/dashboard\/student-(license|licence|master|doctorate|doctorat)/)?.[0] || "/dashboard";
   const subPage = location.pathname.replace(baseRoute, "").replace(/^\//, "");
 
-  // Derive userType from route as primary source
-  const routeLevelMatch = baseRoute.match(/student-(license|master|doctorate)$/);
-  const routeUserType = routeLevelMatch ? `student_${routeLevelMatch[1]}` : "student_license";
+  const routeLevelMatch = baseRoute.match(/student-(license|licence|master|doctorate|doctorat)$/);
+  const routeLevel = routeLevelMatch?.[1] ?? "license";
+  const routeUserType =
+    routeLevel === "master"
+      ? "student_master"
+      : routeLevel === "doctorate" || routeLevel === "doctorat"
+      ? "student_doctorate"
+      : "student_license";
   const [userType, setUserType] = useState(routeUserType);
 
   useEffect(() => {
