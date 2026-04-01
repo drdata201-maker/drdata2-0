@@ -588,5 +588,21 @@
   "settings.account.enterPassword": "Enter your password",
   "settings.account.wrongPassword": "Incorrect password",
   "settings.account.deleteSuccess": "Account deleted successfully",
-  "settings.account.deleteError": "Error deleting account"
+  "settings.account.deleteError": "Error deleting account",
+  "student.status.created": "Created",
+  "student.status.data_uploaded": "Data Uploaded",
+  "student.status.analysis_running": "Analysis Running",
+  "student.status.completed": "Completed",
+  "student.status.active": "Active",
+  "student.status.pending": "Pending",
+  "student.status.draft": "Draft",
+  "student.projects.progress": "Progress",
+  "student.projects.continue": "Continue analysis",
+  "student.projects.viewResults": "View results",
+  "student.analysis.selectProject": "Select a project",
+  "student.analysis.choosePlaceholder": "Choose an existing project...",
+  "student.analysis.noProjects": "No projects yet. Create a project first.",
+  "student.analysis.noDomain": "No domain",
+  "student.analysis.startAnalysis": "Start analysis",
+  "student.history.total": "Total activities"
 }
