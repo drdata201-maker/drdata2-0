@@ -6,38 +6,129 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, FileUp, PlusCircle } from "lucide-react";
+import { BookOpen, FileUp, BarChart3, ChevronRight, ChevronLeft, CheckCircle2, Upload } from "lucide-react";
+
+const PROJECT_TYPES: Record<string, string[]> = {
+  student_license: [
+    "memoir_licence",
+    "academic_project",
+    "questionnaire_analysis",
+    "survey_analysis",
+    "secondary_data_analysis",
+  ],
+  student_master: [
+    "memoir_master",
+    "academic_research",
+    "scientific_article",
+    "dataset_analysis",
+  ],
+  student_doctorate: [
+    "phd_thesis",
+    "scientific_article",
+    "advanced_research",
+    "scientific_publication",
+  ],
+};
+
+const ANALYSIS_OPTIONS: Record<string, string[]> = {
+  student_license: [
+    "descriptive_stats",
+    "frequencies",
+    "mean",
+    "median",
+    "simple_correlation",
+    "t_test",
+    "chi_square",
+    "crosstab",
+    "histogram",
+    "simple_charts",
+  ],
+  student_master: [
+    "descriptive_stats",
+    "correlation",
+    "simple_regression",
+    "multiple_regression",
+    "anova",
+    "t_test",
+    "chi_square",
+    "factor_analysis",
+    "pca",
+    "cronbach_alpha",
+    "cluster_analysis",
+  ],
+  student_doctorate: [
+    "multiple_regression",
+    "panel_data",
+    "time_series",
+    "sem",
+    "advanced_factor_analysis",
+    "machine_learning",
+    "logistic_regression",
+    "survival_analysis",
+    "multilevel_modeling",
+    "advanced_pca",
+    "advanced_cluster",
+  ],
+};
+
+const ACCEPTED_FORMATS = ".xlsx,.xls,.csv,.sav,.dta,.txt,.json,.ods";
 
 export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: string; userType: string }) {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const [step, setStep] = useState(1);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState("thesis");
+  const [projectType, setProjectType] = useState("");
+  const [domain, setDomain] = useState("");
+  const [selectedAnalyses, setSelectedAnalyses] = useState<string[]>([]);
+  const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const types = PROJECT_TYPES[userType] || PROJECT_TYPES.student_license;
+  const analyses = ANALYSIS_OPTIONS[userType] || ANALYSIS_OPTIONS.student_license;
+
+  const toggleAnalysis = (key: string) => {
+    setSelectedAnalyses((prev) =>
+      prev.includes(key) ? prev.filter((a) => a !== key) : [...prev, key]
+    );
+  };
+
+  const canNext = () => {
+    if (step === 1) return title.trim() && projectType;
+    if (step === 2) return true; // file is optional
+    if (step === 3) return selectedAnalyses.length > 0;
+    return false;
+  };
+
   const handleCreate = async () => {
-    if (!title.trim()) { toast.error(t("pme.newAnalysis.titleRequired")); return; }
+    if (!title.trim()) return;
     setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const { error } = await supabase.from("projects").insert({ user_id: session.user.id, title: title.trim(), description: description.trim() || null, status: "active", user_type: userType });
+      const { error } = await supabase.from("projects").insert({
+        user_id: session.user.id,
+        title: title.trim(),
+        description: description.trim() || null,
+        status: "active",
+        user_type: userType,
+      });
       if (error) throw error;
       toast.success(t("student.newProject.success"));
       navigate(`${baseRoute}/projects`);
-    } catch { toast.error(t("pme.newAnalysis.error")); }
-    finally { setLoading(false); }
+    } catch {
+      toast.error(t("pme.newAnalysis.error"));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const projectTypes = [
-    { value: "thesis", label: t("student.projectType.thesis") },
-    { value: "memoir", label: t("student.projectType.memoir") },
-    { value: "research", label: t("student.projectType.research") },
-    { value: "analysis", label: t("student.projectType.analysis") },
-  ];
+  const stepIcons = [BookOpen, FileUp, BarChart3];
+  const stepKeys = ["student.wizard.step1", "student.wizard.step2", "student.wizard.step3"];
 
   return (
     <div className="space-y-6">
@@ -45,44 +136,152 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
         <h1 className="text-2xl font-bold text-foreground">{t("dashboard.newProject")}</h1>
         <p className="mt-1 text-muted-foreground">{t("student.newProject.desc")}</p>
       </div>
-      <div className="grid gap-6 md:grid-cols-3">
-        {[
-          { icon: BookOpen, title: t("student.newProject.step1"), desc: t("student.newProject.step1Desc") },
-          { icon: FileUp, title: t("student.newProject.step2"), desc: t("student.newProject.step2Desc") },
-          { icon: PlusCircle, title: t("student.newProject.step3"), desc: t("student.newProject.step3Desc") },
-        ].map((step, i) => (
-          <Card key={i} className="border-dashed">
-            <CardContent className="flex items-start gap-3 p-4">
-              <div className="rounded-lg bg-primary/10 p-2"><step.icon className="h-5 w-5 text-primary" /></div>
-              <div><p className="font-medium text-foreground">{step.title}</p><p className="text-sm text-muted-foreground">{step.desc}</p></div>
-            </CardContent>
-          </Card>
-        ))}
+
+      {/* Stepper */}
+      <div className="flex items-center gap-2">
+        {[1, 2, 3].map((s) => {
+          const Icon = stepIcons[s - 1];
+          return (
+            <div key={s} className="flex items-center gap-2">
+              <div
+                className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                  step === s
+                    ? "bg-primary text-primary-foreground"
+                    : step > s
+                    ? "bg-primary/20 text-primary"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {step > s ? <CheckCircle2 className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
+                <span className="hidden sm:inline">{t(stepKeys[s - 1])}</span>
+                <span className="sm:hidden">{s}</span>
+              </div>
+              {s < 3 && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+            </div>
+          );
+        })}
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("student.newProject.formTitle")}</CardTitle>
-          <CardDescription>{t("student.newProject.formDesc")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">{t("pme.newAnalysis.analysisTitle")}</label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("student.newProject.titlePlaceholder")} />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">{t("pme.newAnalysis.type")}</label>
-            <Select value={type} onValueChange={setType}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{projectTypes.map((pt) => (<SelectItem key={pt.value} value={pt.value}>{pt.label}</SelectItem>))}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">{t("pme.newAnalysis.description")}</label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("student.newProject.descPlaceholder")} rows={4} />
-          </div>
-          <Button onClick={handleCreate} disabled={loading} className="w-full sm:w-auto">{loading ? "..." : t("pme.newAnalysis.create")}</Button>
-        </CardContent>
-      </Card>
+
+      {/* Step 1: Project Info */}
+      {step === 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("student.wizard.step1Title")}</CardTitle>
+            <CardDescription>{t("student.wizard.step1Desc")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">{t("pme.newAnalysis.analysisTitle")}</label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("student.newProject.titlePlaceholder")} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">{t("student.wizard.projectType")}</label>
+              <Select value={projectType} onValueChange={setProjectType}>
+                <SelectTrigger><SelectValue placeholder={t("student.wizard.selectType")} /></SelectTrigger>
+                <SelectContent>
+                  {types.map((pt) => (
+                    <SelectItem key={pt} value={pt}>{t(`student.type.${pt}`)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">{t("student.wizard.domain")}</label>
+              <Input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder={t("student.wizard.domainPlaceholder")} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">{t("pme.newAnalysis.description")}</label>
+              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("student.newProject.descPlaceholder")} rows={3} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 2: Data Import */}
+      {step === 2 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("student.wizard.step2Title")}</CardTitle>
+            <CardDescription>{t("student.wizard.step2Desc")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div
+              className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-muted-foreground/30 p-8 text-center transition-colors hover:border-primary/50 cursor-pointer"
+              onClick={() => document.getElementById("file-upload")?.click()}
+            >
+              <Upload className="h-10 w-10 text-muted-foreground" />
+              <div>
+                <p className="font-medium text-foreground">{t("student.wizard.dropFile")}</p>
+                <p className="text-sm text-muted-foreground">{t("student.wizard.dropFileDesc")}</p>
+              </div>
+              {file && (
+                <Badge variant="secondary" className="mt-2">
+                  {file.name} ({(file.size / 1024).toFixed(1)} KB)
+                </Badge>
+              )}
+              <input
+                id="file-upload"
+                type="file"
+                accept={ACCEPTED_FORMATS}
+                className="hidden"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {["xlsx", "xls", "csv", "sav", "dta", "txt", "json", "ods"].map((fmt) => (
+                <Badge key={fmt} variant="outline" className="text-xs">.{fmt}</Badge>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">{t("student.wizard.googleSheets")}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 3: Analysis Options */}
+      {step === 3 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("student.wizard.step3Title")}</CardTitle>
+            <CardDescription>{t("student.wizard.step3Desc")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+              {analyses.map((key) => (
+                <Button
+                  key={key}
+                  variant={selectedAnalyses.includes(key) ? "default" : "outline"}
+                  size="sm"
+                  className="h-auto py-2 text-xs"
+                  onClick={() => toggleAnalysis(key)}
+                >
+                  {t(`student.analysis.${key}`)}
+                </Button>
+              ))}
+            </div>
+            {selectedAnalyses.length > 0 && (
+              <p className="mt-3 text-sm text-muted-foreground">
+                {selectedAnalyses.length} {t("student.wizard.selected")}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Navigation */}
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={() => setStep((s) => s - 1)} disabled={step === 1}>
+          <ChevronLeft className="mr-1 h-4 w-4" /> {t("student.wizard.back")}
+        </Button>
+        {step < 3 ? (
+          <Button onClick={() => setStep((s) => s + 1)} disabled={!canNext()}>
+            {t("student.wizard.next")} <ChevronRight className="ml-1 h-4 w-4" />
+          </Button>
+        ) : (
+          <Button onClick={handleCreate} disabled={loading || !canNext()}>
+            {loading ? "..." : t("student.wizard.create")}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
