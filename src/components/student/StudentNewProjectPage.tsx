@@ -63,22 +63,33 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
     if (!title.trim() || !projectType) return;
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-      const { data, error } = await (supabase.from("projects") as any).insert({
-        user_id: session.user.id,
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error("createProject:auth error", authError?.message);
+        toast.error("Authentication error – please log in again.");
+        navigate("/login");
+        return;
+      }
+      const payload = {
+        user_id: user.id,
         title: title.trim(),
         description: description.trim() || null,
         domain: domain.trim() || null,
         status: "created",
         user_type: resolvedUserType,
-      }).select().single();
-      if (error) throw error;
+      };
+      console.log("createProject:payload", payload);
+      const { data, error } = await (supabase.from("projects") as any)
+        .insert(payload)
+        .select("id")
+        .single();
+      console.log("createProject:response", { data, error });
+      if (error) throw new Error(error.message);
       toast.success(t("student.newProject.success"));
-      // Redirect to Assistant Joël workspace with project context
-      navigate(`/analysis/workspace?project=${data.id}&level=${resolvedUserType}&type=${projectType}&domain=${encodeURIComponent(domain || "")}`);
-    } catch {
-      toast.error(t("pme.newAnalysis.error"));
+      navigate(`/analysis/workspace?project=${data.id}&level=${resolvedUserType}&type=${encodeURIComponent(projectType)}&domain=${encodeURIComponent(domain || "")}`);
+    } catch (err: any) {
+      console.error("createProject:error", err);
+      toast.error(err?.message || t("pme.newAnalysis.error"));
     } finally {
       setLoading(false);
     }
