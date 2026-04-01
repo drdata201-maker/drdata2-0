@@ -14,16 +14,15 @@ import { BookOpen, FileUp, BarChart3, ChevronRight, ChevronLeft, CheckCircle2, U
 const PROJECT_TYPES: Record<string, string[]> = {
   student_license: [
     "memoir_licence", "academic_project", "questionnaire_analysis",
-    "field_survey_analysis", "secondary_data_analysis", "end_of_cycle_project", "descriptive_study",
+    "field_survey_analysis", "descriptive_analysis",
   ],
   student_master: [
-    "memoir_master", "academic_research", "scientific_article", "dataset_analysis",
-    "comparative_study", "quantitative_research", "qualitative_research", "mixed_research",
+    "memoir_master", "research_project", "scientific_article",
+    "advanced_analysis", "multivariate_analysis", "comparative_study",
   ],
   student_doctorate: [
-    "phd_thesis", "scientific_article", "scientific_publication", "advanced_research",
-    "longitudinal_study", "experimental_study", "advanced_quantitative_research",
-    "advanced_qualitative_research", "advanced_mixed_research",
+    "phd_thesis", "scientific_research", "scientific_publication",
+    "doctoral_advanced_analysis", "scientific_modeling", "predictive_analysis",
   ],
 };
 
