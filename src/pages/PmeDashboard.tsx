@@ -92,16 +92,16 @@ export default function PmeDashboard() {
             onLogout={handleLogout}
           />
         );
-      case "charts":
-        return <PmeCharts />;
-      case "projects":
-        return <PmeRecentProjects />;
       case "new-analysis":
-        return <PlaceholderPage titleKey="pme.sidebar.newAnalysis" descKey="placeholder.comingSoon" />;
+        return <PmeNewAnalysisPage />;
+      case "projects":
+        return <PmeProjectsPage />;
+      case "charts":
+        return <PmeChartsPage />;
       case "reports":
-        return <PlaceholderPage titleKey="pme.sidebar.reports" descKey="placeholder.comingSoon" />;
+        return <PmeReportsPage />;
       case "history":
-        return <PlaceholderPage titleKey="pme.sidebar.history" descKey="placeholder.comingSoon" />;
+        return <PmeHistoryPage />;
       default:
         return (
           <>
