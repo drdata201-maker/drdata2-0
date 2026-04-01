@@ -16,6 +16,7 @@ import { StudentNewProjectPage } from "@/components/student/StudentNewProjectPag
 import { StudentProjectsPage } from "@/components/student/StudentProjectsPage";
 import { StudentAnalysisPage } from "@/components/student/StudentAnalysisPage";
 import { StudentHistoryPage } from "@/components/student/StudentHistoryPage";
+import { MemoryAssistantPage } from "@/components/student/MemoryAssistantPage";
 
 export default function Dashboard() {
   const { t } = useLanguage();
