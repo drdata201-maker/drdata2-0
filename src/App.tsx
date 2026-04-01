@@ -16,6 +16,7 @@ import Features from "./pages/Features";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
+import AnalysisWorkspace from "./pages/AnalysisWorkspace";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,9 @@ const App = () => (
           {/* Enterprise dashboard */}
           <Route path="/dashboard/enterprise" element={<EnterpriseDashboard />} />
           <Route path="/dashboard/enterprise/*" element={<EnterpriseDashboard />} />
+
+          {/* Analysis workspace */}
+          <Route path="/analysis/workspace" element={<AnalysisWorkspace />} />
 
           {/* Static pages */}
           <Route path="/about" element={<About />} />
