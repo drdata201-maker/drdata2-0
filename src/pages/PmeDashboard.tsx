@@ -12,7 +12,11 @@ import { PmeInsights } from "@/components/pme/PmeInsights";
 import { PmeRecentProjects } from "@/components/pme/PmeRecentProjects";
 import { PmeStats } from "@/components/pme/PmeStats";
 import { PmeSettingsView } from "@/components/pme/PmeSettingsView";
-import { PlaceholderPage } from "@/components/dashboard/PlaceholderPage";
+import { PmeNewAnalysisPage } from "@/components/pme/PmeNewAnalysisPage";
+import { PmeProjectsPage } from "@/components/pme/PmeProjectsPage";
+import { PmeReportsPage } from "@/components/pme/PmeReportsPage";
+import { PmeChartsPage } from "@/components/pme/PmeChartsPage";
+import { PmeHistoryPage } from "@/components/pme/PmeHistoryPage";
 
 const BASE = "/dashboard/pme";
 
