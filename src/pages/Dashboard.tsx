@@ -42,7 +42,7 @@ export default function Dashboard() {
       setUserName(meta?.full_name || meta?.name || session.user.email?.split("@")[0] || "");
       setUserLevel(meta?.level || "licence");
       setUserCountry(meta?.country || "");
-      setUserType(meta?.user_type || "student_license");
+      setUserType(meta?.user_type || routeUserType);
       if (meta?.user_type && !meta.user_type.startsWith("student")) { navigate(getDashboardRoute(meta), { replace: true }); return; }
       if (!meta?.profile_completed && !meta?.user_type) navigate("/complete-profile");
     });
