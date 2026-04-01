@@ -16,6 +16,7 @@ import { StudentNewProjectPage } from "@/components/student/StudentNewProjectPag
 import { StudentProjectsPage } from "@/components/student/StudentProjectsPage";
 import { StudentAnalysisPage } from "@/components/student/StudentAnalysisPage";
 import { StudentHistoryPage } from "@/components/student/StudentHistoryPage";
+import { MemoryAssistantPage } from "@/components/student/MemoryAssistantPage";
 
 export default function Dashboard() {
   const { t } = useLanguage();
@@ -55,6 +56,7 @@ export default function Dashboard() {
     "quick-analysis": "dashboard.quickAnalysis",
     "history": "dashboard.history",
     "settings": "settings.title",
+    "memory-assistant": "memoryAssistant.title",
   };
 
   const headerTitle = t(headerTitleMap[subPage] || "dashboard.dashboard");
@@ -71,6 +73,8 @@ export default function Dashboard() {
         return <StudentAnalysisPage userType={userType} />;
       case "history":
         return <StudentHistoryPage userType={userType} />;
+      case "memory-assistant":
+        return <MemoryAssistantPage />;
       default:
         return (
           <>
