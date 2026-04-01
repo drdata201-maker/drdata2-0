@@ -587,5 +587,12 @@
   "memoryAssistant.bibliography": "Bibliographie",
   "memoryAssistant.bibliographyDesc": "Gérez vos références et générez votre bibliographie aux normes APA, Harvard, etc.",
   "memoryAssistant.comingSoon": "Fonctionnalité en cours de développement",
-  "memoryAssistant.comingSoonDesc": "L'assistant mémoire sera bientôt disponible avec des fonctionnalités d'IA avancées."
+  "memoryAssistant.comingSoonDesc": "L'assistant mémoire sera bientôt disponible avec des fonctionnalités d'IA avancées.",
+  "settings.profile.previewReady": "Aperçu prêt — cliquez Enregistrer",
+  "settings.account.deleteConfirmMsg": "Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.",
+  "settings.account.confirmPasswordLabel": "Confirmez votre mot de passe",
+  "settings.account.enterPassword": "Entrez votre mot de passe",
+  "settings.account.wrongPassword": "Mot de passe incorrect",
+  "settings.account.deleteSuccess": "Compte supprimé avec succès",
+  "settings.account.deleteError": "Erreur lors de la suppression du compte"
 }

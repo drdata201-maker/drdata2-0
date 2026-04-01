@@ -587,5 +587,12 @@
   "memoryAssistant.bibliography": "Bibliography",
   "memoryAssistant.bibliographyDesc": "Manage your references and generate your bibliography in APA, Harvard, etc.",
   "memoryAssistant.comingSoon": "Feature under development",
-  "memoryAssistant.comingSoonDesc": "The thesis assistant will soon be available with advanced AI features."
+  "memoryAssistant.comingSoonDesc": "The thesis assistant will soon be available with advanced AI features.",
+  "settings.profile.previewReady": "Preview ready — click Save",
+  "settings.account.deleteConfirmMsg": "Are you sure you want to delete your account? This action cannot be undone.",
+  "settings.account.confirmPasswordLabel": "Confirm your password",
+  "settings.account.enterPassword": "Enter your password",
+  "settings.account.wrongPassword": "Incorrect password",
+  "settings.account.deleteSuccess": "Account deleted successfully",
+  "settings.account.deleteError": "Error deleting account"
 }
