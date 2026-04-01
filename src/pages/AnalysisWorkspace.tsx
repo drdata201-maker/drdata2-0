@@ -1,6 +1,7 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,7 @@ import { WorkspaceExport } from "@/components/workspace/WorkspaceExport";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table2, BarChart3, MessageSquare, FileText } from "lucide-react";
 
-export default function AnalysisWorkspace() {
+function WorkspaceContent() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -52,7 +53,7 @@ export default function AnalysisWorkspace() {
 
       <div className="flex flex-1 flex-col lg:flex-row">
         {/* Left: Assistant Joël Chat */}
-        <div className="flex w-full flex-col border-r border-border lg:w-96">
+        <div className="flex w-full flex-col border-r border-border lg:w-96 lg:min-h-[calc(100vh-57px)]">
           <JoelChat
             projectId={projectId}
             projectTitle={projectTitle}
@@ -85,5 +86,13 @@ export default function AnalysisWorkspace() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AnalysisWorkspace() {
+  return (
+    <LanguageProvider>
+      <WorkspaceContent />
+    </LanguageProvider>
   );
 }
