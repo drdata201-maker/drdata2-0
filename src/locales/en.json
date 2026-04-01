@@ -370,5 +370,6 @@
   "pme.stats.reports": "Reports generated",
   "pme.settings.companyProfile": "Company profile",
   "pme.settings.companyName": "Company name",
-  "pme.settings.industry": "Industry"
+  "pme.settings.industry": "Industry",
+  "placeholder.comingSoon": "This feature is coming soon. Stay tuned!"
 }

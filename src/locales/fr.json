@@ -370,5 +370,6 @@
   "pme.stats.reports": "Rapports générés",
   "pme.settings.companyProfile": "Profil entreprise",
   "pme.settings.companyName": "Nom de l'entreprise",
-  "pme.settings.industry": "Secteur d'activité"
+  "pme.settings.industry": "Secteur d'activité",
+  "placeholder.comingSoon": "Cette fonctionnalité sera bientôt disponible. Restez connecté !"
 }
