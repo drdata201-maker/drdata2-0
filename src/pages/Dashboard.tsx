@@ -26,10 +26,13 @@ export default function Dashboard() {
   const [userEmail, setUserEmail] = useState("");
   const [userLevel, setUserLevel] = useState("licence");
   const [userCountry, setUserCountry] = useState("");
-  const [userType, setUserType] = useState("student_license");
-
   const baseRoute = location.pathname.match(/^\/dashboard\/student-(license|master|doctorate)/)?.[0] || "/dashboard";
   const subPage = location.pathname.replace(baseRoute, "").replace(/^\//, "");
+
+  // Derive userType from route as primary source
+  const routeLevelMatch = baseRoute.match(/student-(license|master|doctorate)$/);
+  const routeUserType = routeLevelMatch ? `student_${routeLevelMatch[1]}` : "student_license";
+  const [userType, setUserType] = useState(routeUserType);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -39,7 +42,7 @@ export default function Dashboard() {
       setUserName(meta?.full_name || meta?.name || session.user.email?.split("@")[0] || "");
       setUserLevel(meta?.level || "licence");
       setUserCountry(meta?.country || "");
-      setUserType(meta?.user_type || "student_license");
+      setUserType(meta?.user_type || routeUserType);
       if (meta?.user_type && !meta.user_type.startsWith("student")) { navigate(getDashboardRoute(meta), { replace: true }); return; }
       if (!meta?.profile_completed && !meta?.user_type) navigate("/complete-profile");
     });
