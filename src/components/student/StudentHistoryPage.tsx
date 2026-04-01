@@ -3,21 +3,31 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Clock, FolderOpen, BarChart3 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Clock, FolderOpen, BarChart3, Eye } from "lucide-react";
 
-interface HistoryItem { id: string; title: string; type: "project" | "analysis"; status: string; created_at: string; }
+interface HistoryItem {
+  id: string;
+  title: string;
+  type: "project" | "analysis";
+  status: string;
+  domain?: string | null;
+  created_at: string;
+}
 
-export function StudentHistoryPage({ userType }: { userType: string }) {
+export function StudentHistoryPage({ userType, baseRoute }: { userType: string; baseRoute?: string }) {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [items, setItems] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAll = async () => {
       const [projRes, analRes] = await Promise.all([
-        supabase.from("projects").select("id,title,status,created_at").eq("user_type", userType).order("created_at", { ascending: false }).limit(20),
-        supabase.from("analyses").select("id,title,status,created_at").eq("user_type", userType).order("created_at", { ascending: false }).limit(20),
+        (supabase.from("projects") as any).select("id,title,status,domain,created_at").eq("user_type", userType).order("created_at", { ascending: false }).limit(30),
+        supabase.from("analyses").select("id,title,status,created_at").eq("user_type", userType).order("created_at", { ascending: false }).limit(30),
       ]);
       const combined: HistoryItem[] = [
         ...(projRes.data || []).map((d: any) => ({ ...d, type: "project" as const })),
@@ -27,13 +37,10 @@ export function StudentHistoryPage({ userType }: { userType: string }) {
       setLoading(false);
     };
     fetchAll();
-  }, []);
+  }, [userType]);
 
   const typeIcon = (type: string) => {
-    switch (type) { case "project": return <FolderOpen className="h-4 w-4 text-primary" />; default: return <BarChart3 className="h-4 w-4 text-primary" />; }
-  };
-  const typeLabel = (type: string) => {
-    return type === "project" ? t("pme.history.project") : t("pme.history.analysis");
+    return type === "project" ? <FolderOpen className="h-4 w-4 text-primary" /> : <BarChart3 className="h-4 w-4 text-primary" />;
   };
 
   return (
@@ -42,10 +49,12 @@ export function StudentHistoryPage({ userType }: { userType: string }) {
         <h1 className="text-2xl font-bold text-foreground">{t("pme.sidebar.history")}</h1>
         <p className="mt-1 text-muted-foreground">{t("pme.history.desc")}</p>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[
           { icon: FolderOpen, label: t("pme.history.project"), count: items.filter((i) => i.type === "project").length },
           { icon: BarChart3, label: t("pme.history.analysis"), count: items.filter((i) => i.type === "analysis").length },
+          { icon: Clock, label: t("student.history.total"), count: items.length },
         ].map((s, i) => (
           <Card key={i}>
             <CardContent className="flex items-center gap-3 p-4">
@@ -55,6 +64,7 @@ export function StudentHistoryPage({ userType }: { userType: string }) {
           </Card>
         ))}
       </div>
+
       <Card>
         <CardHeader><CardTitle>{t("pme.history.recent")}</CardTitle></CardHeader>
         <CardContent>
@@ -68,19 +78,38 @@ export function StudentHistoryPage({ userType }: { userType: string }) {
           ) : (
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader><TableRow>
-                  <TableHead>{t("pme.history.itemType")}</TableHead>
-                  <TableHead>{t("pme.recentProjects.name")}</TableHead>
-                  <TableHead>{t("pme.recentProjects.status")}</TableHead>
-                  <TableHead>{t("pme.recentProjects.date")}</TableHead>
-                </TableRow></TableHeader>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("pme.history.itemType")}</TableHead>
+                    <TableHead>{t("pme.recentProjects.name")}</TableHead>
+                    <TableHead className="hidden sm:table-cell">{t("student.wizard.domain")}</TableHead>
+                    <TableHead>{t("pme.recentProjects.status")}</TableHead>
+                    <TableHead>{t("pme.recentProjects.date")}</TableHead>
+                    <TableHead className="text-right">{t("pme.projects.actions")}</TableHead>
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
                   {items.map((item) => (
                     <TableRow key={`${item.type}-${item.id}`}>
-                      <TableCell><div className="flex items-center gap-2">{typeIcon(item.type)}<span className="capitalize">{typeLabel(item.type)}</span></div></TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {typeIcon(item.type)}
+                          <span className="text-sm capitalize">{item.type === "project" ? t("pme.history.project") : t("pme.history.analysis")}</span>
+                        </div>
+                      </TableCell>
                       <TableCell className="font-medium">{item.title}</TableCell>
-                      <TableCell><Badge variant="outline">{item.status}</Badge></TableCell>
-                      <TableCell>{new Date(item.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">{item.domain || "—"}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{t(`student.status.${item.status}`) || item.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">{new Date(item.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-right">
+                        {item.type === "project" && baseRoute && (
+                          <Button variant="ghost" size="icon" onClick={() => navigate(`${baseRoute}/quick-analysis?project=${item.id}`)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

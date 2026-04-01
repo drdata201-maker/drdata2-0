@@ -6,10 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
-import { Plus, FolderOpen, Trash2 } from "lucide-react";
+import { Plus, FolderOpen, Trash2, Play, Eye } from "lucide-react";
 import { toast } from "sonner";
 
-interface ProjectRow { id: string; title: string; description: string | null; status: string; created_at: string; }
+interface ProjectRow {
+  id: string;
+  title: string;
+  description: string | null;
+  domain: string | null;
+  status: string;
+  created_at: string;
+}
+
+const STATUS_ORDER = ["created", "data_uploaded", "analysis_running", "completed"];
 
 export function StudentProjectsPage({ baseRoute, userType }: { baseRoute: string; userType: string }) {
   const { t } = useLanguage();
@@ -18,22 +27,39 @@ export function StudentProjectsPage({ baseRoute, userType }: { baseRoute: string
   const [loading, setLoading] = useState(true);
 
   const fetchProjects = async () => {
-    const { data } = await supabase.from("projects").select("*").eq("user_type", userType).order("created_at", { ascending: false });
+    const { data } = await (supabase.from("projects") as any)
+      .select("id,title,description,domain,status,created_at")
+      .eq("user_type", userType)
+      .order("created_at", { ascending: false });
     if (data) setProjects(data as ProjectRow[]);
     setLoading(false);
   };
 
-  useEffect(() => { fetchProjects(); }, []);
+  useEffect(() => { fetchProjects(); }, [userType]);
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("projects").delete().eq("id", id);
-    if (!error) { setProjects((prev) => prev.filter((p) => p.id !== id)); toast.success(t("pme.projects.deleted")); }
+    if (!error) {
+      setProjects((prev) => prev.filter((p) => p.id !== id));
+      toast.success(t("pme.projects.deleted"));
+    }
   };
 
-  const statusColor = (s: string) => { switch (s) { case "active": return "default"; case "completed": return "secondary"; default: return "outline"; } };
-  const statusLabel = (s: string) => {
-    const map: Record<string, string> = { active: t("dashboard.status.inProgress"), completed: t("dashboard.status.completed"), draft: t("dashboard.status.draft") };
-    return map[s] || s;
+  const statusVariant = (s: string) => {
+    switch (s) {
+      case "created": return "outline";
+      case "data_uploaded": return "secondary";
+      case "analysis_running": return "default";
+      case "completed": return "default";
+      default: return "outline";
+    }
+  };
+
+  const statusLabel = (s: string) => t(`student.status.${s}`) || s;
+
+  const statusProgress = (s: string) => {
+    const idx = STATUS_ORDER.indexOf(s);
+    return idx >= 0 ? ((idx + 1) / STATUS_ORDER.length) * 100 : 0;
   };
 
   return (
@@ -43,8 +69,26 @@ export function StudentProjectsPage({ baseRoute, userType }: { baseRoute: string
           <h1 className="text-2xl font-bold text-foreground">{t("dashboard.myProjects")}</h1>
           <p className="mt-1 text-muted-foreground">{t("student.projects.desc")}</p>
         </div>
-        <Button onClick={() => navigate(`${baseRoute}/new-project`)}><Plus className="mr-2 h-4 w-4" /> {t("pme.projects.create")}</Button>
+        <Button onClick={() => navigate(`${baseRoute}/new-project`)}>
+          <Plus className="mr-2 h-4 w-4" /> {t("pme.projects.create")}
+        </Button>
       </div>
+
+      {/* Status summary cards */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {STATUS_ORDER.map((status) => {
+          const count = projects.filter((p) => p.status === status).length;
+          return (
+            <Card key={status}>
+              <CardContent className="p-4 text-center">
+                <p className="text-2xl font-bold text-foreground">{count}</p>
+                <p className="text-xs text-muted-foreground">{statusLabel(status)}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
       <Card>
         <CardHeader><CardTitle>{t("pme.projects.list")} ({projects.length})</CardTitle></CardHeader>
         <CardContent>
@@ -54,26 +98,62 @@ export function StudentProjectsPage({ baseRoute, userType }: { baseRoute: string
             <div className="flex flex-col items-center py-12 text-center">
               <FolderOpen className="mb-4 h-12 w-12 text-muted-foreground" />
               <p className="text-muted-foreground">{t("dashboard.recentProjects.empty")}</p>
-              <Button variant="outline" className="mt-4" onClick={() => navigate(`${baseRoute}/new-project`)}><Plus className="mr-2 h-4 w-4" /> {t("pme.projects.create")}</Button>
+              <Button variant="outline" className="mt-4" onClick={() => navigate(`${baseRoute}/new-project`)}>
+                <Plus className="mr-2 h-4 w-4" /> {t("pme.projects.create")}
+              </Button>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader><TableRow>
-                  <TableHead>{t("pme.recentProjects.name")}</TableHead>
-                  <TableHead className="hidden sm:table-cell">{t("pme.newAnalysis.description")}</TableHead>
-                  <TableHead>{t("pme.recentProjects.status")}</TableHead>
-                  <TableHead>{t("pme.recentProjects.date")}</TableHead>
-                  <TableHead className="text-right">{t("pme.projects.actions")}</TableHead>
-                </TableRow></TableHeader>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("pme.recentProjects.name")}</TableHead>
+                    <TableHead className="hidden md:table-cell">{t("student.wizard.domain")}</TableHead>
+                    <TableHead>{t("pme.recentProjects.status")}</TableHead>
+                    <TableHead className="hidden sm:table-cell">{t("student.projects.progress")}</TableHead>
+                    <TableHead>{t("pme.recentProjects.date")}</TableHead>
+                    <TableHead className="text-right">{t("pme.projects.actions")}</TableHead>
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
                   {projects.map((p) => (
                     <TableRow key={p.id}>
-                      <TableCell className="font-medium">{p.title}</TableCell>
-                      <TableCell className="hidden max-w-[200px] truncate sm:table-cell">{p.description || "—"}</TableCell>
-                      <TableCell><Badge variant={statusColor(p.status) as any}>{statusLabel(p.status)}</Badge></TableCell>
-                      <TableCell>{new Date(p.created_at).toLocaleDateString()}</TableCell>
-                      <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{p.title}</p>
+                          {p.description && <p className="text-xs text-muted-foreground truncate max-w-[200px]">{p.description}</p>}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <span className="text-sm text-muted-foreground">{p.domain || "—"}</span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={statusVariant(p.status) as any}>{statusLabel(p.status)}</Badge>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-16 rounded-full bg-muted">
+                            <div className="h-2 rounded-full bg-primary transition-all" style={{ width: `${statusProgress(p.status)}%` }} />
+                          </div>
+                          <span className="text-xs text-muted-foreground">{statusProgress(p.status)}%</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">{new Date(p.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {p.status !== "completed" && (
+                            <Button variant="ghost" size="icon" title={t("student.projects.continue")} onClick={() => navigate(`${baseRoute}/quick-analysis?project=${p.id}`)}>
+                              <Play className="h-4 w-4 text-primary" />
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="icon" title={t("student.projects.viewResults")} onClick={() => navigate(`${baseRoute}/quick-analysis?project=${p.id}`)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

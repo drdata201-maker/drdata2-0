@@ -51,6 +51,7 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [projectType, setProjectType] = useState("");
+  const [domain, setDomain] = useState("");
   const [selectedAnalyses, setSelectedAnalyses] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -85,11 +86,12 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const { error } = await supabase.from("projects").insert({
+      const { error } = await (supabase.from("projects") as any).insert({
         user_id: session.user.id,
         title: title.trim(),
         description: description.trim() || null,
-        status: "active",
+        domain: domain.trim() || null,
+        status: "created",
         user_type: userType,
       });
       if (error) throw error;
@@ -161,6 +163,10 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
               </Select>
             </div>
             <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">{t("student.wizard.domain")}</label>
+              <Input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder={t("student.wizard.domainPlaceholder")} />
+            </div>
+            <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">{t("pme.newAnalysis.description")}</label>
               <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("student.newProject.descPlaceholder")} rows={3} />
             </div>
@@ -168,7 +174,7 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
         </Card>
       )}
 
-      {/* Step 2: Data Import with drag-and-drop */}
+      {/* Step 2: Data Import */}
       {step === 2 && (
         <Card>
           <CardHeader>
@@ -178,9 +184,7 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
           <CardContent className="space-y-4">
             <div
               className={`flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 text-center transition-colors cursor-pointer ${
-                isDragging
-                  ? "border-primary bg-primary/5"
-                  : "border-muted-foreground/30 hover:border-primary/50"
+                isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/30 hover:border-primary/50"
               }`}
               onClick={() => document.getElementById("file-upload")?.click()}
               onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
@@ -197,13 +201,7 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
                   {file.name} ({(file.size / 1024).toFixed(1)} KB)
                 </Badge>
               )}
-              <input
-                id="file-upload"
-                type="file"
-                accept={ACCEPTED_FORMATS}
-                className="hidden"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-              />
+              <input id="file-upload" type="file" accept={ACCEPTED_FORMATS} className="hidden" onChange={(e) => setFile(e.target.files?.[0] || null)} />
             </div>
             <div className="flex flex-wrap gap-2">
               {["xlsx", "csv", "sav", "dta", "txt"].map((fmt) => (
@@ -224,13 +222,7 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
           <CardContent>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {analyses.map((key) => (
-                <Button
-                  key={key}
-                  variant={selectedAnalyses.includes(key) ? "default" : "outline"}
-                  size="sm"
-                  className="h-auto py-2 text-xs"
-                  onClick={() => toggleAnalysis(key)}
-                >
+                <Button key={key} variant={selectedAnalyses.includes(key) ? "default" : "outline"} size="sm" className="h-auto py-2 text-xs" onClick={() => toggleAnalysis(key)}>
                   {t(`student.analysis.${key}`)}
                 </Button>
               ))}

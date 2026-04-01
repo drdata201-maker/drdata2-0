@@ -588,5 +588,21 @@
   "settings.account.enterPassword": "Entrez votre mot de passe",
   "settings.account.wrongPassword": "Mot de passe incorrect",
   "settings.account.deleteSuccess": "Compte supprimé avec succès",
-  "settings.account.deleteError": "Erreur lors de la suppression du compte"
+  "settings.account.deleteError": "Erreur lors de la suppression du compte",
+  "student.status.created": "Créé",
+  "student.status.data_uploaded": "Données importées",
+  "student.status.analysis_running": "Analyse en cours",
+  "student.status.completed": "Terminé",
+  "student.status.active": "Actif",
+  "student.status.pending": "En attente",
+  "student.status.draft": "Brouillon",
+  "student.projects.progress": "Progression",
+  "student.projects.continue": "Continuer l'analyse",
+  "student.projects.viewResults": "Voir les résultats",
+  "student.analysis.selectProject": "Sélectionner un projet",
+  "student.analysis.choosePlaceholder": "Choisir un projet existant...",
+  "student.analysis.noProjects": "Aucun projet. Créez un projet d'abord.",
+  "student.analysis.noDomain": "Sans domaine",
+  "student.analysis.startAnalysis": "Lancer l'analyse",
+  "student.history.total": "Total activités"
 }
