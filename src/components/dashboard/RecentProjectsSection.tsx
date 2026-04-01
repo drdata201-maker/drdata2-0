@@ -1,22 +1,47 @@
+import { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useLocation, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Play } from "lucide-react";
+
+interface ProjectRow {
+  id: string;
+  title: string;
+  domain: string | null;
+  status: string;
+  created_at: string;
+}
 
 export function RecentProjectsSection() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const baseRoute = location.pathname.match(/^\/dashboard\/student-(license|master|doctorate)/)?.[0] || "/dashboard";
 
-  // Placeholder — no real projects yet
-  const projects: Array<{
-    name: string;
-    domain: string;
-    date: string;
-    status: "draft" | "inProgress" | "completed";
-  }> = [];
+  const [projects, setProjects] = useState<ProjectRow[]>([]);
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data } = await (supabase.from("projects") as any)
+        .select("id,title,domain,status,created_at")
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      if (data) setProjects(data as ProjectRow[]);
+    };
+    fetch();
+  }, []);
 
   const statusColors: Record<string, string> = {
-    draft: "bg-muted text-muted-foreground",
-    inProgress: "bg-accent text-accent-foreground",
-    completed: "bg-primary/10 text-primary",
+    created: "bg-muted text-muted-foreground",
+    data_uploaded: "bg-accent text-accent-foreground",
+    analysis_running: "bg-primary/10 text-primary",
+    completed: "bg-primary/20 text-primary",
+    active: "bg-accent text-accent-foreground",
   };
 
   return (
@@ -32,25 +57,27 @@ export function RecentProjectsSection() {
             <thead>
               <tr className="border-b border-border bg-muted/50">
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("dashboard.recentProjects.name")}</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("dashboard.recentProjects.domain")}</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("dashboard.recentProjects.date")}</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground hidden sm:table-cell">{t("dashboard.recentProjects.domain")}</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("dashboard.recentProjects.status")}</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground hidden sm:table-cell">{t("dashboard.recentProjects.date")}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody>
-              {projects.map((p, i) => (
-                <tr key={i} className="border-b border-border last:border-0">
-                  <td className="px-4 py-3 font-medium text-foreground">{p.name}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{p.domain}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{p.date}</td>
+              {projects.map((p) => (
+                <tr key={p.id} className="border-b border-border last:border-0">
+                  <td className="px-4 py-3 font-medium text-foreground">{p.title}</td>
+                  <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{p.domain || "—"}</td>
                   <td className="px-4 py-3">
-                    <Badge variant="secondary" className={statusColors[p.status]}>
-                      {t(`dashboard.status.${p.status}`)}
+                    <Badge variant="secondary" className={statusColors[p.status] || ""}>
+                      {t(`student.status.${p.status}`) || p.status}
                     </Badge>
                   </td>
+                  <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{new Date(p.created_at).toLocaleDateString()}</td>
                   <td className="px-4 py-3">
-                    <Button size="sm" variant="outline">{t("dashboard.recentProjects.open")}</Button>
+                    <Button size="sm" variant="outline" onClick={() => navigate(`${baseRoute}/quick-analysis?project=${p.id}`)}>
+                      <Play className="mr-1 h-3 w-3" /> {t("dashboard.recentProjects.open")}
+                    </Button>
                   </td>
                 </tr>
               ))}
