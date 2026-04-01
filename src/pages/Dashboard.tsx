@@ -56,6 +56,7 @@ export default function Dashboard() {
     "quick-analysis": "dashboard.quickAnalysis",
     "history": "dashboard.history",
     "settings": "settings.title",
+    "memory-assistant": "memoryAssistant.title",
   };
 
   const headerTitle = t(headerTitleMap[subPage] || "dashboard.dashboard");
