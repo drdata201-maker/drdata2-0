@@ -588,5 +588,21 @@
   "settings.account.enterPassword": "Geben Sie Ihr Passwort ein",
   "settings.account.wrongPassword": "Falsches Passwort",
   "settings.account.deleteSuccess": "Konto erfolgreich gelöscht",
-  "settings.account.deleteError": "Fehler beim Löschen des Kontos"
+  "settings.account.deleteError": "Fehler beim Löschen des Kontos",
+  "student.status.created": "Erstellt",
+  "student.status.data_uploaded": "Daten hochgeladen",
+  "student.status.analysis_running": "Analyse läuft",
+  "student.status.completed": "Abgeschlossen",
+  "student.status.active": "Aktiv",
+  "student.status.pending": "Ausstehend",
+  "student.status.draft": "Entwurf",
+  "student.projects.progress": "Fortschritt",
+  "student.projects.continue": "Analyse fortsetzen",
+  "student.projects.viewResults": "Ergebnisse anzeigen",
+  "student.analysis.selectProject": "Projekt auswählen",
+  "student.analysis.choosePlaceholder": "Bestehendes Projekt wählen...",
+  "student.analysis.noProjects": "Keine Projekte. Erstellen Sie zuerst ein Projekt.",
+  "student.analysis.noDomain": "Kein Fachgebiet",
+  "student.analysis.startAnalysis": "Analyse starten",
+  "student.history.total": "Gesamtaktivitäten"
 }
