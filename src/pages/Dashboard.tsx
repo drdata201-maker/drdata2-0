@@ -93,7 +93,7 @@ export default function Dashboard() {
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar baseRoute={baseRoute} onLogout={handleLogout} />
       <div className="flex flex-1 flex-col">
-        <DashboardHeader title={headerTitle} userName={userName} userLevel={userLevel} />
+        <DashboardHeader title={headerTitle} userName={userName} userLevel={userLevel} onLogout={handleLogout} />
         <main className="flex-1 overflow-y-auto p-6 lg:p-8">{renderContent()}</main>
       </div>
     </div>
