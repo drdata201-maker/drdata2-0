@@ -587,5 +587,12 @@
   "memoryAssistant.bibliography": "Bibliografía",
   "memoryAssistant.bibliographyDesc": "Gestione sus referencias y genere su bibliografía en APA, Harvard, etc.",
   "memoryAssistant.comingSoon": "Función en desarrollo",
-  "memoryAssistant.comingSoonDesc": "El asistente de tesis estará disponible pronto con funciones avanzadas de IA."
+  "memoryAssistant.comingSoonDesc": "El asistente de tesis estará disponible pronto con funciones avanzadas de IA.",
+  "settings.profile.previewReady": "Vista previa lista — haga clic en Guardar",
+  "settings.account.deleteConfirmMsg": "¿Está seguro de que desea eliminar su cuenta? Esta acción no se puede deshacer.",
+  "settings.account.confirmPasswordLabel": "Confirme su contraseña",
+  "settings.account.enterPassword": "Ingrese su contraseña",
+  "settings.account.wrongPassword": "Contraseña incorrecta",
+  "settings.account.deleteSuccess": "Cuenta eliminada con éxito",
+  "settings.account.deleteError": "Error al eliminar la cuenta"
 }

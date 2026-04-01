@@ -587,5 +587,12 @@
   "memoryAssistant.bibliography": "Bibliographie",
   "memoryAssistant.bibliographyDesc": "Verwalten Sie Ihre Referenzen und erstellen Sie Ihre Bibliographie in APA, Harvard, etc.",
   "memoryAssistant.comingSoon": "Funktion in Entwicklung",
-  "memoryAssistant.comingSoonDesc": "Der Abschlussarbeit-Assistent wird bald mit erweiterten KI-Funktionen verfügbar sein."
+  "memoryAssistant.comingSoonDesc": "Der Abschlussarbeit-Assistent wird bald mit erweiterten KI-Funktionen verfügbar sein.",
+  "settings.profile.previewReady": "Vorschau bereit — klicken Sie auf Speichern",
+  "settings.account.deleteConfirmMsg": "Sind Sie sicher, dass Sie Ihr Konto löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+  "settings.account.confirmPasswordLabel": "Bestätigen Sie Ihr Passwort",
+  "settings.account.enterPassword": "Geben Sie Ihr Passwort ein",
+  "settings.account.wrongPassword": "Falsches Passwort",
+  "settings.account.deleteSuccess": "Konto erfolgreich gelöscht",
+  "settings.account.deleteError": "Fehler beim Löschen des Kontos"
 }
