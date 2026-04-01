@@ -75,7 +75,7 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
         title: title.trim(),
         description: description.trim() || null,
         domain: domain.trim() || null,
-        status: "created",
+        status: "draft",
         user_type: resolvedUserType,
       };
       console.log("createProject:payload", payload);
