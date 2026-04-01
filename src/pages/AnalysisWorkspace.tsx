@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Component, ReactNode, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,30 @@ import { JoelChat } from "@/components/workspace/JoelChat";
 import { WorkspaceResults } from "@/components/workspace/WorkspaceResults";
 import { WorkspaceCharts } from "@/components/workspace/WorkspaceCharts";
 import { WorkspaceExport } from "@/components/workspace/WorkspaceExport";
+
+class PanelBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { fallback: ReactNode; children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch() {
+    // Prevent blank screen by isolating panel errors.
+  }
+
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
+function PanelLoading() {
+  return <div className="p-4 text-sm text-muted-foreground">Assistant Joël Loading...</div>;
+}
 
 export default function AnalysisWorkspace() {
   const { t } = useLanguage();
@@ -31,7 +55,6 @@ export default function AnalysisWorkspace() {
 
   useEffect(() => {
     if (!mounted) return;
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         navigate("/login");
@@ -43,17 +66,12 @@ export default function AnalysisWorkspace() {
 
   useEffect(() => {
     if (!mounted || !authed) return;
-
-    const frame = requestAnimationFrame(() => {
-      setWorkspaceReady(true);
-    });
-
-    return () => cancelAnimationFrame(frame);
+    const id = requestAnimationFrame(() => setWorkspaceReady(true));
+    return () => cancelAnimationFrame(id);
   }, [mounted, authed]);
 
   useEffect(() => {
     if (!projectId) return;
-
     (supabase.from("projects") as any)
       .select("title")
       .eq("id", projectId)
@@ -87,17 +105,19 @@ export default function AnalysisWorkspace() {
 
       <div className="flex flex-1 flex-col lg:flex-row">
         <div className="flex w-full flex-col border-r border-border lg:w-96 lg:min-h-[calc(100vh-57px)]">
-          {JoelChat ? (
-            <JoelChat
-              projectId={projectId}
-              projectTitle={projectTitle}
-              projectType={projectType}
-              projectDomain={projectDomain}
-              level={level}
-            />
-          ) : (
-            <div className="p-4 text-sm text-muted-foreground">Assistant Joël Loading...</div>
-          )}
+          <PanelBoundary fallback={<PanelLoading />}>
+            {JoelChat ? (
+              <JoelChat
+                projectId={projectId}
+                projectTitle={projectTitle}
+                projectType={projectType}
+                projectDomain={projectDomain}
+                level={level}
+              />
+            ) : (
+              <PanelLoading />
+            )}
+          </PanelBoundary>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 lg:p-6">
@@ -122,19 +142,28 @@ export default function AnalysisWorkspace() {
             </TabsList>
 
             <TabsContent value="results">
-              {WorkspaceResults ? <WorkspaceResults /> : <div className="text-sm text-muted-foreground">Assistant Joël Loading...</div>}
+              <PanelBoundary fallback={<PanelLoading />}>
+                {WorkspaceResults ? <WorkspaceResults /> : <PanelLoading />}
+              </PanelBoundary>
             </TabsContent>
+
             <TabsContent value="charts">
-              {WorkspaceCharts ? <WorkspaceCharts /> : <div className="text-sm text-muted-foreground">Assistant Joël Loading...</div>}
+              <PanelBoundary fallback={<PanelLoading />}>
+                {WorkspaceCharts ? <WorkspaceCharts /> : <PanelLoading />}
+              </PanelBoundary>
             </TabsContent>
+
             <TabsContent value="interpretation">
               <div className="rounded-lg border border-border bg-card p-6">
                 <h3 className="text-lg font-semibold text-foreground">{t("workspace.academicInterpretation")}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{t("workspace.interpretationPlaceholder")}</p>
               </div>
             </TabsContent>
+
             <TabsContent value="export">
-              {WorkspaceExport ? <WorkspaceExport /> : <div className="text-sm text-muted-foreground">Assistant Joël Loading...</div>}
+              <PanelBoundary fallback={<PanelLoading />}>
+                {WorkspaceExport ? <WorkspaceExport /> : <PanelLoading />}
+              </PanelBoundary>
             </TabsContent>
           </Tabs>
         </div>
