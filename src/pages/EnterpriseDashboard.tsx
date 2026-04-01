@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { getDashboardRoute } from "@/lib/getDashboardRoute";
@@ -15,17 +15,21 @@ import { EnterpriseStats } from "@/components/enterprise/EnterpriseStats";
 import { EnterpriseDepartments } from "@/components/enterprise/EnterpriseDepartments";
 import { EnterpriseTeams } from "@/components/enterprise/EnterpriseTeams";
 import { EnterpriseSettingsView } from "@/components/enterprise/EnterpriseSettingsView";
+import { PlaceholderPage } from "@/components/dashboard/PlaceholderPage";
+
+const BASE = "/dashboard/enterprise";
 
 export default function EnterpriseDashboard() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [activeItem, setActiveItem] = useState("dashboard");
+  const location = useLocation();
   const [companyName, setCompanyName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [userCountry, setUserCountry] = useState("");
   const [industry, setIndustry] = useState("");
   const [companySize, setCompanySize] = useState("");
-  const [companyType, setCompanyType] = useState<"sme" | "enterprise">("enterprise");
+
+  const subPage = location.pathname.replace(BASE, "").replace(/^\//, "") || "";
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -40,16 +44,12 @@ export default function EnterpriseDashboard() {
       setIndustry(meta?.sector || "");
       setCompanySize(meta?.org_size || "");
 
-      const orgType = meta?.org_type || "";
-      setCompanyType(orgType === "enterprise" ? "enterprise" : "sme");
-
       const userType = meta?.user_type;
       if (userType && userType !== "enterprise" && userType !== "organisation") {
         navigate(getDashboardRoute(meta), { replace: true });
         return;
       }
-      // Redirect PME users to their dedicated dashboard
-      if (userType === "pme" || (userType === "organisation" && orgType !== "enterprise")) {
+      if (userType === "pme" || (userType === "organisation" && meta?.org_type !== "enterprise")) {
         navigate("/dashboard/pme", { replace: true });
         return;
       }
@@ -73,25 +73,25 @@ export default function EnterpriseDashboard() {
     navigate("/");
   };
 
-  const sidebarLabelMap: Record<string, string> = {
-    dashboard: "enterprise.sidebar.dashboard",
-    newAnalysis: "enterprise.sidebar.newAnalysis",
-    departments: "enterprise.sidebar.departments",
-    teams: "enterprise.sidebar.teams",
-    projects: "enterprise.sidebar.projects",
-    advancedAnalysis: "enterprise.sidebar.advancedAnalysis",
-    charts: "enterprise.sidebar.charts",
-    reports: "enterprise.sidebar.reports",
-    history: "enterprise.sidebar.history",
-    settings: "settings.title",
+  const companyTypeLabel = t("auth.orgType.enterprise");
+
+  const headerTitleMap: Record<string, string> = {
+    "": "enterprise.sidebar.dashboard",
+    "new-analysis": "enterprise.sidebar.newAnalysis",
+    "departments": "enterprise.sidebar.departments",
+    "teams": "enterprise.sidebar.teams",
+    "projects": "enterprise.sidebar.projects",
+    "advanced-analytics": "enterprise.sidebar.advancedAnalysis",
+    "charts": "enterprise.sidebar.charts",
+    "reports": "enterprise.sidebar.reports",
+    "history": "enterprise.sidebar.history",
+    "settings": "settings.title",
   };
 
-  const headerTitle = t(sidebarLabelMap[activeItem] || "enterprise.sidebar.dashboard");
-
-  const companyTypeLabel = companyType === "enterprise" ? t("auth.orgType.enterprise") : t("auth.orgType.sme");
+  const headerTitle = t(headerTitleMap[subPage] || "enterprise.sidebar.dashboard");
 
   const renderContent = () => {
-    switch (activeItem) {
+    switch (subPage) {
       case "settings":
         return (
           <EnterpriseSettingsView
@@ -108,13 +108,20 @@ export default function EnterpriseDashboard() {
       case "teams":
         return <EnterpriseTeams />;
       case "charts":
-        return <EnterpriseCharts companyType={companyType} />;
+        return <EnterpriseCharts companyType="enterprise" />;
       case "projects":
         return <EnterpriseRecentProjects />;
+      case "advanced-analytics":
+        return <EnterpriseAnalytics companyType="enterprise" />;
+      case "new-analysis":
+        return <PlaceholderPage titleKey="enterprise.sidebar.newAnalysis" descKey="placeholder.comingSoon" />;
+      case "reports":
+        return <PlaceholderPage titleKey="enterprise.sidebar.reports" descKey="placeholder.comingSoon" />;
+      case "history":
+        return <PlaceholderPage titleKey="enterprise.sidebar.history" descKey="placeholder.comingSoon" />;
       default:
         return (
           <>
-            {/* Welcome */}
             <div className="mb-8">
               <h1 className="text-2xl font-bold text-foreground">
                 {t("dashboard.welcomeName").replace("{name}", companyName || "—")}
@@ -138,12 +145,12 @@ export default function EnterpriseDashboard() {
             </div>
 
             <EnterpriseQuickActions />
-            <EnterpriseKPIs companyType={companyType} />
-            <EnterpriseCharts companyType={companyType} />
-            <EnterpriseInsights companyType={companyType} companyName={companyName} />
+            <EnterpriseKPIs companyType="enterprise" />
+            <EnterpriseCharts companyType="enterprise" />
+            <EnterpriseInsights companyType="enterprise" companyName={companyName} />
             <EnterpriseStats />
             <EnterpriseRecentProjects />
-            <EnterpriseAnalytics companyType={companyType} />
+            <EnterpriseAnalytics companyType="enterprise" />
           </>
         );
     }
@@ -151,11 +158,7 @@ export default function EnterpriseDashboard() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <EnterpriseSidebar
-        activeItem={activeItem}
-        onItemClick={setActiveItem}
-        onLogout={handleLogout}
-      />
+      <EnterpriseSidebar onLogout={handleLogout} />
 
       <div className="flex flex-1 flex-col">
         <DashboardHeader

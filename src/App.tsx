@@ -30,13 +30,29 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/complete-profile" element={<CompleteProfile />} />
+
+          {/* Student dashboards */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/student-license" element={<Dashboard />} />
+          <Route path="/dashboard/student-license/*" element={<Dashboard />} />
           <Route path="/dashboard/student-master" element={<Dashboard />} />
+          <Route path="/dashboard/student-master/*" element={<Dashboard />} />
           <Route path="/dashboard/student-doctorate" element={<Dashboard />} />
+          <Route path="/dashboard/student-doctorate/*" element={<Dashboard />} />
+
+          {/* Freelance dashboard */}
           <Route path="/dashboard/freelance" element={<FreelanceDashboard />} />
+          <Route path="/dashboard/freelance/*" element={<FreelanceDashboard />} />
+
+          {/* PME dashboard */}
           <Route path="/dashboard/pme" element={<PmeDashboard />} />
+          <Route path="/dashboard/pme/*" element={<PmeDashboard />} />
+
+          {/* Enterprise dashboard */}
           <Route path="/dashboard/enterprise" element={<EnterpriseDashboard />} />
+          <Route path="/dashboard/enterprise/*" element={<EnterpriseDashboard />} />
+
+          {/* Static pages */}
           <Route path="/about" element={<About />} />
           <Route path="/features" element={<Features />} />
           <Route path="/pricing" element={<Pricing />} />

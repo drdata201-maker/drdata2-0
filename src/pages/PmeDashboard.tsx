@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { getDashboardRoute } from "@/lib/getDashboardRoute";
@@ -12,15 +12,20 @@ import { PmeInsights } from "@/components/pme/PmeInsights";
 import { PmeRecentProjects } from "@/components/pme/PmeRecentProjects";
 import { PmeStats } from "@/components/pme/PmeStats";
 import { PmeSettingsView } from "@/components/pme/PmeSettingsView";
+import { PlaceholderPage } from "@/components/dashboard/PlaceholderPage";
+
+const BASE = "/dashboard/pme";
 
 export default function PmeDashboard() {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [activeItem, setActiveItem] = useState("dashboard");
+  const location = useLocation();
   const [companyName, setCompanyName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [userCountry, setUserCountry] = useState("");
   const [industry, setIndustry] = useState("");
+
+  const subPage = location.pathname.replace(BASE, "").replace(/^\//, "") || "";
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -34,7 +39,6 @@ export default function PmeDashboard() {
       setUserCountry(meta?.country || "");
       setIndustry(meta?.sector || "");
 
-      // Redirect non-PME users to their correct dashboard
       const userType = meta?.user_type;
       if (userType && userType !== "pme") {
         navigate(getDashboardRoute(meta), { replace: true });
@@ -60,20 +64,20 @@ export default function PmeDashboard() {
     navigate("/");
   };
 
-  const sidebarLabelMap: Record<string, string> = {
-    dashboard: "pme.sidebar.dashboard",
-    newAnalysis: "pme.sidebar.newAnalysis",
-    projects: "pme.sidebar.projects",
-    charts: "pme.sidebar.charts",
-    reports: "pme.sidebar.reports",
-    history: "pme.sidebar.history",
-    settings: "settings.title",
+  const headerTitleMap: Record<string, string> = {
+    "": "pme.sidebar.dashboard",
+    "new-analysis": "pme.sidebar.newAnalysis",
+    "projects": "pme.sidebar.projects",
+    "charts": "pme.sidebar.charts",
+    "reports": "pme.sidebar.reports",
+    "history": "pme.sidebar.history",
+    "settings": "settings.title",
   };
 
-  const headerTitle = t(sidebarLabelMap[activeItem] || "pme.sidebar.dashboard");
+  const headerTitle = t(headerTitleMap[subPage] || "pme.sidebar.dashboard");
 
   const renderContent = () => {
-    switch (activeItem) {
+    switch (subPage) {
       case "settings":
         return (
           <PmeSettingsView
@@ -88,10 +92,15 @@ export default function PmeDashboard() {
         return <PmeCharts />;
       case "projects":
         return <PmeRecentProjects />;
+      case "new-analysis":
+        return <PlaceholderPage titleKey="pme.sidebar.newAnalysis" descKey="placeholder.comingSoon" />;
+      case "reports":
+        return <PlaceholderPage titleKey="pme.sidebar.reports" descKey="placeholder.comingSoon" />;
+      case "history":
+        return <PlaceholderPage titleKey="pme.sidebar.history" descKey="placeholder.comingSoon" />;
       default:
         return (
           <>
-            {/* Welcome */}
             <div className="mb-8">
               <h1 className="text-2xl font-bold text-foreground">
                 {t("dashboard.welcomeName").replace("{name}", companyName || "—")}
@@ -127,11 +136,7 @@ export default function PmeDashboard() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <PmeSidebar
-        activeItem={activeItem}
-        onItemClick={setActiveItem}
-        onLogout={handleLogout}
-      />
+      <PmeSidebar onLogout={handleLogout} />
 
       <div className="flex flex-1 flex-col">
         <DashboardHeader
