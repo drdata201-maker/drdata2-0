@@ -47,7 +47,24 @@ export default function Dashboard() {
       setUserName(meta?.full_name || meta?.name || session.user.email?.split("@")[0] || "");
       setUserLevel(meta?.level || "licence");
       setUserCountry(meta?.country || "");
-      setUserType(meta?.user_type || routeUserType);
+      const normalizedMetaUserType = (() => {
+        const metaType = String(meta?.user_type || "").toLowerCase();
+        const metaLevel = String(meta?.level || "").toLowerCase();
+
+        if (metaType === "student_master") return "student_master";
+        if (metaType === "student_doctorate" || metaType === "student_doctorat") return "student_doctorate";
+        if (metaType === "student_license" || metaType === "student_licence") return "student_license";
+
+        if (metaType === "student") {
+          if (metaLevel === "master") return "student_master";
+          if (metaLevel === "doctorat" || metaLevel === "doctorate") return "student_doctorate";
+          return "student_license";
+        }
+
+        return routeUserType;
+      })();
+
+      setUserType(normalizedMetaUserType);
       if (meta?.user_type && !meta.user_type.startsWith("student")) { navigate(getDashboardRoute(meta), { replace: true }); return; }
       if (!meta?.profile_completed && !meta?.user_type) navigate("/complete-profile");
     });

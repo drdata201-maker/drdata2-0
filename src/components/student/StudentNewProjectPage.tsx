@@ -110,7 +110,7 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
         description: description.trim() || null,
         domain: domain.trim() || null,
         status: "created",
-        user_type: userType,
+        user_type: resolvedUserType,
       });
       if (error) throw error;
       toast.success(t("student.newProject.success"));
