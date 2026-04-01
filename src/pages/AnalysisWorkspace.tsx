@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { LanguageProvider } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { JoelChat } from "@/components/workspace/JoelChat";
 import { WorkspaceResults } from "@/components/workspace/WorkspaceResults";
 import { WorkspaceCharts } from "@/components/workspace/WorkspaceCharts";
@@ -13,7 +12,7 @@ import { WorkspaceExport } from "@/components/workspace/WorkspaceExport";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table2, BarChart3, MessageSquare, FileText } from "lucide-react";
 
-function WorkspaceContent() {
+export default function AnalysisWorkspace() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -22,10 +21,15 @@ function WorkspaceContent() {
   const projectType = searchParams.get("type") || "";
   const projectDomain = decodeURIComponent(searchParams.get("domain") || "");
   const [projectTitle, setProjectTitle] = useState("");
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) navigate("/login");
+      if (!session) {
+        navigate("/login");
+      } else {
+        setReady(true);
+      }
     });
   }, [navigate]);
 
@@ -40,6 +44,17 @@ function WorkspaceContent() {
       });
   }, [projectId]);
 
+  if (!ready) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading Assistant Joël...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
@@ -52,7 +67,6 @@ function WorkspaceContent() {
       </header>
 
       <div className="flex flex-1 flex-col lg:flex-row">
-        {/* Left: Assistant Joël Chat */}
         <div className="flex w-full flex-col border-r border-border lg:w-96 lg:min-h-[calc(100vh-57px)]">
           <JoelChat
             projectId={projectId}
@@ -63,7 +77,6 @@ function WorkspaceContent() {
           />
         </div>
 
-        {/* Right: Results */}
         <div className="flex-1 overflow-y-auto p-4 lg:p-6">
           <Tabs defaultValue="results">
             <TabsList className="mb-4">
@@ -86,13 +99,5 @@ function WorkspaceContent() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function AnalysisWorkspace() {
-  return (
-    <LanguageProvider>
-      <WorkspaceContent />
-    </LanguageProvider>
   );
 }
