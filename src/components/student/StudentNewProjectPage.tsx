@@ -57,8 +57,26 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const types = PROJECT_TYPES[userType] || PROJECT_TYPES.student_license;
-  const analyses = ANALYSIS_OPTIONS[userType] || ANALYSIS_OPTIONS.student_license;
+  const resolveStudentUserType = (): "student_license" | "student_master" | "student_doctorate" => {
+    const routeLevel = baseRoute.match(/student-(license|licence|master|doctorate|doctorat)$/)?.[1];
+    if (routeLevel === "master") return "student_master";
+    if (routeLevel === "doctorate" || routeLevel === "doctorat") return "student_doctorate";
+    if (routeLevel === "license" || routeLevel === "licence") return "student_license";
+
+    const normalized = (userType || "").toLowerCase();
+    if (normalized.includes("master")) return "student_master";
+    if (normalized.includes("doctorat") || normalized.includes("doctorate")) return "student_doctorate";
+    return "student_license";
+  };
+
+  const resolvedUserType = resolveStudentUserType();
+  const types =
+    resolvedUserType === "student_master"
+      ? masterProjectTypes
+      : resolvedUserType === "student_doctorate"
+      ? doctoratProjectTypes
+      : licenceProjectTypes;
+  const analyses = ANALYSIS_OPTIONS[resolvedUserType] || ANALYSIS_OPTIONS.student_license;
 
   const toggleAnalysis = (key: string) => {
     setSelectedAnalyses((prev) =>
