@@ -626,5 +626,15 @@
   "joel.startAnalysis": "Iniciar análise",
   "joel.analysisStarting": "🔬 Análise em andamento... Os resultados aparecerão no painel direito.",
   "joel.processing": "Processando sua solicitação. Um momento por favor...",
-  "joel.askQuestion": "Faça uma pergunta ao Joël..."
+  "joel.askQuestion": "Faça uma pergunta ao Joël...",
+  "joel.errorRateLimit": "⚠️ Muitas solicitações. Tente novamente em instantes.",
+  "joel.errorCredits": "⚠️ Créditos esgotados. Recarregue sua conta.",
+  "joel.errorGeneric": "⚠️ Ocorreu um erro. Tente novamente.",
+  "joel.requestInterpretation": "Interpretação acadêmica",
+  "joel.requestConclusion": "Conclusão científica",
+  "joel.requestRecommendations": "Recomendações",
+  "joel.aiAnalysisPrompt": "Importei o arquivo {file}. Realize as seguintes análises: {analyses}. Forneça resultados com tabelas estatísticas, valores p, coeficientes e interpretação acadêmica.",
+  "joel.aiInterpretationPrompt": "Gere uma interpretação acadêmica completa dos resultados anteriores, adequada para uma tese. Inclua significância estatística, implicações teóricas e vínculos com a literatura científica.",
+  "joel.aiConclusionPrompt": "Redija uma conclusão científica estruturada baseada nos resultados da análise anterior. Deve estar pronta para integrar em uma tese acadêmica.",
+  "joel.aiRecommendationsPrompt": "Forneça recomendações de pesquisa baseadas nos resultados anteriores. Inclua direções para futuras pesquisas, melhorias metodológicas e implicações práticas."
 }
