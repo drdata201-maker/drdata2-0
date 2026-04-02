@@ -5,11 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Loader2, Table2, BarChart3, MessageSquare, FileText } from "lucide-react";
+import { ArrowLeft, Loader2, Table2, BarChart3, MessageSquare, FileText, Bot, ClipboardList, BookOpen } from "lucide-react";
 import { JoelChat } from "@/components/workspace/JoelChat";
 import { WorkspaceResults } from "@/components/workspace/WorkspaceResults";
 import { WorkspaceCharts } from "@/components/workspace/WorkspaceCharts";
 import { WorkspaceExport } from "@/components/workspace/WorkspaceExport";
+import { WorkspaceDataPrep } from "@/components/workspace/WorkspaceDataPrep";
+import { WorkspaceInterpretation } from "@/components/workspace/WorkspaceInterpretation";
 
 class PanelBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { hasError: boolean }> {
   constructor(props: { fallback: ReactNode; children: ReactNode }) {
@@ -105,27 +107,17 @@ export default function AnalysisWorkspace() {
         {projectType && <Badge variant="outline">{t(`student.type.${projectType}`)}</Badge>}
       </header>
 
-      <div className="flex flex-1 flex-col lg:flex-row">
-        <div className="flex w-full flex-col border-r border-border lg:w-96 lg:min-h-[calc(100vh-57px)]">
-          <PanelBoundary fallback={<PanelLoading />}>
-            {JoelChat ? (
-              <JoelChat
-                projectId={projectId}
-                projectTitle={projectTitle}
-                projectType={projectType}
-                projectDomain={projectDomain}
-                projectDescription={projectDescription}
-                level={level}
-              />
-            ) : (
-              <PanelLoading />
-            )}
-          </PanelBoundary>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 lg:p-6">
-          <Tabs defaultValue="results">
-            <TabsList className="mb-4">
+      <div className="flex-1 overflow-y-auto p-4 lg:p-6">
+          <Tabs defaultValue="assistant">
+            <TabsList className="mb-4 flex-wrap">
+              <TabsTrigger value="assistant">
+                <Bot className="mr-1 h-4 w-4" />
+                Assistant
+              </TabsTrigger>
+              <TabsTrigger value="dataprep">
+                <ClipboardList className="mr-1 h-4 w-4" />
+                {t("workspace.dataPrep")}
+              </TabsTrigger>
               <TabsTrigger value="results">
                 <Table2 className="mr-1 h-4 w-4" />
                 {t("workspace.results")}
@@ -135,7 +127,7 @@ export default function AnalysisWorkspace() {
                 {t("workspace.charts")}
               </TabsTrigger>
               <TabsTrigger value="interpretation">
-                <MessageSquare className="mr-1 h-4 w-4" />
+                <BookOpen className="mr-1 h-4 w-4" />
                 {t("workspace.interpretation")}
               </TabsTrigger>
               <TabsTrigger value="export">
@@ -143,6 +135,31 @@ export default function AnalysisWorkspace() {
                 {t("workspace.export")}
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="assistant">
+              <div className="rounded-lg border border-border bg-card min-h-[500px] flex flex-col">
+                <PanelBoundary fallback={<PanelLoading />}>
+                  {JoelChat ? (
+                    <JoelChat
+                      projectId={projectId}
+                      projectTitle={projectTitle}
+                      projectType={projectType}
+                      projectDomain={projectDomain}
+                      projectDescription={projectDescription}
+                      level={level}
+                    />
+                  ) : (
+                    <PanelLoading />
+                  )}
+                </PanelBoundary>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="dataprep">
+              <PanelBoundary fallback={<PanelLoading />}>
+                <WorkspaceDataPrep />
+              </PanelBoundary>
+            </TabsContent>
 
             <TabsContent value="results">
               <PanelBoundary fallback={<PanelLoading />}>
@@ -157,10 +174,9 @@ export default function AnalysisWorkspace() {
             </TabsContent>
 
             <TabsContent value="interpretation">
-              <div className="rounded-lg border border-border bg-card p-6">
-                <h3 className="text-lg font-semibold text-foreground">{t("workspace.academicInterpretation")}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{t("workspace.interpretationPlaceholder")}</p>
-              </div>
+              <PanelBoundary fallback={<PanelLoading />}>
+                <WorkspaceInterpretation level={level} />
+              </PanelBoundary>
             </TabsContent>
 
             <TabsContent value="export">
@@ -176,7 +192,6 @@ export default function AnalysisWorkspace() {
             </TabsContent>
           </Tabs>
         </div>
-      </div>
     </div>
   );
 }

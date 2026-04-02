@@ -146,12 +146,10 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     const h = new Date().getHours();
     const timeOfDay = h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
 
-    const greetingPrompt = `The student just opened the analysis workspace. Time of day: ${timeOfDay}. 
-Please greet them warmly, introduce yourself as Joël, acknowledge their project context (title: "${projectTitle}", type: "${projectType}", domain: "${projectDomain}", level: "${getLevelLabel()}"), and present a clean structured summary of their project.
-
-Then ask: "Would you like to continue with this information, or would you like to modify the project details?"
-
-Keep the greeting professional, structured, and encouraging. Use markdown formatting.`;
+    const greetingPrompt = `The student just opened the workspace. Time: ${timeOfDay}. 
+Greet briefly as Joël. Acknowledge: project "${projectTitle}", type "${projectType}", domain "${projectDomain}", level "${getLevelLabel()}".
+Present a short project summary (bullet points). Ask if they want to continue or modify.
+Keep it under 100 words. No long paragraphs.`;
 
     setIsStreaming(true);
     let assistantSoFar = "";
@@ -252,15 +250,14 @@ Keep the greeting professional, structured, and encouraging. Use markdown format
     scrollToBottom();
 
     // Send to AI for dataset analysis
-    const prompt = `The student just uploaded a file: "${uploadedFile.name}" (${(uploadedFile.size / 1024).toFixed(1)} KB, type: ${uploadedFile.type || uploadedFile.name.split('.').pop()}).
-
-Please:
-1. Acknowledge receipt of the file
-2. Describe what you would expect to find in this type of file (based on file name and the project context)
-3. Provide a simulated dataset summary (number of observations, variables detected, data types)
-4. Check for potential data quality issues (missing values, outliers)
-5. If issues found, ask if they want automatic cleaning or to continue without
-6. Then recommend the appropriate analyses for their level and ask them to select`;
+    const prompt = `File uploaded: "${uploadedFile.name}" (${(uploadedFile.size / 1024).toFixed(1)} KB).
+Respond concisely:
+- Acknowledge file receipt
+- State number of observations and variables detected (simulated)
+- State % missing values
+- Direct to **Data Preparation** tab for details
+- Ask if they want automatic cleaning or to continue
+Keep under 80 words.`;
 
     sendToAI(prompt);
     setPhase("analysis");
@@ -279,19 +276,15 @@ Please:
     setPhase("ready");
     scrollToBottom();
 
-    const prompt = `The student selected these analyses: ${selected}.
-Dataset: ${file?.name || "uploaded dataset"}.
+    const prompt = `Selected analyses: ${selected}. Dataset: ${file?.name || "uploaded dataset"}.
 
-Please perform a complete academic analysis:
-1. Execute each selected analysis
-2. Present results in clean markdown tables (with test statistics, p-values, coefficients, R², etc.)
-3. For each test, state the null and alternative hypothesis
-4. Indicate statistical significance at α = 0.05 and α = 0.01
-5. Provide a brief interpretation after each result
-6. Use proper academic statistical terminology
-7. Adapt the depth of interpretation to the student's level (${getLevelLabel()})
-
-Present the results in a structured, professional format ready for academic use.`;
+Respond concisely:
+- Confirm analyses are running
+- Direct to **Results** tab for statistical tables
+- Direct to **Graphs** tab for visualizations
+- Direct to **Interpretation** tab for academic interpretation
+- Mention **Export** tab for downloading reports
+Keep under 80 words. Do NOT display tables or results in chat.`;
 
     sendToAI(prompt);
   };
