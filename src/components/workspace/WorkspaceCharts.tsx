@@ -34,7 +34,7 @@ export function WorkspaceCharts() {
       <Card>
         <CardHeader><CardTitle>{t("workspace.scatter")}</CardTitle></CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={300}>
             <ScatterChart>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis dataKey="x" name="X" type="number" className="text-xs" />
