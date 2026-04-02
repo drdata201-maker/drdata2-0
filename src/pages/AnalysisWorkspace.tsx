@@ -114,6 +114,7 @@ export default function AnalysisWorkspace() {
                 projectTitle={projectTitle}
                 projectType={projectType}
                 projectDomain={projectDomain}
+                projectDescription={projectDescription}
                 level={level}
               />
             ) : (
