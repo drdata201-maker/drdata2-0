@@ -636,5 +636,9 @@
   "joel.aiAnalysisPrompt": "He cargado el archivo {file}. Realice los siguientes análisis: {analyses}. Proporcione resultados con tablas estadísticas, valores p, coeficientes e interpretación académica.",
   "joel.aiInterpretationPrompt": "Genere una interpretación académica completa de los resultados anteriores, adecuada para una tesis. Incluya significación estadística, implicaciones teóricas y vínculos con la literatura científica.",
   "joel.aiConclusionPrompt": "Redacte una conclusión científica estructurada basada en los resultados del análisis anterior. Debe estar lista para integrar en una tesis académica.",
-  "joel.aiRecommendationsPrompt": "Proporcione recomendaciones de investigación basadas en los resultados anteriores. Incluya vías para futuras investigaciones, mejoras metodológicas e implicaciones prácticas."
+  "joel.aiRecommendationsPrompt": "Proporcione recomendaciones de investigación basadas en los resultados anteriores. Incluya vías para futuras investigaciones, mejoras metodológicas e implicaciones prácticas.",
+  "joel.confirmQuestion": "¿Desea continuar con esta información o modificar los detalles del proyecto?",
+  "joel.confirmContinue": "Continuar",
+  "joel.confirmModify": "Modificar proyecto",
+  "joel.requestCharts": "Gráficos y visualizaciones"
 }

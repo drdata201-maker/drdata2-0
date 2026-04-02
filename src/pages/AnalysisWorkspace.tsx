@@ -45,6 +45,7 @@ export default function AnalysisWorkspace() {
   const projectDomain = decodeURIComponent(searchParams.get("domain") || "");
 
   const [projectTitle, setProjectTitle] = useState("");
+  const [projectDescription, setProjectDescription] = useState("");
   const [mounted, setMounted] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [workspaceReady, setWorkspaceReady] = useState(false);
@@ -73,11 +74,12 @@ export default function AnalysisWorkspace() {
   useEffect(() => {
     if (!projectId) return;
     (supabase.from("projects") as any)
-      .select("title")
+      .select("title, description")
       .eq("id", projectId)
       .single()
       .then(({ data }: any) => {
         if (data?.title) setProjectTitle(data.title);
+        if (data?.description) setProjectDescription(data.description);
       });
   }, [projectId]);
 
@@ -112,6 +114,7 @@ export default function AnalysisWorkspace() {
                 projectTitle={projectTitle}
                 projectType={projectType}
                 projectDomain={projectDomain}
+                projectDescription={projectDescription}
                 level={level}
               />
             ) : (

@@ -3,8 +3,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Upload, Sparkles, Bot, Loader2 } from "lucide-react";
+import { Send, Upload, Sparkles, Bot, Loader2, CheckCircle, Edit3 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 const ACCEPTED_FORMATS = ".xlsx,.xls,.csv,.sav,.dta";
@@ -22,6 +21,7 @@ interface JoelChatProps {
   projectTitle: string;
   projectType: string;
   projectDomain: string;
+  projectDescription?: string;
   level: string;
 }
 
@@ -106,14 +106,15 @@ async function streamChat({
   }
 }
 
-export function JoelChat({ projectId, projectTitle, projectType, projectDomain, level }: JoelChatProps) {
+export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, level }: JoelChatProps) {
   const { t, lang } = useLanguage();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
-  const [phase, setPhase] = useState<"greeting" | "upload" | "analysis" | "ready">("greeting");
+  const [phase, setPhase] = useState<"confirm" | "upload" | "analysis" | "ready">("confirm");
   const [file, setFile] = useState<File | null>(null);
   const [selectedAnalyses, setSelectedAnalyses] = useState<string[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [greetingSent, setGreetingSent] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const chatHistoryRef = useRef<{ role: string; content: string }[]>([]);
 
@@ -129,36 +130,71 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     return t("auth.level.licence");
   };
 
-  const getGreeting = () => {
-    const h = new Date().getHours();
-    if (h < 12) return t("joel.greeting.morning");
-    if (h < 18) return t("joel.greeting.afternoon");
-    return t("joel.greeting.evening");
-  };
-
   const projectContext = {
     title: projectTitle,
     type: projectType,
     domain: projectDomain,
+    description: projectDescription || "",
     level: getLevelLabel(),
   };
 
+  // Send AI-powered smart greeting on mount
   useEffect(() => {
-    const greeting = getGreeting();
-    const parts = [];
-    if (projectTitle) parts.push(`📋 ${t("joel.summary.title")}: **${projectTitle}**`);
-    if (projectType) parts.push(`📁 ${t("joel.summary.type")}: ${t(`student.type.${projectType}`)}`);
-    if (projectDomain) parts.push(`🔬 ${t("joel.summary.domain")}: ${projectDomain}`);
-    parts.push(`🎓 ${t("joel.summary.level")}: ${getLevelLabel()}`);
+    if (greetingSent) return;
+    setGreetingSent(true);
 
-    setMessages([
-      { role: "assistant", content: `${greeting}\n\n${t("joel.intro")}`, type: "greeting" },
-      { role: "assistant", content: `${t("joel.projectSummary")}:\n\n${parts.join("\n")}`, type: "summary" },
-      { role: "assistant", content: t("joel.askUpload"), type: "upload" },
-    ]);
-    setPhase("upload");
+    const h = new Date().getHours();
+    const timeOfDay = h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
+
+    const greetingPrompt = `The student just opened the analysis workspace. Time of day: ${timeOfDay}. 
+Please greet them warmly, introduce yourself as Joël, acknowledge their project context (title: "${projectTitle}", type: "${projectType}", domain: "${projectDomain}", level: "${getLevelLabel()}"), and present a clean structured summary of their project.
+
+Then ask: "Would you like to continue with this information, or would you like to modify the project details?"
+
+Keep the greeting professional, structured, and encouraging. Use markdown formatting.`;
+
+    setIsStreaming(true);
+    let assistantSoFar = "";
+
+    streamChat({
+      messages: [{ role: "user", content: greetingPrompt }],
+      projectContext,
+      language: lang,
+      onDelta: (chunk) => {
+        assistantSoFar += chunk;
+        setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last?.role === "assistant" && last.type === "ai-stream") {
+            return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantSoFar } : m);
+          }
+          return [...prev, { role: "assistant", content: assistantSoFar, type: "ai-stream" }];
+        });
+        scrollToBottom();
+      },
+      onDone: () => {
+        chatHistoryRef.current.push(
+          { role: "user", content: greetingPrompt },
+          { role: "assistant", content: assistantSoFar }
+        );
+        setIsStreaming(false);
+      },
+      onError: (err) => {
+        // Fallback to static greeting if AI fails
+        const greeting = h < 12 ? t("joel.greeting.morning") : h < 18 ? t("joel.greeting.afternoon") : t("joel.greeting.evening");
+        const parts = [];
+        if (projectTitle) parts.push(`📋 **${t("joel.summary.title")}:** ${projectTitle}`);
+        if (projectType) parts.push(`📁 **${t("joel.summary.type")}:** ${t(`student.type.${projectType}`)}`);
+        if (projectDomain) parts.push(`🔬 **${t("joel.summary.domain")}:** ${projectDomain}`);
+        parts.push(`🎓 **${t("joel.summary.level")}:** ${getLevelLabel()}`);
+
+        setMessages([
+          { role: "assistant", content: `${greeting}\n\n${t("joel.intro")}\n\n**${t("joel.projectSummary")}:**\n\n${parts.join("\n\n")}\n\n${t("joel.confirmQuestion")}`, type: "greeting" },
+        ]);
+        setIsStreaming(false);
+      },
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectTitle]);
+  }, []);
 
   const sendToAI = useCallback(async (userContent: string) => {
     chatHistoryRef.current.push({ role: "user", content: userContent });
@@ -196,17 +232,38 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     });
   }, [lang, projectContext, scrollToBottom, t]);
 
+  const handleConfirm = () => {
+    setMessages(prev => [...prev, { role: "user", content: t("joel.confirmContinue") }]);
+    setPhase("upload");
+    scrollToBottom();
+    sendToAI(t("joel.confirmContinue") + ". Now ask me to upload my dataset file for analysis.");
+  };
+
+  const handleModify = () => {
+    setMessages(prev => [...prev, { role: "user", content: t("joel.confirmModify") }]);
+    scrollToBottom();
+    sendToAI(t("joel.confirmModify") + ". The student wants to modify their project details. Ask them what they'd like to change.");
+  };
+
   const handleFileUpload = (uploadedFile: File) => {
     setFile(uploadedFile);
     const fileMsg = `📎 ${uploadedFile.name} (${(uploadedFile.size / 1024).toFixed(1)} KB)`;
-    setMessages(prev => [
-      ...prev,
-      { role: "user", content: fileMsg },
-      { role: "assistant", content: t("joel.fileReceived"), type: "text" },
-      { role: "assistant", content: t("joel.askAnalysis"), type: "analysis" },
-    ]);
-    setPhase("analysis");
+    setMessages(prev => [...prev, { role: "user", content: fileMsg }]);
     scrollToBottom();
+
+    // Send to AI for dataset analysis
+    const prompt = `The student just uploaded a file: "${uploadedFile.name}" (${(uploadedFile.size / 1024).toFixed(1)} KB, type: ${uploadedFile.type || uploadedFile.name.split('.').pop()}).
+
+Please:
+1. Acknowledge receipt of the file
+2. Describe what you would expect to find in this type of file (based on file name and the project context)
+3. Provide a simulated dataset summary (number of observations, variables detected, data types)
+4. Check for potential data quality issues (missing values, outliers)
+5. If issues found, ask if they want automatic cleaning or to continue without
+6. Then recommend the appropriate analyses for their level and ask them to select`;
+
+    sendToAI(prompt);
+    setPhase("analysis");
   };
 
   const toggleAnalysis = (key: string) => {
@@ -222,10 +279,20 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     setPhase("ready");
     scrollToBottom();
 
-    // Send to AI for analysis
-    const prompt = t("joel.aiAnalysisPrompt")
-      .replace("{analyses}", selected)
-      .replace("{file}", file?.name || "dataset");
+    const prompt = `The student selected these analyses: ${selected}.
+Dataset: ${file?.name || "uploaded dataset"}.
+
+Please perform a complete academic analysis:
+1. Execute each selected analysis
+2. Present results in clean markdown tables (with test statistics, p-values, coefficients, R², etc.)
+3. For each test, state the null and alternative hypothesis
+4. Indicate statistical significance at α = 0.05 and α = 0.01
+5. Provide a brief interpretation after each result
+6. Use proper academic statistical terminology
+7. Adapt the depth of interpretation to the student's level (${getLevelLabel()})
+
+Present the results in a structured, professional format ready for academic use.`;
+
     sendToAI(prompt);
   };
 
@@ -239,24 +306,27 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
   };
 
   const requestInterpretation = () => {
-    const prompt = t("joel.aiInterpretationPrompt");
     setMessages(prev => [...prev, { role: "user", content: t("joel.requestInterpretation") }]);
     scrollToBottom();
-    sendToAI(prompt);
+    sendToAI(t("joel.aiInterpretationPrompt"));
   };
 
   const requestConclusion = () => {
-    const prompt = t("joel.aiConclusionPrompt");
     setMessages(prev => [...prev, { role: "user", content: t("joel.requestConclusion") }]);
     scrollToBottom();
-    sendToAI(prompt);
+    sendToAI(t("joel.aiConclusionPrompt"));
   };
 
   const requestRecommendations = () => {
-    const prompt = t("joel.aiRecommendationsPrompt");
     setMessages(prev => [...prev, { role: "user", content: t("joel.requestRecommendations") }]);
     scrollToBottom();
-    sendToAI(prompt);
+    sendToAI(t("joel.aiRecommendationsPrompt"));
+  };
+
+  const requestCharts = () => {
+    setMessages(prev => [...prev, { role: "user", content: t("joel.requestCharts") }]);
+    scrollToBottom();
+    sendToAI(`Based on the analysis results, recommend and describe the most appropriate charts and visualizations for this research. Include: which chart type for each variable/relationship, what it would show, and how to interpret it academically. Suggest: histogram, bar chart, scatter plot, box plot, heatmap, pie chart, or correlation matrix as appropriate.`);
   };
 
   const analyses = ANALYSIS_OPTIONS_BY_LEVEL[level] || ANALYSIS_OPTIONS_BY_LEVEL.student_license;
@@ -287,7 +357,7 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
                 : "bg-muted text-foreground"
             }`}>
               {msg.role === "assistant" ? (
-                <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:mb-1 [&>ul]:mb-1 [&>ol]:mb-1">
+                <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:mb-1 [&>ul]:mb-1 [&>ol]:mb-1 [&>table]:text-xs [&>table]:w-full [&>h1]:text-base [&>h2]:text-sm [&>h3]:text-sm">
                   <ReactMarkdown>{msg.content}</ReactMarkdown>
                 </div>
               ) : (
@@ -297,8 +367,22 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
           </div>
         ))}
 
+        {/* Confirm/Modify buttons */}
+        {phase === "confirm" && !isStreaming && messages.length > 0 && (
+          <div className="mt-2 flex gap-2">
+            <Button size="sm" onClick={handleConfirm} className="gap-1.5">
+              <CheckCircle className="h-3.5 w-3.5" />
+              {t("joel.confirmContinue")}
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleModify} className="gap-1.5">
+              <Edit3 className="h-3.5 w-3.5" />
+              {t("joel.confirmModify")}
+            </Button>
+          </div>
+        )}
+
         {/* Upload zone */}
-        {phase === "upload" && (
+        {phase === "upload" && !isStreaming && (
           <div className="mt-2">
             <div
               className="flex flex-col items-center gap-2 rounded-lg border-2 border-dashed border-primary/40 p-4 text-center cursor-pointer hover:bg-primary/5 transition-colors"
@@ -326,8 +410,9 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
         )}
 
         {/* Analysis selection */}
-        {phase === "analysis" && (
+        {phase === "analysis" && !isStreaming && (
           <div className="mt-2 space-y-3">
+            <p className="text-xs font-medium text-muted-foreground">{t("joel.askAnalysis")}</p>
             <div className="grid grid-cols-2 gap-1.5">
               {analyses.map(key => (
                 <Button
@@ -342,7 +427,7 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
               ))}
             </div>
             {selectedAnalyses.length > 0 && (
-              <Button size="sm" className="w-full" onClick={confirmAnalyses} disabled={isStreaming}>
+              <Button size="sm" className="w-full" onClick={confirmAnalyses}>
                 <Sparkles className="mr-1 h-3 w-3" />
                 {t("joel.startAnalysis")} ({selectedAnalyses.length})
               </Button>
@@ -355,6 +440,9 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
           <div className="mt-3 flex flex-wrap gap-2">
             <Button size="sm" variant="outline" onClick={requestInterpretation}>
               📝 {t("joel.requestInterpretation")}
+            </Button>
+            <Button size="sm" variant="outline" onClick={requestCharts}>
+              📊 {t("joel.requestCharts")}
             </Button>
             <Button size="sm" variant="outline" onClick={requestConclusion}>
               🎯 {t("joel.requestConclusion")}
