@@ -640,5 +640,12 @@
   "joel.confirmQuestion": "¿Desea continuar con esta información o modificar los detalles del proyecto?",
   "joel.confirmContinue": "Continuar",
   "joel.confirmModify": "Modificar proyecto",
-  "joel.requestCharts": "Gráficos y visualizaciones"
+  "joel.requestCharts": "Gráficos y visualizaciones",
+  "export.fullReport": "Informe de análisis completo",
+  "export.resultsOnly": "Solo resultados estadísticos",
+  "export.interpretationOnly": "Solo interpretación académica",
+  "export.conclusionOnly": "Conclusión y recomendaciones",
+  "export.sampleInterpretation": "El análisis estadístico revela resultados significativos. Las variables estudiadas muestran correlaciones relevantes para la investigación académica.",
+  "export.sampleConclusion": "Los resultados de este estudio confirman las hipótesis de investigación. Los datos analizados demuestran tendencias significativas.",
+  "export.sampleRecommendations": "Se recomienda profundizar el análisis con una muestra más amplia. Estudios complementarios podrían explorar las variables moderadoras identificadas."
 }

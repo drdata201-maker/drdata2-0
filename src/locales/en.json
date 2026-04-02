@@ -640,5 +640,12 @@
   "joel.confirmQuestion": "Would you like to continue with this information or modify the project details?",
   "joel.confirmContinue": "Continue",
   "joel.confirmModify": "Modify project",
-  "joel.requestCharts": "Charts and visualizations"
+  "joel.requestCharts": "Charts and visualizations",
+  "export.fullReport": "Full Analysis Report",
+  "export.resultsOnly": "Statistical Results Only",
+  "export.interpretationOnly": "Academic Interpretation Only",
+  "export.conclusionOnly": "Conclusion & Recommendations",
+  "export.sampleInterpretation": "The statistical analysis reveals significant results. The studied variables show relevant correlations for academic research. Statistical tests confirm the validity of the formulated hypotheses.",
+  "export.sampleConclusion": "The results of this study confirm the research hypotheses. The analyzed data demonstrate significant trends that contribute to the existing academic literature.",
+  "export.sampleRecommendations": "It is recommended to deepen the analysis with a larger sample. Complementary studies could explore the identified moderating variables."
 }

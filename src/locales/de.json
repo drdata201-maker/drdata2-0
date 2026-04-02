@@ -640,5 +640,12 @@
   "joel.confirmQuestion": "Möchten Sie mit diesen Informationen fortfahren oder die Projektdetails ändern?",
   "joel.confirmContinue": "Fortfahren",
   "joel.confirmModify": "Projekt ändern",
-  "joel.requestCharts": "Diagramme und Visualisierungen"
+  "joel.requestCharts": "Diagramme und Visualisierungen",
+  "export.fullReport": "Vollständiger Analysebericht",
+  "export.resultsOnly": "Nur statistische Ergebnisse",
+  "export.interpretationOnly": "Nur akademische Interpretation",
+  "export.conclusionOnly": "Schlussfolgerung & Empfehlungen",
+  "export.sampleInterpretation": "Die statistische Analyse zeigt signifikante Ergebnisse. Die untersuchten Variablen zeigen relevante Korrelationen für die akademische Forschung.",
+  "export.sampleConclusion": "Die Ergebnisse dieser Studie bestätigen die Forschungshypothesen. Die analysierten Daten zeigen signifikante Trends.",
+  "export.sampleRecommendations": "Es wird empfohlen, die Analyse mit einer größeren Stichprobe zu vertiefen. Ergänzende Studien könnten die identifizierten Moderatorvariablen untersuchen."
 }

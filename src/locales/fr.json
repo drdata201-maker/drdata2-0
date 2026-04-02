@@ -640,5 +640,12 @@
   "joel.confirmQuestion": "Souhaitez-vous continuer avec ces informations ou modifier les détails du projet ?",
   "joel.confirmContinue": "Continuer",
   "joel.confirmModify": "Modifier le projet",
-  "joel.requestCharts": "Graphiques et visualisations"
+  "joel.requestCharts": "Graphiques et visualisations",
+  "export.fullReport": "Rapport d'analyse complet",
+  "export.resultsOnly": "Résultats statistiques uniquement",
+  "export.interpretationOnly": "Interprétation académique uniquement",
+  "export.conclusionOnly": "Conclusion et recommandations",
+  "export.sampleInterpretation": "L'analyse statistique révèle des résultats significatifs. Les variables étudiées montrent des corrélations pertinentes pour la recherche académique. Les tests statistiques confirment la validité des hypothèses formulées.",
+  "export.sampleConclusion": "Les résultats de cette étude confirment les hypothèses de recherche. Les données analysées démontrent des tendances significatives qui contribuent à la littérature académique existante.",
+  "export.sampleRecommendations": "Il est recommandé d'approfondir l'analyse avec un échantillon plus large. Des études complémentaires pourraient explorer les variables modératrices identifiées."
 }
