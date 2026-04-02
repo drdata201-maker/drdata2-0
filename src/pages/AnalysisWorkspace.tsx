@@ -52,6 +52,31 @@ export default function AnalysisWorkspace() {
   const [workspaceReady, setWorkspaceReady] = useState(false);
   const [activeTab, setActiveTab] = useState("assistant");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
+  const [visitedSteps, setVisitedSteps] = useState<Set<string>>(new Set(["assistant"]));
+
+  const WORKFLOW_STEPS = [
+    { key: "assistant", label: "Assistant" },
+    { key: "dataprep", label: t("workspace.dataPrep") },
+    { key: "results", label: t("workspace.results") },
+    { key: "charts", label: t("workspace.charts") },
+    { key: "interpretation", label: t("workspace.interpretation") },
+    { key: "export", label: t("workspace.export") },
+  ];
+
+  const handleTabChange = (tab: string) => {
+    // Mark previous tab as completed when moving forward
+    const prevIdx = WORKFLOW_STEPS.findIndex(s => s.key === activeTab);
+    const nextIdx = WORKFLOW_STEPS.findIndex(s => s.key === tab);
+    if (nextIdx > prevIdx) {
+      setCompletedSteps(prev => new Set([...prev, activeTab]));
+    }
+    setVisitedSteps(prev => new Set([...prev, tab]));
+    setActiveTab(tab);
+  };
+
+  const currentStepIdx = WORKFLOW_STEPS.findIndex(s => s.key === activeTab);
+  const progressPct = Math.round(((completedSteps.size) / WORKFLOW_STEPS.length) * 100);
 
   useEffect(() => { setMounted(true); }, []);
 
