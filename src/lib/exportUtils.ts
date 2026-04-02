@@ -150,8 +150,8 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
   const t = l(data.lang);
   const sections: Paragraph[] = [];
 
-  const addHeading = (text: string, level: typeof HeadingLevel.HEADING_1 = HeadingLevel.HEADING_1) =>
-    sections.push(new Paragraph({ heading: level, children: [new TextRun({ text, bold: true })] }));
+  const addHeading = (text: string, headingLevel: (typeof HeadingLevel)[keyof typeof HeadingLevel] = HeadingLevel.HEADING_1) =>
+    sections.push(new Paragraph({ heading: headingLevel, children: [new TextRun({ text, bold: true })] }));
 
   const addText = (text: string) =>
     sections.push(new Paragraph({ children: [new TextRun(text)], spacing: { after: 120 } }));
