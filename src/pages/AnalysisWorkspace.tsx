@@ -45,6 +45,7 @@ export default function AnalysisWorkspace() {
   const projectDomain = decodeURIComponent(searchParams.get("domain") || "");
 
   const [projectTitle, setProjectTitle] = useState("");
+  const [projectDescription, setProjectDescription] = useState("");
   const [mounted, setMounted] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [workspaceReady, setWorkspaceReady] = useState(false);
