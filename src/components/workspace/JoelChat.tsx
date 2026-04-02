@@ -146,12 +146,10 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     const h = new Date().getHours();
     const timeOfDay = h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
 
-    const greetingPrompt = `The student just opened the analysis workspace. Time of day: ${timeOfDay}. 
-Please greet them warmly, introduce yourself as Joël, acknowledge their project context (title: "${projectTitle}", type: "${projectType}", domain: "${projectDomain}", level: "${getLevelLabel()}"), and present a clean structured summary of their project.
-
-Then ask: "Would you like to continue with this information, or would you like to modify the project details?"
-
-Keep the greeting professional, structured, and encouraging. Use markdown formatting.`;
+    const greetingPrompt = `The student just opened the workspace. Time: ${timeOfDay}. 
+Greet briefly as Joël. Acknowledge: project "${projectTitle}", type "${projectType}", domain "${projectDomain}", level "${getLevelLabel()}".
+Present a short project summary (bullet points). Ask if they want to continue or modify.
+Keep it under 100 words. No long paragraphs.`;
 
     setIsStreaming(true);
     let assistantSoFar = "";
