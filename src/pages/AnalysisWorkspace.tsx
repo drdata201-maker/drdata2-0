@@ -5,11 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Loader2, Table2, BarChart3, MessageSquare, FileText } from "lucide-react";
+import { ArrowLeft, Loader2, Table2, BarChart3, MessageSquare, FileText, Bot, ClipboardList, BookOpen } from "lucide-react";
 import { JoelChat } from "@/components/workspace/JoelChat";
 import { WorkspaceResults } from "@/components/workspace/WorkspaceResults";
 import { WorkspaceCharts } from "@/components/workspace/WorkspaceCharts";
 import { WorkspaceExport } from "@/components/workspace/WorkspaceExport";
+import { WorkspaceDataPrep } from "@/components/workspace/WorkspaceDataPrep";
+import { WorkspaceInterpretation } from "@/components/workspace/WorkspaceInterpretation";
 
 class PanelBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { hasError: boolean }> {
   constructor(props: { fallback: ReactNode; children: ReactNode }) {
