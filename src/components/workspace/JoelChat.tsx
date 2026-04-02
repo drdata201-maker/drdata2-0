@@ -250,15 +250,14 @@ Keep it under 100 words. No long paragraphs.`;
     scrollToBottom();
 
     // Send to AI for dataset analysis
-    const prompt = `The student just uploaded a file: "${uploadedFile.name}" (${(uploadedFile.size / 1024).toFixed(1)} KB, type: ${uploadedFile.type || uploadedFile.name.split('.').pop()}).
-
-Please:
-1. Acknowledge receipt of the file
-2. Describe what you would expect to find in this type of file (based on file name and the project context)
-3. Provide a simulated dataset summary (number of observations, variables detected, data types)
-4. Check for potential data quality issues (missing values, outliers)
-5. If issues found, ask if they want automatic cleaning or to continue without
-6. Then recommend the appropriate analyses for their level and ask them to select`;
+    const prompt = `File uploaded: "${uploadedFile.name}" (${(uploadedFile.size / 1024).toFixed(1)} KB).
+Respond concisely:
+- Acknowledge file receipt
+- State number of observations and variables detected (simulated)
+- State % missing values
+- Direct to **Data Preparation** tab for details
+- Ask if they want automatic cleaning or to continue
+Keep under 80 words.`;
 
     sendToAI(prompt);
     setPhase("analysis");
