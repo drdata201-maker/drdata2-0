@@ -107,25 +107,7 @@ export default function AnalysisWorkspace() {
         {projectType && <Badge variant="outline">{t(`student.type.${projectType}`)}</Badge>}
       </header>
 
-      <div className="flex flex-1 flex-col lg:flex-row">
-        <div className="flex w-full flex-col border-r border-border lg:w-96 lg:min-h-[calc(100vh-57px)]">
-          <PanelBoundary fallback={<PanelLoading />}>
-            {JoelChat ? (
-              <JoelChat
-                projectId={projectId}
-                projectTitle={projectTitle}
-                projectType={projectType}
-                projectDomain={projectDomain}
-                projectDescription={projectDescription}
-                level={level}
-              />
-            ) : (
-              <PanelLoading />
-            )}
-          </PanelBoundary>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 lg:p-6">
+      <div className="flex-1 overflow-y-auto p-4 lg:p-6">
           <Tabs defaultValue="assistant">
             <TabsList className="mb-4 flex-wrap">
               <TabsTrigger value="assistant">
