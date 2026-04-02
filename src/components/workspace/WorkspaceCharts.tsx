@@ -16,7 +16,7 @@ export function WorkspaceCharts() {
   const { t } = useLanguage();
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
       <Card>
         <CardHeader><CardTitle>{t("workspace.histogram")}</CardTitle></CardHeader>
         <CardContent>
