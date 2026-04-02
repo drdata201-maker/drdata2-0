@@ -276,19 +276,15 @@ Keep under 80 words.`;
     setPhase("ready");
     scrollToBottom();
 
-    const prompt = `The student selected these analyses: ${selected}.
-Dataset: ${file?.name || "uploaded dataset"}.
+    const prompt = `Selected analyses: ${selected}. Dataset: ${file?.name || "uploaded dataset"}.
 
-Please perform a complete academic analysis:
-1. Execute each selected analysis
-2. Present results in clean markdown tables (with test statistics, p-values, coefficients, R², etc.)
-3. For each test, state the null and alternative hypothesis
-4. Indicate statistical significance at α = 0.05 and α = 0.01
-5. Provide a brief interpretation after each result
-6. Use proper academic statistical terminology
-7. Adapt the depth of interpretation to the student's level (${getLevelLabel()})
-
-Present the results in a structured, professional format ready for academic use.`;
+Respond concisely:
+- Confirm analyses are running
+- Direct to **Results** tab for statistical tables
+- Direct to **Graphs** tab for visualizations
+- Direct to **Interpretation** tab for academic interpretation
+- Mention **Export** tab for downloading reports
+Keep under 80 words. Do NOT display tables or results in chat.`;
 
     sendToAI(prompt);
   };
