@@ -5,13 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Loader2, Table2, BarChart3, MessageSquare, FileText, Bot, ClipboardList, BookOpen } from "lucide-react";
+import { ArrowLeft, Loader2, Table2, BarChart3, FileText, Bot, ClipboardList, BookOpen, Maximize2, Minimize2 } from "lucide-react";
 import { JoelChat } from "@/components/workspace/JoelChat";
 import { WorkspaceResults } from "@/components/workspace/WorkspaceResults";
 import { WorkspaceCharts } from "@/components/workspace/WorkspaceCharts";
 import { WorkspaceExport } from "@/components/workspace/WorkspaceExport";
 import { WorkspaceDataPrep } from "@/components/workspace/WorkspaceDataPrep";
 import { WorkspaceInterpretation } from "@/components/workspace/WorkspaceInterpretation";
+import { cn } from "@/lib/utils";
 
 class PanelBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { hasError: boolean }> {
   constructor(props: { fallback: ReactNode; children: ReactNode }) {
@@ -23,9 +24,7 @@ class PanelBoundary extends Component<{ fallback: ReactNode; children: ReactNode
     return { hasError: true };
   }
 
-  componentDidCatch() {
-    // Prevent blank screen by isolating panel errors.
-  }
+  componentDidCatch() {}
 
   render() {
     if (this.state.hasError) return this.props.fallback;
@@ -51,18 +50,15 @@ export default function AnalysisWorkspace() {
   const [mounted, setMounted] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [workspaceReady, setWorkspaceReady] = useState(false);
+  const [activeTab, setActiveTab] = useState("assistant");
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!mounted) return;
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        navigate("/login");
-        return;
-      }
+      if (!session) { navigate("/login"); return; }
       setAuthed(true);
     });
   }, [mounted, navigate]);
@@ -96,90 +92,130 @@ export default function AnalysisWorkspace() {
     );
   }
 
+  const tabMeta: Record<string, { maxWidth: string; minHeight: string }> = {
+    assistant:      { maxWidth: "4xl", minHeight: "calc(100vh - 160px)" },
+    dataprep:       { maxWidth: "6xl", minHeight: "auto" },
+    results:        { maxWidth: "full", minHeight: "auto" },
+    charts:         { maxWidth: "full", minHeight: "auto" },
+    interpretation: { maxWidth: "4xl", minHeight: "auto" },
+    export:         { maxWidth: "5xl", minHeight: "auto" },
+  };
+
+  const meta = tabMeta[activeTab] || tabMeta.assistant;
+
+  const contentMaxW: Record<string, string> = {
+    "4xl": "max-w-4xl",
+    "5xl": "max-w-5xl",
+    "6xl": "max-w-6xl",
+    full: "max-w-full",
+  };
+
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
+    <div className={cn(
+      "flex min-h-screen flex-col bg-background transition-all duration-300",
+      isFullscreen && "fixed inset-0 z-50"
+    )}>
+      {/* Header */}
+      <header className={cn(
+        "flex items-center gap-3 border-b border-border px-4 transition-all duration-300",
+        isFullscreen ? "py-2" : "py-3"
+      )}>
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-lg font-bold text-foreground">{t("joel.workspaceTitle")}</h1>
-        {projectTitle && <Badge variant="secondary">{projectTitle}</Badge>}
-        {projectType && <Badge variant="outline">{t(`student.type.${projectType}`)}</Badge>}
+        <h1 className="text-lg font-bold text-foreground truncate">{t("joel.workspaceTitle")}</h1>
+        {projectTitle && <Badge variant="secondary" className="hidden sm:inline-flex">{projectTitle}</Badge>}
+        {projectType && <Badge variant="outline" className="hidden md:inline-flex">{t(`student.type.${projectType}`)}</Badge>}
+        <div className="ml-auto">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsFullscreen(f => !f)}
+            title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+          >
+            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </Button>
+        </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-4 lg:p-6">
-          <Tabs defaultValue="assistant">
-            <TabsList className="mb-4 flex-wrap">
-              <TabsTrigger value="assistant">
-                <Bot className="mr-1 h-4 w-4" />
-                Assistant
-              </TabsTrigger>
-              <TabsTrigger value="dataprep">
-                <ClipboardList className="mr-1 h-4 w-4" />
-                {t("workspace.dataPrep")}
-              </TabsTrigger>
-              <TabsTrigger value="results">
-                <Table2 className="mr-1 h-4 w-4" />
-                {t("workspace.results")}
-              </TabsTrigger>
-              <TabsTrigger value="charts">
-                <BarChart3 className="mr-1 h-4 w-4" />
-                {t("workspace.charts")}
-              </TabsTrigger>
-              <TabsTrigger value="interpretation">
-                <BookOpen className="mr-1 h-4 w-4" />
-                {t("workspace.interpretation")}
-              </TabsTrigger>
-              <TabsTrigger value="export">
-                <FileText className="mr-1 h-4 w-4" />
-                {t("workspace.export")}
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="assistant">
-              <div className="rounded-lg border border-border bg-card min-h-[500px] flex flex-col">
-                <PanelBoundary fallback={<PanelLoading />}>
-                  {JoelChat ? (
-                    <JoelChat
-                      projectId={projectId}
-                      projectTitle={projectTitle}
-                      projectType={projectType}
-                      projectDomain={projectDomain}
-                      projectDescription={projectDescription}
-                      level={level}
-                    />
-                  ) : (
-                    <PanelLoading />
+      {/* Workspace */}
+      <div className="flex-1 overflow-y-auto">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+          {/* Tab navigation */}
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 pt-3 pb-0">
+            <TabsList className="w-full justify-start gap-1 bg-transparent p-0 h-auto flex-wrap">
+              {[
+                { value: "assistant", icon: Bot, label: "Assistant" },
+                { value: "dataprep", icon: ClipboardList, label: t("workspace.dataPrep") },
+                { value: "results", icon: Table2, label: t("workspace.results") },
+                { value: "charts", icon: BarChart3, label: t("workspace.charts") },
+                { value: "interpretation", icon: BookOpen, label: t("workspace.interpretation") },
+                { value: "export", icon: FileText, label: t("workspace.export") },
+              ].map(({ value, icon: Icon, label }) => (
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  className={cn(
+                    "relative rounded-none border-b-2 border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                    "data-[state=active]:border-b-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none",
+                    "hover:text-primary/80 hover:bg-muted/50"
                   )}
+                >
+                  <Icon className="mr-1.5 h-4 w-4" />
+                  <span className="hidden sm:inline">{label}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+
+          {/* Tab content with dynamic sizing */}
+          <div className={cn(
+            "flex-1 px-4 py-6 lg:px-6 mx-auto w-full transition-all duration-300",
+            contentMaxW[meta.maxWidth]
+          )}>
+            <TabsContent value="assistant" className="mt-0 animate-fade-in">
+              <div
+                className="rounded-xl border border-border bg-card flex flex-col shadow-sm"
+                style={{ minHeight: meta.minHeight }}
+              >
+                <PanelBoundary fallback={<PanelLoading />}>
+                  <JoelChat
+                    projectId={projectId}
+                    projectTitle={projectTitle}
+                    projectType={projectType}
+                    projectDomain={projectDomain}
+                    projectDescription={projectDescription}
+                    level={level}
+                  />
                 </PanelBoundary>
               </div>
             </TabsContent>
 
-            <TabsContent value="dataprep">
+            <TabsContent value="dataprep" className="mt-0 animate-fade-in">
               <PanelBoundary fallback={<PanelLoading />}>
                 <WorkspaceDataPrep />
               </PanelBoundary>
             </TabsContent>
 
-            <TabsContent value="results">
+            <TabsContent value="results" className="mt-0 animate-fade-in">
               <PanelBoundary fallback={<PanelLoading />}>
-                {WorkspaceResults ? <WorkspaceResults /> : <PanelLoading />}
+                <WorkspaceResults />
               </PanelBoundary>
             </TabsContent>
 
-            <TabsContent value="charts">
+            <TabsContent value="charts" className="mt-0 animate-fade-in">
               <PanelBoundary fallback={<PanelLoading />}>
-                {WorkspaceCharts ? <WorkspaceCharts /> : <PanelLoading />}
+                <WorkspaceCharts />
               </PanelBoundary>
             </TabsContent>
 
-            <TabsContent value="interpretation">
+            <TabsContent value="interpretation" className="mt-0 animate-fade-in">
               <PanelBoundary fallback={<PanelLoading />}>
                 <WorkspaceInterpretation level={level} />
               </PanelBoundary>
             </TabsContent>
 
-            <TabsContent value="export">
+            <TabsContent value="export" className="mt-0 animate-fade-in">
               <PanelBoundary fallback={<PanelLoading />}>
                 <WorkspaceExport
                   projectTitle={projectTitle}
@@ -190,8 +226,9 @@ export default function AnalysisWorkspace() {
                 />
               </PanelBoundary>
             </TabsContent>
-          </Tabs>
-        </div>
+          </div>
+        </Tabs>
+      </div>
     </div>
   );
 }

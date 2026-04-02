@@ -16,11 +16,11 @@ export function WorkspaceCharts() {
   const { t } = useLanguage();
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
       <Card>
         <CardHeader><CardTitle>{t("workspace.histogram")}</CardTitle></CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={300}>
             <BarChart data={mockChartData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis dataKey="name" className="text-xs" />
@@ -34,7 +34,7 @@ export function WorkspaceCharts() {
       <Card>
         <CardHeader><CardTitle>{t("workspace.scatter")}</CardTitle></CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={300}>
             <ScatterChart>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis dataKey="x" name="X" type="number" className="text-xs" />
@@ -48,7 +48,7 @@ export function WorkspaceCharts() {
       <Card>
         <CardHeader><CardTitle>{t("workspace.pieChart")}</CardTitle></CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie data={mockChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
                 {mockChartData.map((_, i) => (
@@ -63,7 +63,7 @@ export function WorkspaceCharts() {
       <Card>
         <CardHeader><CardTitle>{t("workspace.lineChart")}</CardTitle></CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={300}>
             <LineChart data={mockChartData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis dataKey="name" className="text-xs" />
