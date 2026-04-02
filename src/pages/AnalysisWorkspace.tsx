@@ -142,30 +142,64 @@ export default function AnalysisWorkspace() {
     )}>
       {/* Header */}
       <header className={cn(
-        "flex items-center gap-3 border-b border-border px-4 transition-all duration-300",
+        "border-b border-border px-4 transition-all duration-300",
         isFullscreen ? "py-2" : "py-3"
       )}>
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-lg font-bold text-foreground truncate">{t("joel.workspaceTitle")}</h1>
-        {projectTitle && <Badge variant="secondary" className="hidden sm:inline-flex">{projectTitle}</Badge>}
-        {projectType && <Badge variant="outline" className="hidden md:inline-flex">{t(`student.type.${projectType}`)}</Badge>}
-        <div className="ml-auto">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsFullscreen(f => !f)}
-            title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-          >
-            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-5 w-5" />
           </Button>
+          <h1 className="text-lg font-bold text-foreground truncate">{t("joel.workspaceTitle")}</h1>
+          {projectTitle && <Badge variant="secondary" className="hidden sm:inline-flex">{projectTitle}</Badge>}
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-muted-foreground hidden sm:inline">{progressPct}%</span>
+            <Button variant="ghost" size="icon" onClick={() => setIsFullscreen(f => !f)} title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}>
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
+          </div>
+        </div>
+
+        {/* Progress stepper */}
+        <div className="mt-2 flex items-center gap-0.5 sm:gap-1">
+          {WORKFLOW_STEPS.map((step, i) => {
+            const isCompleted = completedSteps.has(step.key);
+            const isCurrent = step.key === activeTab;
+            return (
+              <div key={step.key} className="flex items-center flex-1">
+                <button
+                  onClick={() => handleTabChange(step.key)}
+                  className={cn(
+                    "flex items-center gap-1 text-xs font-medium transition-all duration-200 rounded-full px-1.5 py-0.5 sm:px-2 sm:py-1",
+                    isCurrent && "bg-primary text-primary-foreground",
+                    isCompleted && !isCurrent && "text-primary",
+                    !isCompleted && !isCurrent && "text-muted-foreground"
+                  )}
+                >
+                  <span className={cn(
+                    "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold transition-all duration-200 border",
+                    isCurrent && "bg-primary-foreground text-primary border-primary-foreground",
+                    isCompleted && !isCurrent && "bg-primary text-primary-foreground border-primary",
+                    !isCompleted && !isCurrent && "border-muted-foreground/40"
+                  )}>
+                    {isCompleted ? <Check className="h-3 w-3" /> : i + 1}
+                  </span>
+                  <span className="hidden lg:inline truncate">{step.label}</span>
+                </button>
+                {i < WORKFLOW_STEPS.length - 1 && (
+                  <div className={cn(
+                    "flex-1 h-0.5 mx-0.5 rounded-full transition-all duration-300",
+                    isCompleted ? "bg-primary" : "bg-border"
+                  )} />
+                )}
+              </div>
+            );
+          })}
         </div>
       </header>
 
       {/* Workspace */}
       <div className="flex-1 overflow-y-auto">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col h-full">
           {/* Tab navigation */}
           <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 pt-3 pb-0">
             <TabsList className="w-full justify-start gap-1 bg-transparent p-0 h-auto flex-wrap">
