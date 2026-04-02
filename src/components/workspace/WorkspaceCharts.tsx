@@ -63,7 +63,7 @@ export function WorkspaceCharts() {
       <Card>
         <CardHeader><CardTitle>{t("workspace.lineChart")}</CardTitle></CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={300}>
             <LineChart data={mockChartData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis dataKey="name" className="text-xs" />
