@@ -165,7 +165,13 @@ export default function AnalysisWorkspace() {
 
             <TabsContent value="export">
               <PanelBoundary fallback={<PanelLoading />}>
-                {WorkspaceExport ? <WorkspaceExport /> : <PanelLoading />}
+                <WorkspaceExport
+                  projectTitle={projectTitle}
+                  projectType={projectType}
+                  projectDomain={projectDomain}
+                  projectDescription={projectDescription}
+                  level={level}
+                />
               </PanelBoundary>
             </TabsContent>
           </Tabs>

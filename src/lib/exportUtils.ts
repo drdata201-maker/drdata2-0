@@ -148,7 +148,7 @@ function filePrefix(level: string): string {
 
 export async function exportDocx(data: ExportData, content: ExportContent) {
   const t = l(data.lang);
-  const sections: Paragraph[] = [];
+  const sections: (Paragraph | Table)[] = [];
 
   const addHeading = (text: string, headingLevel: (typeof HeadingLevel)[keyof typeof HeadingLevel] = HeadingLevel.HEADING_1) =>
     sections.push(new Paragraph({ heading: headingLevel, children: [new TextRun({ text, bold: true })] }));
