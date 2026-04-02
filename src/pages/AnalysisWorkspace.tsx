@@ -74,11 +74,12 @@ export default function AnalysisWorkspace() {
   useEffect(() => {
     if (!projectId) return;
     (supabase.from("projects") as any)
-      .select("title")
+      .select("title, description")
       .eq("id", projectId)
       .single()
       .then(({ data }: any) => {
         if (data?.title) setProjectTitle(data.title);
+        if (data?.description) setProjectDescription(data.description);
       });
   }, [projectId]);
 
