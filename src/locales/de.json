@@ -636,5 +636,9 @@
   "joel.aiAnalysisPrompt": "Ich habe die Datei {file} hochgeladen. Bitte führen Sie folgende Analysen durch: {analyses}. Liefern Sie Ergebnisse mit statistischen Tabellen, p-Werten, Koeffizienten und akademischer Interpretation.",
   "joel.aiInterpretationPrompt": "Erstellen Sie eine umfassende akademische Interpretation der vorherigen Ergebnisse, geeignet für eine Abschlussarbeit. Berücksichtigen Sie statistische Signifikanz, theoretische Implikationen und Bezüge zur wissenschaftlichen Literatur.",
   "joel.aiConclusionPrompt": "Schreiben Sie eine strukturierte wissenschaftliche Schlussfolgerung basierend auf den vorherigen Analyseergebnissen. Sie sollte bereit sein, in eine akademische Abschlussarbeit integriert zu werden.",
-  "joel.aiRecommendationsPrompt": "Geben Sie Forschungsempfehlungen basierend auf den vorherigen Analyseergebnissen. Nennen Sie zukünftige Forschungsrichtungen, methodische Verbesserungen und praktische Implikationen."
+  "joel.aiRecommendationsPrompt": "Geben Sie Forschungsempfehlungen basierend auf den vorherigen Analyseergebnissen. Nennen Sie zukünftige Forschungsrichtungen, methodische Verbesserungen und praktische Implikationen.",
+  "joel.confirmQuestion": "Möchten Sie mit diesen Informationen fortfahren oder die Projektdetails ändern?",
+  "joel.confirmContinue": "Fortfahren",
+  "joel.confirmModify": "Projekt ändern",
+  "joel.requestCharts": "Diagramme und Visualisierungen"
 }

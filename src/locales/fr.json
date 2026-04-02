@@ -636,5 +636,9 @@
   "joel.aiAnalysisPrompt": "J'ai importé le fichier {file}. Veuillez effectuer les analyses suivantes : {analyses}. Fournissez les résultats avec les tableaux statistiques, les valeurs p, les coefficients et l'interprétation académique.",
   "joel.aiInterpretationPrompt": "Générez une interprétation académique complète des résultats précédents, adaptée pour un mémoire ou une thèse. Incluez la signification statistique, les implications théoriques et les liens avec la littérature scientifique.",
   "joel.aiConclusionPrompt": "Rédigez une conclusion scientifique structurée basée sur les résultats d'analyse précédents. Elle doit être prête à intégrer dans un mémoire ou une thèse académique.",
-  "joel.aiRecommendationsPrompt": "Proposez des recommandations de recherche basées sur les résultats d'analyse précédents. Incluez des pistes pour de futures recherches, des améliorations méthodologiques et des implications pratiques."
+  "joel.aiRecommendationsPrompt": "Proposez des recommandations de recherche basées sur les résultats d'analyse précédents. Incluez des pistes pour de futures recherches, des améliorations méthodologiques et des implications pratiques.",
+  "joel.confirmQuestion": "Souhaitez-vous continuer avec ces informations ou modifier les détails du projet ?",
+  "joel.confirmContinue": "Continuer",
+  "joel.confirmModify": "Modifier le projet",
+  "joel.requestCharts": "Graphiques et visualisations"
 }
