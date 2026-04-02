@@ -20,7 +20,7 @@ export function WorkspaceCharts() {
       <Card>
         <CardHeader><CardTitle>{t("workspace.histogram")}</CardTitle></CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={300}>
             <BarChart data={mockChartData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis dataKey="name" className="text-xs" />
