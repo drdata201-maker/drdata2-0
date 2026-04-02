@@ -192,7 +192,6 @@ export default function AnalysisWorkspace() {
             </TabsContent>
           </Tabs>
         </div>
-      </div>
     </div>
   );
 }
