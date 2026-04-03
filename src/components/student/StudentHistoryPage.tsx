@@ -104,8 +104,8 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
                       </TableCell>
                       <TableCell className="text-sm">{new Date(item.created_at).toLocaleDateString()}</TableCell>
                       <TableCell className="text-right">
-                        {item.type === "project" && baseRoute && (
-                          <Button variant="ghost" size="icon" onClick={() => navigate(`${baseRoute}/quick-analysis?project=${item.id}`)}>
+                        {item.type === "project" && (
+                          <Button variant="ghost" size="icon" onClick={() => navigate(`/analysis/workspace?project=${item.id}&level=${userType}`)}>
                             <Eye className="h-4 w-4" />
                           </Button>
                         )}
