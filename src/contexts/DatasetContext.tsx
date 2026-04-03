@@ -1,5 +1,17 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import * as XLSX from "xlsx";
+import {
+  AnalysisResultItem,
+  computeDescriptive,
+  computeFrequencies,
+  computeCorrelations,
+  computeTTest,
+  computeChiSquare,
+  computeAnova,
+  computeRegression,
+} from "@/lib/statsEngine";
+
+export type { AnalysisResultItem };
 
 export interface VariableInfo {
   name: string;
@@ -30,8 +42,10 @@ interface DatasetContextType {
   prepStatus: PrepStatus;
   prepError: string | null;
   cleanedData: Record<string, unknown>[] | null;
+  analysisResults: AnalysisResultItem[];
   processFile: (file: File) => Promise<DatasetSummary>;
   runCleaning: () => void;
+  runAnalyses: (analysisKeys: string[], software: string) => void;
   reset: () => void;
 }
 
@@ -147,6 +161,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   const [prepStatus, setPrepStatus] = useState<PrepStatus>("idle");
   const [prepError, setPrepError] = useState<string | null>(null);
   const [cleanedData, setCleanedData] = useState<Record<string, unknown>[] | null>(null);
+  const [analysisResults, setAnalysisResults] = useState<AnalysisResultItem[]>([]);
 
   const processFile = useCallback(async (file: File): Promise<DatasetSummary> => {
     setPrepStatus("uploading");
@@ -214,15 +229,67 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     }, 2000);
   }, [dataset]);
 
+  const runAnalyses = useCallback((analysisKeys: string[], software: string) => {
+    if (!dataset) return;
+    const rows = cleanedData || dataset.rawData;
+    const numVars = dataset.variables.filter(v => v.type === "numeric").map(v => v.name);
+    const catVars = dataset.variables.filter(v => v.type === "categorical" || v.type === "ordinal").map(v => v.name);
+    const newResults: AnalysisResultItem[] = [];
+    const ts = new Date().toISOString();
+
+    for (const key of analysisKeys) {
+      const analysisName = key.startsWith("custom:") ? key.slice(7) : key;
+      const result: AnalysisResultItem = { id: crypto.randomUUID(), type: analysisName, title: analysisName, timestamp: ts };
+
+      if (key === "descriptive_stats" || key === "frequencies" || key.startsWith("custom:")) {
+        if (numVars.length) result.descriptive = computeDescriptive(rows, numVars);
+        if (catVars.length) result.frequencies = computeFrequencies(rows, catVars);
+      }
+      if (key === "frequencies") {
+        result.frequencies = computeFrequencies(rows, catVars.length ? catVars : numVars.slice(0, 3));
+      }
+      if (key === "correlation") {
+        result.correlations = computeCorrelations(rows, numVars);
+      }
+      if (key === "t_test" && numVars.length && catVars.length) {
+        const t = computeTTest(rows, numVars[0], catVars[0]);
+        if (t) result.tTests = [t];
+      }
+      if (key === "chi_square" && catVars.length >= 2) {
+        result.chiSquares = [computeChiSquare(rows, catVars[0], catVars[1])];
+      }
+      if (key === "crosstab" && catVars.length >= 2) {
+        result.chiSquares = [computeChiSquare(rows, catVars[0], catVars[1])];
+      }
+      if ((key === "anova" || key === "anova_basic") && numVars.length && catVars.length) {
+        result.anovas = [computeAnova(rows, numVars[0], catVars[0])];
+      }
+      if ((key === "simple_regression" || key === "multiple_regression" || key === "logistic_regression") && numVars.length >= 2) {
+        const dep = numVars[0];
+        const ind = key === "simple_regression" ? numVars.slice(1, 2) : numVars.slice(1);
+        result.regressions = [computeRegression(rows, dep, ind)];
+      }
+      if (key === "pca" || key === "factor_analysis" || key === "cronbach_alpha") {
+        if (numVars.length) result.descriptive = computeDescriptive(rows, numVars);
+        if (numVars.length >= 2) result.correlations = computeCorrelations(rows, numVars);
+      }
+
+      newResults.push(result);
+    }
+
+    setAnalysisResults(prev => [...prev, ...newResults]);
+  }, [dataset, cleanedData]);
+
   const reset = useCallback(() => {
     setDataset(null);
     setPrepStatus("idle");
     setPrepError(null);
     setCleanedData(null);
+    setAnalysisResults([]);
   }, []);
 
   return (
-    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, processFile, runCleaning, reset }}>
+    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, processFile, runCleaning, runAnalyses, reset }}>
       {children}
     </DatasetContext.Provider>
   );

@@ -143,7 +143,7 @@ async function streamChat({
 
 export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, level }: JoelChatProps) {
   const { t, lang } = useLanguage();
-  const { processFile, dataset } = useDataset();
+  const { processFile, dataset, runAnalyses } = useDataset();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [phase, setPhase] = useState<"confirm" | "upload" | "software" | "analysis" | "variables" | "ready">("confirm");
@@ -337,6 +337,9 @@ Keep under 80 words.`;
     ]);
     setPhase("ready");
     scrollToBottom();
+
+    // Trigger real statistical computations
+    runAnalyses(selectedAnalyses, selectedSoftware);
 
     const variableInfo = dataset
       ? `Available variables: ${dataset.variables.map(v => `${v.name} (${v.type})`).join(", ")}.`

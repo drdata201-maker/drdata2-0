@@ -708,5 +708,15 @@
   "joel.specifyAnalysis": "Especifique a análise...",
   "student.analysis.anova_basic": "ANOVA (básico)",
   "student.analysis.nonparametric": "Testes não paramétricos",
-  "student.analysis.multivariate": "Análise multivariada"
+  "student.analysis.multivariate": "Análise multivariada",
+  "results.noData": "Nenhum conjunto de dados",
+  "results.noResults": "Sem resultados de análise",
+  "results.selectAnalysis": "Selecione uma análise pelo Assistente",
+  "results.descriptiveStats": "Estatísticas descritivas",
+  "results.frequency": "Tabela de frequências",
+  "results.correlations": "Correlações",
+  "results.regression": "Regressão",
+  "results.value": "Valor",
+  "results.count": "Contagem",
+  "results.group": "Grupo"
 }
