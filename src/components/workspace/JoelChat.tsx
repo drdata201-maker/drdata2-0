@@ -270,7 +270,7 @@ Respond concisely:
 Keep under 80 words.`;
 
       sendToAI(prompt);
-      setPhase("analysis");
+      setPhase("software");
     } catch {
       sendToAI(`File upload failed for "${uploadedFile.name}". The file may be corrupted or unsupported. Ask the user to try another file. Keep under 50 words.`);
     }
