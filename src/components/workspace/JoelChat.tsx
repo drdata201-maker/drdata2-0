@@ -338,6 +338,9 @@ Keep under 80 words.`;
     setPhase("ready");
     scrollToBottom();
 
+    // Trigger real statistical computations
+    runAnalyses(selectedAnalyses, selectedSoftware);
+
     const variableInfo = dataset
       ? `Available variables: ${dataset.variables.map(v => `${v.name} (${v.type})`).join(", ")}.`
       : "";
