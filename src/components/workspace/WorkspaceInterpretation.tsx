@@ -47,7 +47,7 @@ export function WorkspaceInterpretation({ level, projectTitle, projectType, proj
 
       if (fnError) throw fnError;
       if (respData?.error) throw new Error(respData.error);
-      setData(respData as InterpretationData);
+      setInterpretationData(respData as InterpretationData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Interpretation error");
     } finally {
