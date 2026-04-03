@@ -621,19 +621,31 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
 
         {/* Quick action buttons after analysis */}
         {phase === "ready" && !isStreaming && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={requestInterpretation}>
-              📝 {t("joel.requestInterpretation")}
-            </Button>
-            <Button size="sm" variant="outline" onClick={requestCharts}>
-              📊 {t("joel.requestCharts")}
-            </Button>
-            <Button size="sm" variant="outline" onClick={requestConclusion}>
-              🎯 {t("joel.requestConclusion")}
-            </Button>
-            <Button size="sm" variant="outline" onClick={requestRecommendations}>
-              💡 {t("joel.requestRecommendations")}
-            </Button>
+          <div className="mt-3 space-y-2">
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" onClick={requestInterpretation}>
+                📝 {t("joel.requestInterpretation")}
+              </Button>
+              <Button size="sm" variant="outline" onClick={requestCharts}>
+                📊 {t("joel.requestCharts")}
+              </Button>
+              <Button size="sm" variant="outline" onClick={requestConclusion}>
+                🎯 {t("joel.requestConclusion")}
+              </Button>
+              <Button size="sm" variant="outline" onClick={requestRecommendations}>
+                💡 {t("joel.requestRecommendations")}
+              </Button>
+            </div>
+            <div className="flex gap-2 border-t border-border pt-2">
+              <Button size="sm" variant="default" onClick={handleNewAnalysis} className="gap-1.5">
+                <RotateCcw className="h-3.5 w-3.5" />
+                {t("joel.newAnalysis")}
+              </Button>
+              <Button size="sm" variant="secondary" onClick={handleFinishProject} className="gap-1.5">
+                <CheckCheck className="h-3.5 w-3.5" />
+                {t("joel.finishProject")}
+              </Button>
+            </div>
           </div>
         )}
       </div>
