@@ -718,5 +718,14 @@
   "results.regression": "Régression",
   "results.value": "Valeur",
   "results.count": "Effectif",
-  "results.group": "Groupe"
+  "results.group": "Groupe",
+  "charts.noData": "Aucun jeu de données chargé",
+  "charts.noCharts": "Aucun graphique disponible",
+  "charts.runAnalysis": "Lancez une analyse pour générer des graphiques",
+  "charts.histogram": "Histogramme",
+  "charts.barChart": "Diagramme en barres",
+  "charts.pieChart": "Diagramme circulaire",
+  "charts.scatter": "Nuage de points",
+  "charts.boxPlot": "Boîte à moustaches",
+  "charts.regression": "Régression"
 }

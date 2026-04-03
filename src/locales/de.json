@@ -718,5 +718,14 @@
   "results.regression": "Regression",
   "results.value": "Wert",
   "results.count": "Häufigkeit",
-  "results.group": "Gruppe"
+  "results.group": "Gruppe",
+  "charts.noData": "Kein Datensatz geladen",
+  "charts.noCharts": "Keine Diagramme verfügbar",
+  "charts.runAnalysis": "Führen Sie eine Analyse aus, um Diagramme zu generieren",
+  "charts.histogram": "Histogramm",
+  "charts.barChart": "Balkendiagramm",
+  "charts.pieChart": "Kreisdiagramm",
+  "charts.scatter": "Streudiagramm",
+  "charts.boxPlot": "Boxplot",
+  "charts.regression": "Regression"
 }

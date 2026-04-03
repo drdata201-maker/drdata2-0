@@ -718,5 +718,14 @@
   "results.regression": "Regressão",
   "results.value": "Valor",
   "results.count": "Contagem",
-  "results.group": "Grupo"
+  "results.group": "Grupo",
+  "charts.noData": "Nenhum conjunto de dados",
+  "charts.noCharts": "Nenhum gráfico disponível",
+  "charts.runAnalysis": "Execute uma análise para gerar gráficos",
+  "charts.histogram": "Histograma",
+  "charts.barChart": "Gráfico de barras",
+  "charts.pieChart": "Gráfico circular",
+  "charts.scatter": "Diagrama de dispersão",
+  "charts.boxPlot": "Box plot",
+  "charts.regression": "Regressão"
 }
