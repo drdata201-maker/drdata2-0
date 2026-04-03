@@ -302,6 +302,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     setPrepError(null);
     setCleanedData(null);
     setAnalysisResults([]);
+    setInterpretationData(null);
   }, []);
 
   return (
