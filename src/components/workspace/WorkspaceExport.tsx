@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset } from "@/contexts/DatasetContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Table2, MessageSquare, BookOpen, Download, Loader2, Upload } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { FileText, Table2, MessageSquare, BookOpen, Download, Loader2, Upload, Eye } from "lucide-react";
 import { exportDocx, exportPdf, exportXlsx, type ExportData } from "@/lib/exportUtils";
 
 interface WorkspaceExportProps {
@@ -18,12 +22,23 @@ interface WorkspaceExportProps {
 type ContentType = "full" | "results" | "interpretation" | "conclusion";
 type FormatType = "docx" | "pdf" | "xlsx";
 
+const levelLabels: Record<string, Record<string, string>> = {
+  fr: { student_license: "Licence", student_master: "Master", student_doctorat: "Doctorat" },
+  en: { student_license: "Bachelor", student_master: "Master", student_doctorat: "Doctorate" },
+  es: { student_license: "Licenciatura", student_master: "Máster", student_doctorat: "Doctorado" },
+  de: { student_license: "Bachelor", student_master: "Master", student_doctorat: "Doktorat" },
+  pt: { student_license: "Licenciatura", student_master: "Mestrado", student_doctorat: "Doutorado" },
+};
+
 export function WorkspaceExport({ projectTitle, projectType, projectDomain, projectDescription, level }: WorkspaceExportProps) {
   const { t, lang } = useLanguage();
   const { dataset, analysisResults, interpretationData } = useDataset();
   const [loading, setLoading] = useState<string | null>(null);
+  const [previewContent, setPreviewContent] = useState<ContentType | null>(null);
 
-  const buildData = (): ExportData => {
+  const buildData = useMemo((): ExportData | null => {
+    if (!dataset || analysisResults.length === 0) return null;
+
     const statsTable: ExportData["statsTable"] = [];
     const testResults: ExportData["testResults"] = [];
 
@@ -67,61 +82,40 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
       }
     }
 
-    // Build interpretation/conclusion/recommendations from real AI data
     let interpretation = "";
     let conclusion = "";
     let recommendations = "";
 
     if (interpretationData) {
-      // Combine all section interpretations
       interpretation = interpretationData.sections
         .map(s => `${s.analysisType}\n\n${s.interpretation}`)
         .join("\n\n---\n\n");
 
-      // Combine section conclusions + global conclusion
-      const sectionConclusions = interpretationData.sections
-        .filter(s => s.conclusion)
-        .map(s => s.conclusion);
-      if (interpretationData.globalConclusion) {
-        sectionConclusions.push(interpretationData.globalConclusion);
-      }
+      const sectionConclusions = interpretationData.sections.filter(s => s.conclusion).map(s => s.conclusion);
+      if (interpretationData.globalConclusion) sectionConclusions.push(interpretationData.globalConclusion);
       conclusion = sectionConclusions.join("\n\n");
 
-      // Combine section recommendations + global recommendations
-      const sectionRecs = interpretationData.sections
-        .filter(s => s.recommendations)
-        .map(s => s.recommendations);
-      if (interpretationData.globalRecommendations) {
-        sectionRecs.push(interpretationData.globalRecommendations);
-      }
+      const sectionRecs = interpretationData.sections.filter(s => s.recommendations).map(s => s.recommendations);
+      if (interpretationData.globalRecommendations) sectionRecs.push(interpretationData.globalRecommendations);
       recommendations = sectionRecs.join("\n\n");
     }
 
-    // Fallback to sample texts only if no AI interpretation available
     if (!interpretation) interpretation = t("export.sampleInterpretation");
     if (!conclusion) conclusion = t("export.sampleConclusion");
     if (!recommendations) recommendations = t("export.sampleRecommendations");
 
     return {
       projectTitle: projectTitle || "Untitled Project",
-      projectType,
-      projectDomain,
-      projectDescription,
-      level,
-      lang,
-      statsTable,
-      testResults,
-      interpretation,
-      conclusion,
-      recommendations,
+      projectType, projectDomain, projectDescription, level, lang,
+      statsTable, testResults, interpretation, conclusion, recommendations,
     };
-  };
+  }, [dataset, analysisResults, interpretationData, projectTitle, projectType, projectDomain, projectDescription, level, lang, t]);
 
   const handleExport = async (content: ContentType, format: FormatType) => {
     const key = `${content}-${format}`;
     setLoading(key);
     try {
-      const data = buildData();
+      const data = buildData!;
       if (format === "docx") await exportDocx(data, content);
       else if (format === "pdf") exportPdf(data, content);
       else exportXlsx(data, content);
@@ -132,7 +126,7 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
     }
   };
 
-  if (!dataset || analysisResults.length === 0) {
+  if (!dataset || analysisResults.length === 0 || !buildData) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center gap-4 py-12">
@@ -143,12 +137,20 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
     );
   }
 
+  const data = buildData;
+  const lvl = (levelLabels[lang] || levelLabels.en)[level] || level;
+
   const exportOptions: { content: ContentType; icon: typeof FileText; labelKey: string }[] = [
     { content: "full", icon: FileText, labelKey: "export.fullReport" },
     { content: "results", icon: Table2, labelKey: "export.resultsOnly" },
     { content: "interpretation", icon: MessageSquare, labelKey: "export.interpretationOnly" },
     { content: "conclusion", icon: BookOpen, labelKey: "export.conclusionOnly" },
   ];
+
+  const showProjectInfo = (ct: ContentType) => ct === "full" || ct === "results";
+  const showStats = (ct: ContentType) => ct === "full" || ct === "results";
+  const showInterp = (ct: ContentType) => ct === "full" || ct === "interpretation";
+  const showConc = (ct: ContentType) => ct === "full" || ct === "conclusion";
 
   return (
     <div className="space-y-4">
@@ -181,6 +183,15 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setPreviewContent(content)}
+                className="min-w-[100px]"
+              >
+                <Eye className="mr-1 h-3 w-3" />
+                {t("export.preview") || "Preview"}
+              </Button>
               {(["docx", "pdf", "xlsx"] as FormatType[]).map(format => {
                 const key = `${content}-${format}`;
                 const isLoading = loading === key;
@@ -202,6 +213,145 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
           </CardContent>
         </Card>
       ))}
+
+      {/* Preview Dialog */}
+      <Dialog open={!!previewContent} onOpenChange={open => !open && setPreviewContent(null)}>
+        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5 text-primary" />
+              {t("export.previewTitle") || "Report Preview"}
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="flex-1 px-6 pb-6">
+            {previewContent && (
+              <div className="space-y-6 py-2">
+                {/* Title block */}
+                <div className="text-center space-y-1 pb-4 border-b border-border">
+                  <h1 className="text-xl font-bold text-foreground">{data.projectTitle}</h1>
+                  <p className="text-xs text-muted-foreground italic">
+                    {t("export.generatedBy") || "Generated by Dr Data 2.0 — Assistant Joël"}
+                  </p>
+                </div>
+
+                {/* Project info */}
+                {showProjectInfo(previewContent) && (
+                  <section className="space-y-2">
+                    <h2 className="text-lg font-semibold text-foreground">{t("export.projectInfo") || "Project Information"}</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm">
+                      <div><span className="font-medium text-foreground">{t("export.projectTitle") || "Title"}:</span> <span className="text-muted-foreground">{data.projectTitle}</span></div>
+                      <div><span className="font-medium text-foreground">{t("export.level") || "Level"}:</span> <span className="text-muted-foreground">{lvl}</span></div>
+                      <div><span className="font-medium text-foreground">{t("export.type") || "Type"}:</span> <span className="text-muted-foreground">{data.projectType || "—"}</span></div>
+                      <div><span className="font-medium text-foreground">{t("export.domain") || "Domain"}:</span> <span className="text-muted-foreground">{data.projectDomain || "—"}</span></div>
+                    </div>
+                    {data.projectDescription && (
+                      <p className="text-sm text-muted-foreground">{data.projectDescription}</p>
+                    )}
+                  </section>
+                )}
+
+                {/* Stats tables */}
+                {showStats(previewContent) && data.statsTable.length > 0 && (
+                  <section className="space-y-3">
+                    <h2 className="text-lg font-semibold text-foreground">{t("export.descriptiveStats") || "Descriptive Statistics"}</h2>
+                    <div className="rounded-md border border-border overflow-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{t("export.variable") || "Variable"}</TableHead>
+                            <TableHead className="text-right">N</TableHead>
+                            <TableHead className="text-right">{t("export.mean") || "Mean"}</TableHead>
+                            <TableHead className="text-right">{t("export.std") || "Std"}</TableHead>
+                            <TableHead className="text-right">Min</TableHead>
+                            <TableHead className="text-right">Max</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {data.statsTable.map((row, i) => (
+                            <TableRow key={i}>
+                              <TableCell className="font-medium">{row.variable}</TableCell>
+                              <TableCell className="text-right">{row.n}</TableCell>
+                              <TableCell className="text-right">{typeof row.mean === "number" ? row.mean.toFixed(3) : row.mean}</TableCell>
+                              <TableCell className="text-right">{typeof row.std === "number" ? row.std.toFixed(3) : row.std}</TableCell>
+                              <TableCell className="text-right">{typeof row.min === "number" ? row.min.toFixed(2) : row.min}</TableCell>
+                              <TableCell className="text-right">{typeof row.max === "number" ? row.max.toFixed(2) : row.max}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </section>
+                )}
+
+                {showStats(previewContent) && data.testResults.length > 0 && (
+                  <section className="space-y-3">
+                    <h2 className="text-lg font-semibold text-foreground">{t("export.testResults") || "Test Results"}</h2>
+                    <div className="rounded-md border border-border overflow-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{t("export.test") || "Test"}</TableHead>
+                            <TableHead className="text-right">{t("export.value") || "Value"}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {data.testResults.map((row, i) => (
+                            <TableRow key={i}>
+                              <TableCell className="font-medium">{row.label}</TableCell>
+                              <TableCell className="text-right font-mono text-sm">{row.value}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </section>
+                )}
+
+                <Separator />
+
+                {/* Interpretation */}
+                {showInterp(previewContent) && (
+                  <section className="space-y-2">
+                    <h2 className="text-lg font-semibold text-foreground">{t("export.interpretation") || "Academic Interpretation"}</h2>
+                    <p className="text-sm leading-relaxed text-foreground whitespace-pre-line">{data.interpretation}</p>
+                  </section>
+                )}
+
+                {/* Conclusion */}
+                {showConc(previewContent) && (
+                  <section className="space-y-2">
+                    <h2 className="text-lg font-semibold text-foreground">{t("export.conclusion") || "Conclusion"}</h2>
+                    <p className="text-sm leading-relaxed text-foreground whitespace-pre-line">{data.conclusion}</p>
+                    <h3 className="text-base font-semibold text-foreground mt-4">{t("export.recommendations") || "Recommendations"}</h3>
+                    <p className="text-sm leading-relaxed text-foreground whitespace-pre-line">{data.recommendations}</p>
+                  </section>
+                )}
+
+                {/* Export buttons at bottom of preview */}
+                <Separator />
+                <div className="flex flex-wrap gap-2 justify-center pb-2">
+                  {(["docx", "pdf", "xlsx"] as FormatType[]).map(format => {
+                    const key = `${previewContent}-${format}`;
+                    const isLoading = loading === key;
+                    return (
+                      <Button
+                        key={format}
+                        variant="default"
+                        size="sm"
+                        disabled={!!loading}
+                        onClick={() => handleExport(previewContent!, format)}
+                      >
+                        {isLoading ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Download className="mr-1 h-3 w-3" />}
+                        {format === "docx" ? "Word (.docx)" : format === "pdf" ? "PDF (.pdf)" : "Excel (.xlsx)"}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
