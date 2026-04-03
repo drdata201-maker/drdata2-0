@@ -718,5 +718,14 @@
   "results.regression": "Regression",
   "results.value": "Value",
   "results.count": "Count",
-  "results.group": "Group"
+  "results.group": "Group",
+  "charts.noData": "No dataset loaded",
+  "charts.noCharts": "No charts available",
+  "charts.runAnalysis": "Run an analysis to generate charts",
+  "charts.histogram": "Histogram",
+  "charts.barChart": "Bar Chart",
+  "charts.pieChart": "Pie Chart",
+  "charts.scatter": "Scatter Plot",
+  "charts.boxPlot": "Box Plot",
+  "charts.regression": "Regression"
 }
