@@ -81,7 +81,146 @@ export interface AnalysisResultItem {
   anovas?: AnovaResult[];
 }
 
-// --- Computation helpers ---
+// ─── Statistical distribution functions ───
+
+/** Natural log of gamma function (Lanczos approximation) */
+function lnGamma(x: number): number {
+  const g = 7;
+  const c = [
+    0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+    771.32342877765313, -176.61502916214059, 12.507343278686905,
+    -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7,
+  ];
+  if (x < 0.5) {
+    return Math.log(Math.PI / Math.sin(Math.PI * x)) - lnGamma(1 - x);
+  }
+  x -= 1;
+  let a = c[0];
+  const t = x + g + 0.5;
+  for (let i = 1; i < g + 2; i++) a += c[i] / (x + i);
+  return 0.5 * Math.log(2 * Math.PI) + (x + 0.5) * Math.log(t) - t + Math.log(a);
+}
+
+/** Regularized lower incomplete gamma function P(a, x) via series expansion */
+function gammainc(a: number, x: number): number {
+  if (x <= 0) return 0;
+  if (x > a + 200) return 1; // large x → converges to 1
+
+  // Use series expansion for x < a+1
+  if (x < a + 1) {
+    let sum = 1 / a;
+    let term = 1 / a;
+    for (let n = 1; n < 200; n++) {
+      term *= x / (a + n);
+      sum += term;
+      if (Math.abs(term) < sum * 1e-14) break;
+    }
+    return sum * Math.exp(-x + a * Math.log(x) - lnGamma(a));
+  }
+
+  // Use continued fraction for x >= a+1
+  let f = 1e-30;
+  let c = 1e-30;
+  let d = 0;
+  for (let i = 1; i < 200; i++) {
+    const an = i % 2 === 1
+      ? ((i + 1) / 2 - a) // odd
+      : i / 2;             // even
+    const bn = i === 1 ? x : x - a + (i + 1) / 2 + (i - 1) / 2;
+    d = bn + an * d;
+    if (Math.abs(d) < 1e-30) d = 1e-30;
+    c = bn + an / c;
+    if (Math.abs(c) < 1e-30) c = 1e-30;
+    d = 1 / d;
+    const delta = c * d;
+    f *= delta;
+    if (Math.abs(delta - 1) < 1e-14) break;
+  }
+  // Q(a,x) = e^(-x) * x^a / Gamma(a) * (1/f_continued_fraction)
+  // But simpler: use the series result complement
+  return 1 - gammainc_series_only(a, x);
+}
+
+function gammainc_series_only(a: number, x: number): number {
+  let sum = 1 / a;
+  let term = 1 / a;
+  for (let n = 1; n < 300; n++) {
+    term *= x / (a + n);
+    sum += term;
+    if (Math.abs(term) < sum * 1e-14) break;
+  }
+  return sum * Math.exp(-x + a * Math.log(x) - lnGamma(a));
+}
+
+/** Chi-square survival function: P(X² > x | df) */
+function chi2sf(x: number, df: number): number {
+  if (df <= 0 || x <= 0) return 1;
+  return 1 - gammainc(df / 2, x / 2);
+}
+
+/** F-distribution survival function: P(F > x | df1, df2) using regularized incomplete beta */
+function fsf(x: number, df1: number, df2: number): number {
+  if (x <= 0 || df1 <= 0 || df2 <= 0) return 1;
+  const z = (df1 * x) / (df1 * x + df2);
+  return 1 - betainc(df1 / 2, df2 / 2, z);
+}
+
+/** Regularized incomplete beta function I_x(a, b) via continued fraction */
+function betainc(a: number, b: number, x: number): number {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+
+  // Use symmetry if x > (a+1)/(a+b+2)
+  if (x > (a + 1) / (a + b + 2)) {
+    return 1 - betainc(b, a, 1 - x);
+  }
+
+  const lnBeta = lnGamma(a) + lnGamma(b) - lnGamma(a + b);
+  const front = Math.exp(Math.log(x) * a + Math.log(1 - x) * b - lnBeta) / a;
+
+  // Lentz's continued fraction
+  let f = 1e-30, c = 1e-30, d = 0;
+
+  for (let m = 0; m <= 200; m++) {
+    let numerator: number;
+    if (m === 0) {
+      numerator = 1;
+    } else if (m % 2 === 0) {
+      const k = m / 2;
+      numerator = (k * (b - k) * x) / ((a + 2 * k - 1) * (a + 2 * k));
+    } else {
+      const k = (m - 1) / 2;
+      numerator = -((a + k) * (a + b + k) * x) / ((a + 2 * k) * (a + 2 * k + 1));
+    }
+
+    d = 1 + numerator * d;
+    if (Math.abs(d) < 1e-30) d = 1e-30;
+    d = 1 / d;
+
+    c = 1 + numerator / c;
+    if (Math.abs(c) < 1e-30) c = 1e-30;
+
+    f *= c * d;
+    if (Math.abs(c * d - 1) < 1e-14) break;
+  }
+
+  return front * (f - 1);
+}
+
+/** t-distribution two-tailed p-value using regularized incomplete beta */
+function tToP(t: number, df: number): number {
+  if (df <= 0) return 1;
+  const x = df / (df + t * t);
+  return betainc(df / 2, 0.5, x);
+}
+
+function rToP(r: number, n: number): number {
+  if (n < 3) return 1;
+  const t = r * Math.sqrt((n - 2) / (1 - r * r + 1e-10));
+  return tToP(t, n - 2);
+}
+
+// ─── Basic helpers ───
 
 function getNumericValues(rows: Record<string, unknown>[], col: string): number[] {
   return rows
@@ -152,23 +291,7 @@ function pearsonR(x: number[], y: number[]): number {
   return dx * dy === 0 ? 0 : num / Math.sqrt(dx * dy);
 }
 
-// Approximate p-value from t-statistic using normal approximation
-function tToP(t: number, df: number): number {
-  const x = df / (df + t * t);
-  if (df <= 0) return 1;
-  // Simple approximation
-  const absT = Math.abs(t);
-  const p = Math.exp(-0.717 * absT - 0.416 * absT * absT);
-  return Math.min(1, Math.max(0, p * 2));
-}
-
-function rToP(r: number, n: number): number {
-  if (n < 3) return 1;
-  const t = r * Math.sqrt((n - 2) / (1 - r * r + 1e-10));
-  return tToP(t, n - 2);
-}
-
-// --- Analysis runners ---
+// ─── Analysis runners ───
 
 export function computeDescriptive(
   rows: Record<string, unknown>[],
@@ -307,7 +430,7 @@ export function computeChiSquare(
     var1, var2,
     chiSquare: round(chi2, 4),
     df,
-    pValue: round(Math.exp(-chi2 / 2), 4), // approximation
+    pValue: round(chi2sf(chi2, df), 4),
     cramersV: round(cramersV, 4),
   };
 }
@@ -350,7 +473,7 @@ export function computeAnova(
     factor,
     groups: groupEntries,
     fStat: round(fStat, 4),
-    pValue: round(Math.exp(-fStat / 2), 4),
+    pValue: round(fsf(fStat, dfBetween, dfWithin), 4),
     dfBetween,
     dfWithin,
   };
@@ -361,7 +484,6 @@ export function computeRegression(
   depVar: string,
   indVars: string[]
 ): RegressionResult {
-  // Simple/multiple regression using least squares (simplified)
   const validRows = rows.filter(r =>
     !isNaN(Number(r[depVar])) && indVars.every(v => !isNaN(Number(r[v])))
   );
@@ -370,7 +492,6 @@ export function computeRegression(
   const y = validRows.map(r => Number(r[depVar]));
   const yMean = mean(y);
 
-  // For simple regression (1 independent variable)
   if (indVars.length === 1) {
     const x = validRows.map(r => Number(r[indVars[0]]));
     const xMean = mean(x);
@@ -403,7 +524,7 @@ export function computeRegression(
       rSquared: round(r2, 4),
       adjustedR2: round(adjR2, 4),
       fStat: round(fStat, 4),
-      fPValue: round(tToP(Math.sqrt(fStat), n - 2), 4),
+      fPValue: round(fsf(fStat, 1, n - 2), 4),
       n,
     };
   }
@@ -428,6 +549,7 @@ export function computeRegression(
   const r2 = ssTot > 0 ? 1 - ssRes / ssTot : 0;
   const k = indVars.length;
   const adjR2 = n > k + 1 ? 1 - ((1 - r2) * (n - 1)) / (n - k - 1) : r2;
+  const fStat = r2 / (1 - r2 + 1e-10) * ((n - k - 1) / k);
 
   return {
     dependent: depVar,
@@ -438,8 +560,8 @@ export function computeRegression(
     ],
     rSquared: round(Math.max(0, Math.min(1, r2)), 4),
     adjustedR2: round(Math.max(0, Math.min(1, adjR2)), 4),
-    fStat: round(r2 / (1 - r2 + 1e-10) * ((n - k - 1) / k), 4),
-    fPValue: 0,
+    fStat: round(fStat, 4),
+    fPValue: round(fsf(fStat, k, n - k - 1), 4),
     n,
   };
 }
