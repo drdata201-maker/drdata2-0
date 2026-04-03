@@ -26,8 +26,8 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
   useEffect(() => {
     const fetchAll = async () => {
       const [projRes, analRes] = await Promise.all([
-        (supabase.from("projects") as any).select("id,title,status,domain,created_at").eq("user_type", userType).order("created_at", { ascending: false }).limit(30),
-        supabase.from("analyses").select("id,title,status,created_at").eq("user_type", userType).order("created_at", { ascending: false }).limit(30),
+        (supabase.from("projects") as any).select("id,title,status,domain,created_at").eq("user_type", userType).order("created_at", { ascending: false }).limit(50),
+        supabase.from("analyses").select("id,title,type,status,created_at").eq("user_type", userType).order("created_at", { ascending: false }).limit(50),
       ]);
       const combined: HistoryItem[] = [
         ...(projRes.data || []).map((d: any) => ({ ...d, type: "project" as const })),

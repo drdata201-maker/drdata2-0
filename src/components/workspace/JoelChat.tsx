@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset } from "@/contexts/DatasetContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Send, Upload, Sparkles, Bot, Loader2, CheckCircle, Edit3 } from "lucide-react";
+import { Send, Upload, Sparkles, Bot, Loader2, CheckCircle, Edit3, RotateCcw, CheckCheck } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
 
 const ACCEPTED_FORMATS = ".xlsx,.xls,.csv,.sav,.dta";
 
@@ -327,7 +329,7 @@ Keep under 80 words.`;
     setSelectedAnalyses(prev => prev.includes(key) ? prev.filter(a => a !== key) : [...prev, key]);
   };
 
-  const confirmAnalyses = () => {
+  const confirmAnalyses = async () => {
     const selected = selectedAnalyses.map(a =>
       a.startsWith("custom:") ? a.slice(7) : t(`student.analysis.${a}`)
     ).join(", ");
@@ -340,6 +342,29 @@ Keep under 80 words.`;
 
     // Trigger real statistical computations
     runAnalyses(selectedAnalyses, selectedSoftware);
+
+    // Auto-save analysis to database
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        await supabase.from("analyses").insert({
+          user_id: session.user.id,
+          project_id: projectId || undefined,
+          title: `${selected} — ${projectTitle || "Analysis"}`,
+          type: selectedAnalyses.join(","),
+          status: "completed",
+          user_type: level.includes("master") ? "student_master" : level.includes("doctor") ? "student_doctorate" : "student_license",
+          results: { analyses: selectedAnalyses, software: selectedSoftware, dataset: file?.name } as any,
+        } as any);
+
+        // Update project status to active
+        if (projectId) {
+          await supabase.from("projects").update({ status: "active" } as any).eq("id", projectId);
+        }
+      }
+    } catch (err) {
+      console.error("Auto-save failed:", err);
+    }
 
     const variableInfo = dataset
       ? `Available variables: ${dataset.variables.map(v => `${v.name} (${v.type})`).join(", ")}.`
@@ -354,9 +379,35 @@ Respond concisely:
 - Direct to **Graphs** tab for visualizations
 - Direct to **Interpretation** tab for academic interpretation
 - Mention **Export** tab for downloading reports
+- Ask if they want to run another analysis on the same dataset
 Keep under 80 words. Do NOT display tables or results in chat.`;
 
     sendToAI(prompt);
+  };
+
+  const handleNewAnalysis = () => {
+    setSelectedAnalyses([]);
+    setExpandedCategory(null);
+    setCustomAnalysis("");
+    setPhase("analysis");
+    setMessages(prev => [...prev, { role: "user", content: t("joel.newAnalysis") }]);
+    scrollToBottom();
+    sendToAI("The student wants to run another analysis on the same dataset. Acknowledge briefly and ask them to select their next analysis. Keep under 40 words.");
+  };
+
+  const handleFinishProject = async () => {
+    setMessages(prev => [...prev, { role: "user", content: t("joel.finishProject") }]);
+    scrollToBottom();
+
+    // Update project status to completed
+    if (projectId) {
+      try {
+        await supabase.from("projects").update({ status: "completed" } as any).eq("id", projectId);
+        toast.success(t("joel.projectSaved"));
+      } catch { /* ignore */ }
+    }
+
+    sendToAI("The student has finished all analyses. Congratulate them briefly. Remind them to check the Export tab to download their report. Keep under 50 words.");
   };
 
   const sendMessage = () => {
@@ -570,19 +621,31 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
 
         {/* Quick action buttons after analysis */}
         {phase === "ready" && !isStreaming && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={requestInterpretation}>
-              📝 {t("joel.requestInterpretation")}
-            </Button>
-            <Button size="sm" variant="outline" onClick={requestCharts}>
-              📊 {t("joel.requestCharts")}
-            </Button>
-            <Button size="sm" variant="outline" onClick={requestConclusion}>
-              🎯 {t("joel.requestConclusion")}
-            </Button>
-            <Button size="sm" variant="outline" onClick={requestRecommendations}>
-              💡 {t("joel.requestRecommendations")}
-            </Button>
+          <div className="mt-3 space-y-2">
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" onClick={requestInterpretation}>
+                📝 {t("joel.requestInterpretation")}
+              </Button>
+              <Button size="sm" variant="outline" onClick={requestCharts}>
+                📊 {t("joel.requestCharts")}
+              </Button>
+              <Button size="sm" variant="outline" onClick={requestConclusion}>
+                🎯 {t("joel.requestConclusion")}
+              </Button>
+              <Button size="sm" variant="outline" onClick={requestRecommendations}>
+                💡 {t("joel.requestRecommendations")}
+              </Button>
+            </div>
+            <div className="flex gap-2 border-t border-border pt-2">
+              <Button size="sm" variant="default" onClick={handleNewAnalysis} className="gap-1.5">
+                <RotateCcw className="h-3.5 w-3.5" />
+                {t("joel.newAnalysis")}
+              </Button>
+              <Button size="sm" variant="secondary" onClick={handleFinishProject} className="gap-1.5">
+                <CheckCheck className="h-3.5 w-3.5" />
+                {t("joel.finishProject")}
+              </Button>
+            </div>
           </div>
         )}
       </div>

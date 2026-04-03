@@ -1,13 +1,37 @@
+import { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 import { FolderOpen, BarChart3, FileText } from "lucide-react";
 
 export function StatsSection() {
   const { t } = useLanguage();
+  const [counts, setCounts] = useState({ projects: 0, analyses: 0, reports: 0 });
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const uid = session.user.id;
+
+      const [projRes, analRes, repRes] = await Promise.all([
+        supabase.from("projects").select("id", { count: "exact", head: true }).eq("user_id", uid),
+        supabase.from("analyses").select("id", { count: "exact", head: true }).eq("user_id", uid),
+        supabase.from("reports").select("id", { count: "exact", head: true }).eq("user_id", uid),
+      ]);
+
+      setCounts({
+        projects: projRes.count ?? 0,
+        analyses: analRes.count ?? 0,
+        reports: repRes.count ?? 0,
+      });
+    };
+    fetchCounts();
+  }, []);
 
   const stats = [
-    { label: "dashboard.stats.projects", value: 0, icon: FolderOpen },
-    { label: "dashboard.stats.analyses", value: 0, icon: BarChart3 },
-    { label: "dashboard.stats.reports", value: 0, icon: FileText },
+    { label: "dashboard.stats.projects", value: counts.projects, icon: FolderOpen },
+    { label: "dashboard.stats.analyses", value: counts.analyses, icon: BarChart3 },
+    { label: "dashboard.stats.reports", value: counts.reports, icon: FileText },
   ];
 
   return (
