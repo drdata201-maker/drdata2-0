@@ -20,7 +20,7 @@ type FormatType = "docx" | "pdf" | "xlsx";
 
 export function WorkspaceExport({ projectTitle, projectType, projectDomain, projectDescription, level }: WorkspaceExportProps) {
   const { t, lang } = useLanguage();
-  const { dataset, analysisResults } = useDataset();
+  const { dataset, analysisResults, interpretationData } = useDataset();
   const [loading, setLoading] = useState<string | null>(null);
 
   const buildData = (): ExportData => {
