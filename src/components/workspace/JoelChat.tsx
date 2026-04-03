@@ -112,8 +112,10 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
   const { processFile, dataset } = useDataset();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
-  const [phase, setPhase] = useState<"confirm" | "upload" | "analysis" | "ready">("confirm");
+  const [phase, setPhase] = useState<"confirm" | "upload" | "software" | "analysis" | "ready">("confirm");
   const [file, setFile] = useState<File | null>(null);
+  const [selectedSoftware, setSelectedSoftware] = useState<string>("");
+  const [customSoftware, setCustomSoftware] = useState("");
   const [selectedAnalyses, setSelectedAnalyses] = useState<string[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [greetingSent, setGreetingSent] = useState(false);
