@@ -332,19 +332,69 @@ Keep under 80 words.`;
     setSelectedAnalyses(prev => prev.includes(key) ? prev.filter(a => a !== key) : [...prev, key]);
   };
 
-  const confirmAnalyses = async () => {
+  // Check if any selected analysis needs variable selection
+  const needsVariableSelection = useMemo(() => {
+    return selectedAnalyses.some(a => VARIABLE_REQUIRING[a]);
+  }, [selectedAnalyses]);
+
+  const numericVars = useMemo(() =>
+    dataset?.variables.filter(v => v.type === "numeric").map(v => v.name) || [],
+    [dataset]
+  );
+
+  const categoricalVars = useMemo(() =>
+    dataset?.variables.filter(v => v.type === "categorical" || v.type === "ordinal").map(v => v.name) || [],
+    [dataset]
+  );
+
+  const allVarNames = useMemo(() =>
+    dataset?.variables.map(v => v.name) || [],
+    [dataset]
+  );
+
+  const toggleIndVar = (varName: string) => {
+    setSelectedIndVars(prev =>
+      prev.includes(varName) ? prev.filter(v => v !== varName) : [...prev, varName]
+    );
+  };
+
+  const handleConfirmAnalysesStep = () => {
+    if (needsVariableSelection) {
+      const selected = selectedAnalyses.map(a =>
+        a.startsWith("custom:") ? a.slice(7) : t(`student.analysis.${a}`)
+      ).join(", ");
+      setMessages(prev => [
+        ...prev,
+        { role: "user", content: `${t("joel.selectedAnalyses")}: ${selected}` },
+      ]);
+      setPhase("variables");
+      setSelectedDepVar("");
+      setSelectedIndVars([]);
+      scrollToBottom();
+      sendToAI(`Selected analyses: ${selected}. Now ask the student to select the variables for their analysis. Keep under 40 words.`);
+    } else {
+      executeAnalyses();
+    }
+  };
+
+  const confirmVariablesAndRun = () => {
+    const varInfo = selectedDepVar
+      ? `${t("joel.varDependent")}: ${selectedDepVar}, ${t("joel.varIndependent")}: ${selectedIndVars.join(", ")}`
+      : `${t("joel.varSelected")}: ${selectedIndVars.join(", ")}`;
+    setMessages(prev => [...prev, { role: "user", content: `📊 ${varInfo}` }]);
+    scrollToBottom();
+    executeAnalyses();
+  };
+
+  const executeAnalyses = async () => {
     const selected = selectedAnalyses.map(a =>
       a.startsWith("custom:") ? a.slice(7) : t(`student.analysis.${a}`)
     ).join(", ");
-    setMessages(prev => [
-      ...prev,
-      { role: "user", content: `${t("joel.selectedAnalyses")}: ${selected}` },
-    ]);
-    setPhase("ready");
-    scrollToBottom();
 
-    // Trigger real statistical computations
-    runAnalyses(selectedAnalyses, selectedSoftware);
+    setPhase("ready");
+
+    // Run analyses with selected variables
+    runAnalyses(selectedAnalyses, selectedSoftware, selectedDepVar || undefined, selectedIndVars.length > 0 ? selectedIndVars : undefined);
 
     // Auto-save analysis to database
     try {
@@ -357,10 +407,9 @@ Keep under 80 words.`;
           type: selectedAnalyses.join(","),
           status: "completed",
           user_type: level.includes("master") ? "student_master" : level.includes("doctor") ? "student_doctorate" : "student_license",
-          results: { analyses: selectedAnalyses, software: selectedSoftware, dataset: file?.name } as any,
+          results: { analyses: selectedAnalyses, software: selectedSoftware, dataset: file?.name, depVar: selectedDepVar, indVars: selectedIndVars } as any,
         } as any);
 
-        // Update project status to active
         if (projectId) {
           await supabase.from("projects").update({ status: "active" } as any).eq("id", projectId);
         }
@@ -374,6 +423,7 @@ Keep under 80 words.`;
       : "";
 
     const prompt = `Selected analyses: ${selected}. Software: ${selectedSoftware}. Dataset: ${file?.name || "uploaded dataset"}.
+${selectedDepVar ? `Dependent variable: ${selectedDepVar}. Independent: ${selectedIndVars.join(", ")}.` : ""}
 ${variableInfo}
 
 Respond concisely:
