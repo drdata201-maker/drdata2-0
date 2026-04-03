@@ -272,7 +272,7 @@ export default function AnalysisWorkspace() {
 
             <TabsContent value="interpretation" className="mt-0 animate-fade-in">
               <PanelBoundary fallback={<PanelLoading />}>
-                <WorkspaceInterpretation level={level} />
+                <WorkspaceInterpretation level={level} projectTitle={projectTitle} projectType={projectType} projectDomain={projectDomain} />
               </PanelBoundary>
             </TabsContent>
 
