@@ -693,5 +693,9 @@
   "dataPrep.duplicates": "duplicate rows detected",
   "dataPrep.error": "Error during data preparation",
   "dataPrep.type.date": "Date",
-  "dataPrep.type.text": "Text"
+  "dataPrep.type.text": "Text",
+  "joel.selectSoftware": "Select your statistical software",
+  "joel.selectedSoftware": "Selected software",
+  "joel.otherSoftware": "Other",
+  "joel.specifySoftware": "Specify software..."
 }

@@ -693,5 +693,9 @@
   "dataPrep.duplicates": "doppelte Zeilen erkannt",
   "dataPrep.error": "Fehler bei der Datenvorbereitung",
   "dataPrep.type.date": "Datum",
-  "dataPrep.type.text": "Text"
+  "dataPrep.type.text": "Text",
+  "joel.selectSoftware": "Wählen Sie Ihre Statistiksoftware",
+  "joel.selectedSoftware": "Ausgewählte Software",
+  "joel.otherSoftware": "Andere",
+  "joel.specifySoftware": "Software angeben..."
 }

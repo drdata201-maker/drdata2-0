@@ -693,5 +693,9 @@
   "dataPrep.duplicates": "linhas duplicadas detectadas",
   "dataPrep.error": "Erro durante a preparação dos dados",
   "dataPrep.type.date": "Data",
-  "dataPrep.type.text": "Texto"
+  "dataPrep.type.text": "Texto",
+  "joel.selectSoftware": "Selecione seu software estatístico",
+  "joel.selectedSoftware": "Software selecionado",
+  "joel.otherSoftware": "Outro",
+  "joel.specifySoftware": "Especifique o software..."
 }
