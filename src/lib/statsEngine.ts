@@ -139,50 +139,8 @@ function gammainc(a: number, x: number): number {
   const Q = Math.exp(-x + a * Math.log(x) - lnGamma(a)) * f;
   return 1 - Q;
 }
-  if (x < a + 1) {
-    let sum = 1 / a;
-    let term = 1 / a;
-    for (let n = 1; n < 200; n++) {
-      term *= x / (a + n);
-      sum += term;
-      if (Math.abs(term) < sum * 1e-14) break;
-    }
-    return sum * Math.exp(-x + a * Math.log(x) - lnGamma(a));
-  }
 
-  // Use continued fraction for x >= a+1
-  let f = 1e-30;
-  let c = 1e-30;
-  let d = 0;
-  for (let i = 1; i < 200; i++) {
-    const an = i % 2 === 1
-      ? ((i + 1) / 2 - a) // odd
-      : i / 2;             // even
-    const bn = i === 1 ? x : x - a + (i + 1) / 2 + (i - 1) / 2;
-    d = bn + an * d;
-    if (Math.abs(d) < 1e-30) d = 1e-30;
-    c = bn + an / c;
-    if (Math.abs(c) < 1e-30) c = 1e-30;
-    d = 1 / d;
-    const delta = c * d;
-    f *= delta;
-    if (Math.abs(delta - 1) < 1e-14) break;
-  }
-  // Q(a,x) = e^(-x) * x^a / Gamma(a) * (1/f_continued_fraction)
-  // But simpler: use the series result complement
-  return 1 - gammainc_series_only(a, x);
-}
 
-function gammainc_series_only(a: number, x: number): number {
-  let sum = 1 / a;
-  let term = 1 / a;
-  for (let n = 1; n < 300; n++) {
-    term *= x / (a + n);
-    sum += term;
-    if (Math.abs(term) < sum * 1e-14) break;
-  }
-  return sum * Math.exp(-x + a * Math.log(x) - lnGamma(a));
-}
 
 /** Chi-square survival function: P(X² > x | df) */
 function chi2sf(x: number, df: number): number {
