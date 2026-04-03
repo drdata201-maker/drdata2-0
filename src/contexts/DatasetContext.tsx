@@ -245,13 +245,17 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     }, 2000);
   }, [dataset]);
 
-  const runAnalyses = useCallback((analysisKeys: string[], software: string) => {
+  const runAnalyses = useCallback((analysisKeys: string[], software: string, depVar?: string, indVars?: string[]) => {
     if (!dataset) return;
     const rows = cleanedData || dataset.rawData;
     const numVars = dataset.variables.filter(v => v.type === "numeric").map(v => v.name);
     const catVars = dataset.variables.filter(v => v.type === "categorical" || v.type === "ordinal").map(v => v.name);
     const newResults: AnalysisResultItem[] = [];
     const ts = new Date().toISOString();
+
+    // Use user-selected variables if provided, otherwise fall back to auto-detection
+    const effectiveDepVar = depVar || numVars[0];
+    const effectiveIndVars = indVars && indVars.length > 0 ? indVars : numVars.slice(1);
 
     for (const key of analysisKeys) {
       const analysisName = key.startsWith("custom:") ? key.slice(7) : key;
@@ -265,25 +269,34 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
         result.frequencies = computeFrequencies(rows, catVars.length ? catVars : numVars.slice(0, 3));
       }
       if (key === "correlation") {
-        result.correlations = computeCorrelations(rows, numVars);
+        const corrVars = indVars && indVars.length >= 2 ? indVars.filter(v => numVars.includes(v)) : numVars;
+        result.correlations = computeCorrelations(rows, corrVars);
       }
-      if (key === "t_test" && numVars.length && catVars.length) {
-        const t = computeTTest(rows, numVars[0], catVars[0]);
-        if (t) result.tTests = [t];
+      if (key === "t_test" && effectiveDepVar) {
+        const groupVar = indVars?.[0] || catVars[0];
+        if (groupVar) {
+          const t = computeTTest(rows, effectiveDepVar, groupVar);
+          if (t) result.tTests = [t];
+        }
       }
-      if (key === "chi_square" && catVars.length >= 2) {
-        result.chiSquares = [computeChiSquare(rows, catVars[0], catVars[1])];
+      if (key === "chi_square") {
+        const v1 = indVars?.[0] || catVars[0];
+        const v2 = indVars?.[1] || catVars[1];
+        if (v1 && v2) result.chiSquares = [computeChiSquare(rows, v1, v2)];
       }
-      if (key === "crosstab" && catVars.length >= 2) {
-        result.chiSquares = [computeChiSquare(rows, catVars[0], catVars[1])];
+      if (key === "crosstab") {
+        const v1 = indVars?.[0] || catVars[0];
+        const v2 = indVars?.[1] || catVars[1];
+        if (v1 && v2) result.chiSquares = [computeChiSquare(rows, v1, v2)];
       }
-      if ((key === "anova" || key === "anova_basic") && numVars.length && catVars.length) {
-        result.anovas = [computeAnova(rows, numVars[0], catVars[0])];
+      if ((key === "anova" || key === "anova_basic") && effectiveDepVar) {
+        const factorVar = indVars?.[0] || catVars[0];
+        if (factorVar) result.anovas = [computeAnova(rows, effectiveDepVar, factorVar)];
       }
-      if ((key === "simple_regression" || key === "multiple_regression" || key === "logistic_regression") && numVars.length >= 2) {
-        const dep = numVars[0];
-        const ind = key === "simple_regression" ? numVars.slice(1, 2) : numVars.slice(1);
-        result.regressions = [computeRegression(rows, dep, ind)];
+      if ((key === "simple_regression" || key === "multiple_regression" || key === "logistic_regression") && effectiveDepVar) {
+        const regInd = effectiveIndVars.filter(v => v !== effectiveDepVar && numVars.includes(v));
+        const ind = key === "simple_regression" ? regInd.slice(0, 1) : regInd;
+        if (ind.length > 0) result.regressions = [computeRegression(rows, effectiveDepVar, ind)];
       }
       if (key === "pca" || key === "factor_analysis" || key === "cronbach_alpha") {
         if (numVars.length) result.descriptive = computeDescriptive(rows, numVars);
