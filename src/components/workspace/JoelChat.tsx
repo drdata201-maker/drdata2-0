@@ -245,24 +245,33 @@ Keep it under 100 words. No long paragraphs.`;
     sendToAI(t("joel.confirmModify") + ". The student wants to modify their project details. Ask them what they'd like to change.");
   };
 
-  const handleFileUpload = (uploadedFile: File) => {
+  const handleFileUpload = async (uploadedFile: File) => {
     setFile(uploadedFile);
     const fileMsg = `📎 ${uploadedFile.name} (${(uploadedFile.size / 1024).toFixed(1)} KB)`;
     setMessages(prev => [...prev, { role: "user", content: fileMsg }]);
     scrollToBottom();
 
-    // Send to AI for dataset analysis
-    const prompt = `File uploaded: "${uploadedFile.name}" (${(uploadedFile.size / 1024).toFixed(1)} KB).
+    try {
+      const summary = await processFile(uploadedFile);
+
+      const prompt = `File uploaded and parsed: "${uploadedFile.name}" (${(uploadedFile.size / 1024).toFixed(1)} KB).
+Real dataset stats:
+- ${summary.observations} observations
+- ${summary.variables.length} variables (${summary.variables.filter(v => v.type === "numeric").length} numeric, ${summary.variables.filter(v => v.type === "categorical").length} categorical)
+- ${summary.totalMissingPct}% missing values
+- ${summary.duplicateRows} duplicate rows
+
 Respond concisely:
-- Acknowledge file receipt
-- State number of observations and variables detected (simulated)
-- State % missing values
+- Acknowledge file receipt with real numbers above
 - Direct to **Data Preparation** tab for details
 - Ask if they want automatic cleaning or to continue
 Keep under 80 words.`;
 
-    sendToAI(prompt);
-    setPhase("analysis");
+      sendToAI(prompt);
+      setPhase("analysis");
+    } catch {
+      sendToAI(`File upload failed for "${uploadedFile.name}". The file may be corrupted or unsupported. Ask the user to try another file. Keep under 50 words.`);
+    }
   };
 
   const toggleAnalysis = (key: string) => {
