@@ -146,11 +146,13 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
   const { processFile, dataset } = useDataset();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
-  const [phase, setPhase] = useState<"confirm" | "upload" | "software" | "analysis" | "ready">("confirm");
+  const [phase, setPhase] = useState<"confirm" | "upload" | "software" | "analysis" | "variables" | "ready">("confirm");
   const [file, setFile] = useState<File | null>(null);
   const [selectedSoftware, setSelectedSoftware] = useState<string>("");
   const [customSoftware, setCustomSoftware] = useState("");
+  const [customAnalysis, setCustomAnalysis] = useState("");
   const [selectedAnalyses, setSelectedAnalyses] = useState<string[]>([]);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [greetingSent, setGreetingSent] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
