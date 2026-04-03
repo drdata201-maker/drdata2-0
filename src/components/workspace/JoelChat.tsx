@@ -501,23 +501,54 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
           </div>
         )}
 
-        {/* Analysis selection */}
+        {/* Analysis selection - categorized */}
         {phase === "analysis" && !isStreaming && (
           <div className="mt-2 space-y-3">
             <p className="text-xs font-medium text-muted-foreground">{t("joel.askAnalysis")}</p>
-            <div className="grid grid-cols-2 gap-1.5">
-              {analyses.map(key => (
-                <Button
-                  key={key}
-                  variant={selectedAnalyses.includes(key) ? "default" : "outline"}
-                  size="sm"
-                  className="h-auto py-1.5 text-xs"
-                  onClick={() => toggleAnalysis(key)}
+            {categories.map(cat => (
+              <div key={cat.key} className="space-y-1.5">
+                <button
+                  onClick={() => setExpandedCategory(expandedCategory === cat.key ? null : cat.key)}
+                  className="flex w-full items-center justify-between rounded-md bg-muted/50 px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted transition-colors"
                 >
-                  {t(`student.analysis.${key}`)}
-                </Button>
-              ))}
+                  {t(`joel.category.${cat.key}`)}
+                  <span className="text-muted-foreground">{expandedCategory === cat.key ? "−" : "+"}</span>
+                </button>
+                {(expandedCategory === cat.key || expandedCategory === null) && (
+                  <div className="grid grid-cols-2 gap-1 pl-1">
+                    {cat.analyses.map(key => (
+                      <Button
+                        key={key}
+                        variant={selectedAnalyses.includes(key) ? "default" : "outline"}
+                        size="sm"
+                        className="h-auto py-1.5 text-xs justify-start"
+                        onClick={() => toggleAnalysis(key)}
+                      >
+                        {t(`student.analysis.${key}`)}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Other analysis */}
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">{t("joel.otherAnalysis")}</p>
+              <Input
+                value={customAnalysis}
+                onChange={e => setCustomAnalysis(e.target.value)}
+                placeholder={t("joel.specifyAnalysis")}
+                className="text-xs"
+                onKeyDown={e => {
+                  if (e.key === "Enter" && customAnalysis.trim()) {
+                    setSelectedAnalyses(prev => [...prev, `custom:${customAnalysis.trim()}`]);
+                    setCustomAnalysis("");
+                  }
+                }}
+              />
             </div>
+
             {selectedAnalyses.length > 0 && (
               <Button size="sm" className="w-full" onClick={confirmAnalyses}>
                 <Sparkles className="mr-1 h-3 w-3" />
