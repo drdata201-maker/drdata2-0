@@ -139,9 +139,6 @@ function gammainc(a: number, x: number): number {
   const Q = Math.exp(-x + a * Math.log(x) - lnGamma(a)) * f;
   return 1 - Q;
 }
-function gammainc(a: number, x: number): number {
-  if (x <= 0) return 0;
-  if (x > a + 200) return 1; // large x → converges to 1
 
   // Use series expansion for x < a+1
   if (x < a + 1) {
