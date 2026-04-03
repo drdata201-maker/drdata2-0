@@ -529,7 +529,7 @@
   "student.analysis.factor_analysis": "Análise fatorial",
   "student.analysis.pca": "ACP",
   "student.analysis.cronbach_alpha": "Alfa de Cronbach",
-  "student.analysis.cluster_analysis": "Análise cluster",
+  "student.analysis.cluster_analysis": "Análise de clusters",
   "student.analysis.panel_data": "Dados em painel",
   "student.analysis.time_series": "Séries temporais",
   "student.analysis.sem": "Equações estruturais",
@@ -697,5 +697,16 @@
   "joel.selectSoftware": "Selecione seu software estatístico",
   "joel.selectedSoftware": "Software selecionado",
   "joel.otherSoftware": "Outro",
-  "joel.specifySoftware": "Especifique o software..."
+  "joel.specifySoftware": "Especifique o software...",
+  "joel.category.descriptive": "Análise descritiva",
+  "joel.category.comparative": "Análise comparativa",
+  "joel.category.relationship": "Análise relacional",
+  "joel.category.predictive": "Análise preditiva",
+  "joel.category.reliability": "Confiabilidade",
+  "joel.category.advanced": "Análise avançada",
+  "joel.otherAnalysis": "Outra análise",
+  "joel.specifyAnalysis": "Especifique a análise...",
+  "student.analysis.anova_basic": "ANOVA (básico)",
+  "student.analysis.nonparametric": "Testes não paramétricos",
+  "student.analysis.multivariate": "Análise multivariada"
 }

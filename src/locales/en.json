@@ -529,7 +529,7 @@
   "student.analysis.factor_analysis": "Factor Analysis",
   "student.analysis.pca": "PCA",
   "student.analysis.cronbach_alpha": "Cronbach's Alpha",
-  "student.analysis.cluster_analysis": "Cluster Analysis",
+  "student.analysis.cluster_analysis": "Cluster analysis",
   "student.analysis.panel_data": "Panel Data",
   "student.analysis.time_series": "Time Series",
   "student.analysis.sem": "Structural Equation Modeling",
@@ -697,5 +697,16 @@
   "joel.selectSoftware": "Select your statistical software",
   "joel.selectedSoftware": "Selected software",
   "joel.otherSoftware": "Other",
-  "joel.specifySoftware": "Specify software..."
+  "joel.specifySoftware": "Specify software...",
+  "joel.category.descriptive": "Descriptive Analysis",
+  "joel.category.comparative": "Comparative Analysis",
+  "joel.category.relationship": "Relationship Analysis",
+  "joel.category.predictive": "Predictive Analysis",
+  "joel.category.reliability": "Reliability",
+  "joel.category.advanced": "Advanced Analysis",
+  "joel.otherAnalysis": "Other analysis",
+  "joel.specifyAnalysis": "Specify analysis...",
+  "student.analysis.anova_basic": "ANOVA (basic)",
+  "student.analysis.nonparametric": "Non-parametric tests",
+  "student.analysis.multivariate": "Multivariate analysis"
 }

@@ -697,5 +697,16 @@
   "joel.selectSoftware": "Wählen Sie Ihre Statistiksoftware",
   "joel.selectedSoftware": "Ausgewählte Software",
   "joel.otherSoftware": "Andere",
-  "joel.specifySoftware": "Software angeben..."
+  "joel.specifySoftware": "Software angeben...",
+  "joel.category.descriptive": "Deskriptive Analyse",
+  "joel.category.comparative": "Vergleichende Analyse",
+  "joel.category.relationship": "Beziehungsanalyse",
+  "joel.category.predictive": "Prädiktive Analyse",
+  "joel.category.reliability": "Reliabilität",
+  "joel.category.advanced": "Erweiterte Analyse",
+  "joel.otherAnalysis": "Andere Analyse",
+  "joel.specifyAnalysis": "Analyse angeben...",
+  "student.analysis.anova_basic": "ANOVA (Grundlagen)",
+  "student.analysis.nonparametric": "Nichtparametrische Tests",
+  "student.analysis.multivariate": "Multivariate Analyse"
 }
