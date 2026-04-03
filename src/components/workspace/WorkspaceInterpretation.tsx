@@ -8,18 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BookOpen, GraduationCap, Target, Lightbulb, Loader2, RefreshCw, AlertCircle } from "lucide-react";
 
-interface InterpretationSection {
-  analysisType: string;
-  interpretation: string;
-  conclusion: string;
-  recommendations: string;
-}
-
-interface InterpretationData {
-  sections: InterpretationSection[];
-  globalConclusion: string;
-  globalRecommendations: string;
-}
+// Types are now imported from DatasetContext
 
 interface WorkspaceInterpretationProps {
   level: string;
