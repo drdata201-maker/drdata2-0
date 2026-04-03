@@ -137,6 +137,7 @@ export default function AnalysisWorkspace() {
   };
 
   return (
+    <DatasetProvider>
     <div className={cn(
       "flex min-h-screen flex-col bg-background transition-all duration-300",
       isFullscreen && "fixed inset-0 z-50"
