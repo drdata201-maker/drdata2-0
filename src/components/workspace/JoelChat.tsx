@@ -112,8 +112,10 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
   const { processFile, dataset } = useDataset();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
-  const [phase, setPhase] = useState<"confirm" | "upload" | "analysis" | "ready">("confirm");
+  const [phase, setPhase] = useState<"confirm" | "upload" | "software" | "analysis" | "ready">("confirm");
   const [file, setFile] = useState<File | null>(null);
+  const [selectedSoftware, setSelectedSoftware] = useState<string>("");
+  const [customSoftware, setCustomSoftware] = useState("");
   const [selectedAnalyses, setSelectedAnalyses] = useState<string[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [greetingSent, setGreetingSent] = useState(false);
@@ -268,10 +270,21 @@ Respond concisely:
 Keep under 80 words.`;
 
       sendToAI(prompt);
-      setPhase("analysis");
+      setPhase("software");
     } catch {
       sendToAI(`File upload failed for "${uploadedFile.name}". The file may be corrupted or unsupported. Ask the user to try another file. Keep under 50 words.`);
     }
+  };
+
+  const SOFTWARE_OPTIONS = ["SPSS", "Stata", "R", "Epi Info", "Jamovi", "Excel", "Python"];
+
+  const handleSoftwareSelect = (sw: string) => {
+    const name = sw === "other" ? customSoftware || "Other" : sw;
+    setSelectedSoftware(name);
+    setMessages(prev => [...prev, { role: "user", content: `🖥️ ${t("joel.selectedSoftware")}: ${name}` }]);
+    setPhase("analysis");
+    scrollToBottom();
+    sendToAI(`Student selected "${name}" as statistical software. Acknowledge briefly. Then ask them to select analyses. Keep under 50 words.`);
   };
 
   const toggleAnalysis = (key: string) => {
@@ -287,10 +300,10 @@ Keep under 80 words.`;
     setPhase("ready");
     scrollToBottom();
 
-    const prompt = `Selected analyses: ${selected}. Dataset: ${file?.name || "uploaded dataset"}.
+    const prompt = `Selected analyses: ${selected}. Software: ${selectedSoftware}. Dataset: ${file?.name || "uploaded dataset"}.
 
 Respond concisely:
-- Confirm analyses are running
+- Confirm analyses are running using ${selectedSoftware}-style output
 - Direct to **Results** tab for statistical tables
 - Direct to **Graphs** tab for visualizations
 - Direct to **Interpretation** tab for academic interpretation
@@ -410,6 +423,45 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
                 }}
               />
             </div>
+          </div>
+        )}
+
+        {/* Software selection */}
+        {phase === "software" && !isStreaming && (
+          <div className="mt-2 space-y-3">
+            <p className="text-xs font-medium text-muted-foreground">{t("joel.selectSoftware")}</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {SOFTWARE_OPTIONS.map(sw => (
+                <Button
+                  key={sw}
+                  variant="outline"
+                  size="sm"
+                  className="h-auto py-2 text-xs font-medium"
+                  onClick={() => handleSoftwareSelect(sw)}
+                >
+                  {sw}
+                </Button>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-auto py-2 text-xs font-medium"
+                onClick={() => {
+                  if (customSoftware.trim()) handleSoftwareSelect("other");
+                }}
+              >
+                {t("joel.otherSoftware")}
+              </Button>
+            </div>
+            <Input
+              value={customSoftware}
+              onChange={e => setCustomSoftware(e.target.value)}
+              placeholder={t("joel.specifySoftware")}
+              className="text-xs"
+              onKeyDown={e => {
+                if (e.key === "Enter" && customSoftware.trim()) handleSoftwareSelect("other");
+              }}
+            />
           </div>
         )}
 

@@ -693,5 +693,9 @@
   "dataPrep.duplicates": "filas duplicadas detectadas",
   "dataPrep.error": "Error durante la preparación de datos",
   "dataPrep.type.date": "Fecha",
-  "dataPrep.type.text": "Texto"
+  "dataPrep.type.text": "Texto",
+  "joel.selectSoftware": "Seleccione su software estadístico",
+  "joel.selectedSoftware": "Software seleccionado",
+  "joel.otherSoftware": "Otro",
+  "joel.specifySoftware": "Especifique el software..."
 }
