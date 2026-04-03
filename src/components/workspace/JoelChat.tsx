@@ -276,6 +276,17 @@ Keep under 80 words.`;
     }
   };
 
+  const SOFTWARE_OPTIONS = ["SPSS", "Stata", "R", "Epi Info", "Jamovi", "Excel", "Python"];
+
+  const handleSoftwareSelect = (sw: string) => {
+    const name = sw === "other" ? customSoftware || "Other" : sw;
+    setSelectedSoftware(name);
+    setMessages(prev => [...prev, { role: "user", content: `🖥️ ${t("joel.selectedSoftware")}: ${name}` }]);
+    setPhase("analysis");
+    scrollToBottom();
+    sendToAI(`Student selected "${name}" as statistical software. Acknowledge briefly. Then ask them to select analyses. Keep under 50 words.`);
+  };
+
   const toggleAnalysis = (key: string) => {
     setSelectedAnalyses(prev => prev.includes(key) ? prev.filter(a => a !== key) : [...prev, key]);
   };
