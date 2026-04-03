@@ -300,10 +300,10 @@ Keep under 80 words.`;
     setPhase("ready");
     scrollToBottom();
 
-    const prompt = `Selected analyses: ${selected}. Dataset: ${file?.name || "uploaded dataset"}.
+    const prompt = `Selected analyses: ${selected}. Software: ${selectedSoftware}. Dataset: ${file?.name || "uploaded dataset"}.
 
 Respond concisely:
-- Confirm analyses are running
+- Confirm analyses are running using ${selectedSoftware}-style output
 - Direct to **Results** tab for statistical tables
 - Direct to **Graphs** tab for visualizations
 - Direct to **Interpretation** tab for academic interpretation
