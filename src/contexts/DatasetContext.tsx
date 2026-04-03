@@ -161,6 +161,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   const [prepStatus, setPrepStatus] = useState<PrepStatus>("idle");
   const [prepError, setPrepError] = useState<string | null>(null);
   const [cleanedData, setCleanedData] = useState<Record<string, unknown>[] | null>(null);
+  const [analysisResults, setAnalysisResults] = useState<AnalysisResultItem[]>([]);
 
   const processFile = useCallback(async (file: File): Promise<DatasetSummary> => {
     setPrepStatus("uploading");
