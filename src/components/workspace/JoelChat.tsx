@@ -672,6 +672,93 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
           </div>
         )}
 
+        {/* Variable selection */}
+        {phase === "variables" && !isStreaming && dataset && (
+          <div className="mt-2 space-y-3">
+            <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+              <Variable className="h-3.5 w-3.5" />
+              {t("joel.selectVariables") || "Select variables for your analysis"}
+            </p>
+
+            {/* Show dependent variable selector for analyses that need it */}
+            {selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.dependent) && (
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">
+                  {t("joel.varDependent") || "Dependent variable"}
+                </label>
+                <Select value={selectedDepVar} onValueChange={setSelectedDepVar}>
+                  <SelectTrigger className="text-xs h-8">
+                    <SelectValue placeholder={t("joel.varSelectPlaceholder") || "Select variable..."} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {numericVars.map(v => (
+                      <SelectItem key={v} value={v} className="text-xs">{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Independent / paired variable selection */}
+            {selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.independent) && (
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">
+                  {t("joel.varIndependent") || "Independent variable(s)"}
+                </label>
+                <div className="flex flex-wrap gap-1">
+                  {allVarNames.filter(v => v !== selectedDepVar).map(v => (
+                    <Button
+                      key={v}
+                      variant={selectedIndVars.includes(v) ? "default" : "outline"}
+                      size="sm"
+                      className="h-auto py-1 text-xs"
+                      onClick={() => toggleIndVar(v)}
+                    >
+                      {v}
+                      <Badge variant="secondary" className="ml-1 text-[10px] px-1">
+                        {dataset.variables.find(dv => dv.name === v)?.type === "numeric" ? "N" : "C"}
+                      </Badge>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* For chi-square / correlation: just pick 2 variables */}
+            {selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.variables) && !selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.dependent) && (
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">
+                  {t("joel.varSelect2") || "Select variables"}
+                </label>
+                <div className="flex flex-wrap gap-1">
+                  {allVarNames.map(v => (
+                    <Button
+                      key={v}
+                      variant={selectedIndVars.includes(v) ? "default" : "outline"}
+                      size="sm"
+                      className="h-auto py-1 text-xs"
+                      onClick={() => toggleIndVar(v)}
+                    >
+                      {v}
+                      <Badge variant="secondary" className="ml-1 text-[10px] px-1">
+                        {dataset.variables.find(dv => dv.name === v)?.type === "numeric" ? "N" : "C"}
+                      </Badge>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Confirm variables */}
+            {(selectedDepVar || selectedIndVars.length >= 2 || (selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.independent) && selectedIndVars.length >= 1)) && (
+              <Button size="sm" className="w-full" onClick={confirmVariablesAndRun}>
+                <Sparkles className="mr-1 h-3 w-3" />
+                {t("joel.runWithVariables") || "Run analysis"}
+              </Button>
+            )}
+          </div>
+        )}
+
         {/* Quick action buttons after analysis */}
         {phase === "ready" && !isStreaming && (
           <div className="mt-3 space-y-2">
