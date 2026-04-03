@@ -9,10 +9,44 @@ import ReactMarkdown from "react-markdown";
 
 const ACCEPTED_FORMATS = ".xlsx,.xls,.csv,.sav,.dta";
 
-const ANALYSIS_OPTIONS_BY_LEVEL: Record<string, string[]> = {
-  student_license: ["descriptive_stats", "frequencies", "correlation", "t_test", "chi_square", "crosstab"],
-  student_master: ["descriptive_stats", "correlation", "simple_regression", "multiple_regression", "anova", "chi_square", "factor_analysis", "pca", "cronbach_alpha"],
-  student_doctorate: ["multiple_regression", "panel_data", "time_series", "sem", "advanced_factor_analysis", "logistic_regression", "survival_analysis", "multilevel_modeling"],
+interface AnalysisCategory {
+  key: string;
+  analyses: string[];
+}
+
+const ANALYSIS_CATEGORIES_BY_LEVEL: Record<string, AnalysisCategory[]> = {
+  student_license: [
+    { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
+    { key: "comparative", analyses: ["t_test", "chi_square", "anova_basic"] },
+    { key: "relationship", analyses: ["correlation"] },
+  ],
+  student_master: [
+    { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
+    { key: "comparative", analyses: ["t_test", "chi_square", "anova", "nonparametric"] },
+    { key: "relationship", analyses: ["correlation", "simple_regression", "multiple_regression"] },
+    { key: "predictive", analyses: ["logistic_regression", "factor_analysis"] },
+    { key: "reliability", analyses: ["cronbach_alpha", "pca"] },
+  ],
+  student_doctorate: [
+    { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
+    { key: "comparative", analyses: ["t_test", "chi_square", "anova", "nonparametric"] },
+    { key: "relationship", analyses: ["correlation", "simple_regression", "multiple_regression"] },
+    { key: "predictive", analyses: ["logistic_regression", "factor_analysis", "sem"] },
+    { key: "advanced", analyses: ["pca", "cluster_analysis", "panel_data", "time_series", "survival_analysis", "multilevel_modeling", "multivariate"] },
+  ],
+};
+
+// Analyses that require variable selection
+const VARIABLE_REQUIRING: Record<string, { dependent?: boolean; independent?: boolean; variables?: number }> = {
+  correlation: { variables: 2 },
+  simple_regression: { dependent: true, independent: true },
+  multiple_regression: { dependent: true, independent: true },
+  logistic_regression: { dependent: true, independent: true },
+  t_test: { dependent: true, independent: true },
+  anova: { dependent: true, independent: true },
+  anova_basic: { dependent: true, independent: true },
+  chi_square: { variables: 2 },
+  crosstab: { variables: 2 },
 };
 
 type Msg = { role: "assistant" | "user"; content: string; type?: string };
