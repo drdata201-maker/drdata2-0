@@ -4,9 +4,9 @@ import { useDataset } from "@/contexts/DatasetContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  BarChart, Bar, LineChart, Line, ScatterChart, Scatter,
+  BarChart, Bar, ScatterChart, Scatter,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, BoxPlot, Legend,
+  PieChart, Pie, Cell,
 } from "recharts";
 import { BarChart3, Upload } from "lucide-react";
 
