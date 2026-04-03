@@ -60,7 +60,7 @@ interface DatasetContextType {
   setInterpretationData: (data: InterpretationData | null) => void;
   processFile: (file: File) => Promise<DatasetSummary>;
   runCleaning: () => void;
-  runAnalyses: (analysisKeys: string[], software: string) => void;
+  runAnalyses: (analysisKeys: string[], software: string, depVar?: string, indVars?: string[]) => void;
   reset: () => void;
 }
 
