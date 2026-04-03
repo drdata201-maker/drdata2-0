@@ -456,7 +456,7 @@ export function computeAnova(
   const dfWithin = allVals.length - Object.keys(groups).length;
   const msBetween = dfBetween > 0 ? ssBetween / dfBetween : 0;
   const msWithin = dfWithin > 0 ? ssWithin / dfWithin : 0;
-  const fStat = msWithin > 0 ? msBetween / msWithin : 0;
+  const fStat = msWithin > 0 ? msBetween / msWithin : (msBetween > 0 ? 1e6 : 0);
 
   return {
     dependent: depVar,
