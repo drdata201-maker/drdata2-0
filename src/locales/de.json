@@ -684,5 +684,14 @@
   "export.conclusionOnly": "Schlussfolgerung & Empfehlungen",
   "export.sampleInterpretation": "Die statistische Analyse zeigt signifikante Ergebnisse. Die untersuchten Variablen zeigen relevante Korrelationen für die akademische Forschung.",
   "export.sampleConclusion": "Die Ergebnisse dieser Studie bestätigen die Forschungshypothesen. Die analysierten Daten zeigen signifikante Trends.",
-  "export.sampleRecommendations": "Es wird empfohlen, die Analyse mit einer größeren Stichprobe zu vertiefen. Ergänzende Studien könnten die identifizierten Moderatorvariablen untersuchen."
+  "export.sampleRecommendations": "Es wird empfohlen, die Analyse mit einer größeren Stichprobe zu vertiefen. Ergänzende Studien könnten die identifizierten Moderatorvariablen untersuchen.",
+  "dataPrep.noData": "Kein Datensatz geladen",
+  "dataPrep.uploadFirst": "Bitte laden Sie zuerst eine Datei über den Assistenten-Tab hoch",
+  "dataPrep.stepUploading": "Hochladen",
+  "dataPrep.stepReading": "Datei lesen",
+  "dataPrep.stepCleaning": "Daten bereinigen",
+  "dataPrep.duplicates": "doppelte Zeilen erkannt",
+  "dataPrep.error": "Fehler bei der Datenvorbereitung",
+  "dataPrep.type.date": "Datum",
+  "dataPrep.type.text": "Text"
 }

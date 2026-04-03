@@ -1,6 +1,7 @@
 import { Component, ReactNode, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { DatasetProvider } from "@/contexts/DatasetContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -136,6 +137,7 @@ export default function AnalysisWorkspace() {
   };
 
   return (
+    <DatasetProvider>
     <div className={cn(
       "flex min-h-screen flex-col bg-background transition-all duration-300",
       isFullscreen && "fixed inset-0 z-50"
@@ -289,5 +291,6 @@ export default function AnalysisWorkspace() {
         </Tabs>
       </div>
     </div>
+    </DatasetProvider>
   );
 }

@@ -684,5 +684,14 @@
   "export.conclusionOnly": "Conclusion & Recommendations",
   "export.sampleInterpretation": "The statistical analysis reveals significant results. The studied variables show relevant correlations for academic research. Statistical tests confirm the validity of the formulated hypotheses.",
   "export.sampleConclusion": "The results of this study confirm the research hypotheses. The analyzed data demonstrate significant trends that contribute to the existing academic literature.",
-  "export.sampleRecommendations": "It is recommended to deepen the analysis with a larger sample. Complementary studies could explore the identified moderating variables."
+  "export.sampleRecommendations": "It is recommended to deepen the analysis with a larger sample. Complementary studies could explore the identified moderating variables.",
+  "dataPrep.noData": "No dataset loaded",
+  "dataPrep.uploadFirst": "Please upload a file first via the Assistant tab",
+  "dataPrep.stepUploading": "Uploading",
+  "dataPrep.stepReading": "Reading file",
+  "dataPrep.stepCleaning": "Cleaning data",
+  "dataPrep.duplicates": "duplicate rows detected",
+  "dataPrep.error": "Error during data preparation",
+  "dataPrep.type.date": "Date",
+  "dataPrep.type.text": "Text"
 }

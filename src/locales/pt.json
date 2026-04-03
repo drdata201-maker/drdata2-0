@@ -684,5 +684,14 @@
   "export.conclusionOnly": "Conclusão e recomendações",
   "export.sampleInterpretation": "A análise estatística revela resultados significativos. As variáveis estudadas mostram correlações relevantes para a pesquisa acadêmica.",
   "export.sampleConclusion": "Os resultados deste estudo confirmam as hipóteses de pesquisa. Os dados analisados demonstram tendências significativas.",
-  "export.sampleRecommendations": "Recomenda-se aprofundar a análise com uma amostra maior. Estudos complementares poderiam explorar as variáveis moderadoras identificadas."
+  "export.sampleRecommendations": "Recomenda-se aprofundar a análise com uma amostra maior. Estudos complementares poderiam explorar as variáveis moderadoras identificadas.",
+  "dataPrep.noData": "Nenhum conjunto de dados carregado",
+  "dataPrep.uploadFirst": "Por favor, envie um arquivo primeiro pela aba Assistente",
+  "dataPrep.stepUploading": "Enviando",
+  "dataPrep.stepReading": "Lendo arquivo",
+  "dataPrep.stepCleaning": "Limpando dados",
+  "dataPrep.duplicates": "linhas duplicadas detectadas",
+  "dataPrep.error": "Erro durante a preparação dos dados",
+  "dataPrep.type.date": "Data",
+  "dataPrep.type.text": "Texto"
 }

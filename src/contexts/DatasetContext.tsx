@@ -1,0 +1,229 @@
+import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import * as XLSX from "xlsx";
+
+export interface VariableInfo {
+  name: string;
+  type: "numeric" | "categorical" | "ordinal" | "date" | "text";
+  missing: number;
+  missingPct: number;
+  outliers: number;
+  uniqueValues: number;
+  sample: (string | number | null)[];
+}
+
+export interface DatasetSummary {
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  observations: number;
+  variables: VariableInfo[];
+  duplicateRows: number;
+  totalMissing: number;
+  totalMissingPct: number;
+  rawData: Record<string, unknown>[];
+}
+
+type PrepStatus = "idle" | "uploading" | "reading" | "cleaning" | "ready" | "error";
+
+interface DatasetContextType {
+  dataset: DatasetSummary | null;
+  prepStatus: PrepStatus;
+  prepError: string | null;
+  cleanedData: Record<string, unknown>[] | null;
+  processFile: (file: File) => Promise<DatasetSummary>;
+  runCleaning: () => void;
+  reset: () => void;
+}
+
+const DatasetContext = createContext<DatasetContextType | null>(null);
+
+export function useDataset() {
+  const ctx = useContext(DatasetContext);
+  if (!ctx) throw new Error("useDataset must be used within DatasetProvider");
+  return ctx;
+}
+
+function detectType(values: unknown[]): VariableInfo["type"] {
+  const nonNull = values.filter(v => v != null && v !== "");
+  if (nonNull.length === 0) return "text";
+
+  let numCount = 0;
+  let dateCount = 0;
+
+  for (const v of nonNull.slice(0, 100)) {
+    if (typeof v === "number" || (!isNaN(Number(v)) && String(v).trim() !== "")) {
+      numCount++;
+    } else if (v instanceof Date || (!isNaN(Date.parse(String(v))) && String(v).length > 6)) {
+      dateCount++;
+    }
+  }
+
+  const sample = nonNull.slice(0, 100).length;
+  if (numCount / sample > 0.8) return "numeric";
+  if (dateCount / sample > 0.8) return "date";
+
+  const unique = new Set(nonNull.map(String)).size;
+  if (unique <= 10 && nonNull.length > 20) return "categorical";
+  if (unique <= 20 && nonNull.length > 50) return "ordinal";
+
+  return "text";
+}
+
+function detectOutliers(values: unknown[]): number {
+  const nums = values.filter(v => typeof v === "number" || (!isNaN(Number(v)) && v != null && v !== "")).map(Number);
+  if (nums.length < 10) return 0;
+  const sorted = [...nums].sort((a, b) => a - b);
+  const q1 = sorted[Math.floor(sorted.length * 0.25)];
+  const q3 = sorted[Math.floor(sorted.length * 0.75)];
+  const iqr = q3 - q1;
+  const lower = q1 - 1.5 * iqr;
+  const upper = q3 + 1.5 * iqr;
+  return nums.filter(n => n < lower || n > upper).length;
+}
+
+function analyzeDataset(rows: Record<string, unknown>[], fileName: string, fileSize: number): DatasetSummary {
+  if (rows.length === 0) throw new Error("Empty dataset");
+
+  const columns = Object.keys(rows[0]);
+  const variables: VariableInfo[] = columns.map(col => {
+    const values = rows.map(r => r[col]);
+    const missing = values.filter(v => v == null || v === "" || (typeof v === "number" && isNaN(v))).length;
+    const nonNull = values.filter(v => v != null && v !== "");
+    const type = detectType(values);
+
+    return {
+      name: col,
+      type,
+      missing,
+      missingPct: Math.round((missing / rows.length) * 1000) / 10,
+      outliers: type === "numeric" ? detectOutliers(values) : 0,
+      uniqueValues: new Set(nonNull.map(String)).size,
+      sample: nonNull.slice(0, 5).map(v => v as string | number | null),
+    };
+  });
+
+  const totalMissing = variables.reduce((s, v) => s + v.missing, 0);
+  const totalCells = rows.length * columns.length;
+
+  // Detect duplicates
+  const rowStrings = rows.map(r => JSON.stringify(r));
+  const duplicateRows = rowStrings.length - new Set(rowStrings).size;
+
+  const ext = fileName.split(".").pop()?.toLowerCase() || "";
+  const typeMap: Record<string, string> = { xlsx: "Excel", xls: "Excel", csv: "CSV", sav: "SPSS", dta: "Stata", json: "JSON" };
+
+  return {
+    fileName,
+    fileSize,
+    fileType: typeMap[ext] || ext.toUpperCase(),
+    observations: rows.length,
+    variables,
+    duplicateRows,
+    totalMissing,
+    totalMissingPct: Math.round((totalMissing / totalCells) * 1000) / 10,
+    rawData: rows,
+  };
+}
+
+async function parseFile(file: File): Promise<Record<string, unknown>[]> {
+  const buffer = await file.arrayBuffer();
+  const ext = file.name.split(".").pop()?.toLowerCase();
+
+  if (ext === "csv") {
+    const text = new TextDecoder().decode(buffer);
+    const wb = XLSX.read(text, { type: "string" });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    return XLSX.utils.sheet_to_json(sheet, { defval: null });
+  }
+
+  // xlsx, xls, and other formats supported by xlsx library
+  const wb = XLSX.read(buffer, { type: "array" });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  return XLSX.utils.sheet_to_json(sheet, { defval: null });
+}
+
+export function DatasetProvider({ children }: { children: ReactNode }) {
+  const [dataset, setDataset] = useState<DatasetSummary | null>(null);
+  const [prepStatus, setPrepStatus] = useState<PrepStatus>("idle");
+  const [prepError, setPrepError] = useState<string | null>(null);
+  const [cleanedData, setCleanedData] = useState<Record<string, unknown>[] | null>(null);
+
+  const processFile = useCallback(async (file: File): Promise<DatasetSummary> => {
+    setPrepStatus("uploading");
+    setPrepError(null);
+
+    try {
+      await new Promise(r => setTimeout(r, 500)); // brief upload simulation
+      setPrepStatus("reading");
+
+      const rows = await parseFile(file);
+      if (rows.length === 0) throw new Error("Empty dataset");
+
+      const summary = analyzeDataset(rows, file.name, file.size);
+      setDataset(summary);
+      setPrepStatus("ready");
+      return summary;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      setPrepError(msg);
+      setPrepStatus("error");
+      throw err;
+    }
+  }, []);
+
+  const runCleaning = useCallback(() => {
+    if (!dataset) return;
+    setPrepStatus("cleaning");
+
+    setTimeout(() => {
+      // Simulate cleaning: remove duplicates, fill missing with defaults
+      const seen = new Set<string>();
+      const cleaned = dataset.rawData.filter(row => {
+        const key = JSON.stringify(row);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).map(row => {
+        const cleaned: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(row)) {
+          if (v == null || v === "") {
+            const varInfo = dataset.variables.find(vi => vi.name === k);
+            cleaned[k] = varInfo?.type === "numeric" ? 0 : "N/A";
+          } else {
+            cleaned[k] = v;
+          }
+        }
+        return cleaned;
+      });
+
+      setCleanedData(cleaned);
+
+      // Update dataset summary after cleaning
+      const updatedVars = dataset.variables.map(v => ({ ...v, missing: 0, missingPct: 0 }));
+      setDataset(prev => prev ? {
+        ...prev,
+        observations: cleaned.length,
+        duplicateRows: 0,
+        totalMissing: 0,
+        totalMissingPct: 0,
+        variables: updatedVars,
+        rawData: cleaned,
+      } : null);
+
+      setPrepStatus("ready");
+    }, 2000);
+  }, [dataset]);
+
+  const reset = useCallback(() => {
+    setDataset(null);
+    setPrepStatus("idle");
+    setPrepError(null);
+    setCleanedData(null);
+  }, []);
+
+  return (
+    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, processFile, runCleaning, reset }}>
+      {children}
+    </DatasetContext.Provider>
+  );
+}
