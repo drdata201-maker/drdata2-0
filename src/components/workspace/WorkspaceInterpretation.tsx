@@ -28,7 +28,7 @@ interface WorkspaceInterpretationProps {
 }
 
 export function WorkspaceInterpretation({ level, projectTitle, projectType, projectDomain }: WorkspaceInterpretationProps) {
-  const { t, language } = useLanguage();
+  const { t, lang: language } = useLanguage();
   const { analysisResults } = useDataset();
   const [data, setData] = useState<InterpretationData | null>(null);
   const [loading, setLoading] = useState(false);
