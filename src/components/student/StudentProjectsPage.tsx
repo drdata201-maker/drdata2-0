@@ -18,7 +18,7 @@ interface ProjectRow {
   created_at: string;
 }
 
-const STATUS_ORDER = ["created", "data_uploaded", "analysis_running", "completed"];
+const STATUS_ORDER = ["draft", "active", "completed", "archived"];
 
 export function StudentProjectsPage({ baseRoute, userType }: { baseRoute: string; userType: string }) {
   const { t } = useLanguage();
