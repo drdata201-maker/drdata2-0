@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset } from "@/contexts/DatasetContext";
+import type { InterpretationData } from "@/contexts/DatasetContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
