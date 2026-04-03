@@ -664,7 +664,7 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
             </div>
 
             {selectedAnalyses.length > 0 && (
-              <Button size="sm" className="w-full" onClick={confirmAnalyses}>
+              <Button size="sm" className="w-full" onClick={handleConfirmAnalysesStep}>
                 <Sparkles className="mr-1 h-3 w-3" />
                 {t("joel.startAnalysis")} ({selectedAnalyses.length})
               </Button>
