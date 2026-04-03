@@ -101,16 +101,16 @@ function lnGamma(x: number): number {
   return 0.5 * Math.log(2 * Math.PI) + (x + 0.5) * Math.log(t) - t + Math.log(a);
 }
 
-/** Regularized lower incomplete gamma function P(a, x) via series expansion */
+/** Regularized lower incomplete gamma function P(a, x) */
 function gammainc(a: number, x: number): number {
   if (x <= 0) return 0;
-  if (x > a + 200) return 1; // large x → converges to 1
+  if (x > a + 200) return 1;
 
-  // Use series expansion for x < a+1
+  // Use series expansion for x < a+1 (converges fast)
   if (x < a + 1) {
     let sum = 1 / a;
     let term = 1 / a;
-    for (let n = 1; n < 200; n++) {
+    for (let n = 1; n < 300; n++) {
       term *= x / (a + n);
       sum += term;
       if (Math.abs(term) < sum * 1e-14) break;
@@ -118,39 +118,29 @@ function gammainc(a: number, x: number): number {
     return sum * Math.exp(-x + a * Math.log(x) - lnGamma(a));
   }
 
-  // Use continued fraction for x >= a+1
-  let f = 1e-30;
-  let c = 1e-30;
-  let d = 0;
-  for (let i = 1; i < 200; i++) {
-    const an = i % 2 === 1
-      ? ((i + 1) / 2 - a) // odd
-      : i / 2;             // even
-    const bn = i === 1 ? x : x - a + (i + 1) / 2 + (i - 1) / 2;
-    d = bn + an * d;
+  // Use continued fraction for Q(a,x) when x >= a+1, then P = 1 - Q
+  // Legendre CF: Q(a,x) = e^(-x)*x^a/Gamma(a) * CF
+  let b = x + 1 - a;
+  let c = 1e30;
+  let d = 1 / b;
+  let f = d;
+  for (let i = 1; i <= 300; i++) {
+    const an = -i * (i - a);
+    b += 2;
+    d = an * d + b;
     if (Math.abs(d) < 1e-30) d = 1e-30;
-    c = bn + an / c;
+    c = b + an / c;
     if (Math.abs(c) < 1e-30) c = 1e-30;
     d = 1 / d;
-    const delta = c * d;
+    const delta = d * c;
     f *= delta;
     if (Math.abs(delta - 1) < 1e-14) break;
   }
-  // Q(a,x) = e^(-x) * x^a / Gamma(a) * (1/f_continued_fraction)
-  // But simpler: use the series result complement
-  return 1 - gammainc_series_only(a, x);
+  const Q = Math.exp(-x + a * Math.log(x) - lnGamma(a)) * f;
+  return 1 - Q;
 }
 
-function gammainc_series_only(a: number, x: number): number {
-  let sum = 1 / a;
-  let term = 1 / a;
-  for (let n = 1; n < 300; n++) {
-    term *= x / (a + n);
-    sum += term;
-    if (Math.abs(term) < sum * 1e-14) break;
-  }
-  return sum * Math.exp(-x + a * Math.log(x) - lnGamma(a));
-}
+
 
 /** Chi-square survival function: P(X² > x | df) */
 function chi2sf(x: number, df: number): number {
@@ -466,7 +456,7 @@ export function computeAnova(
   const dfWithin = allVals.length - Object.keys(groups).length;
   const msBetween = dfBetween > 0 ? ssBetween / dfBetween : 0;
   const msWithin = dfWithin > 0 ? ssWithin / dfWithin : 0;
-  const fStat = msWithin > 0 ? msBetween / msWithin : 0;
+  const fStat = msWithin > 0 ? msBetween / msWithin : (msBetween > 0 ? 1e6 : 0);
 
   return {
     dependent: depVar,
@@ -512,7 +502,7 @@ export function computeRegression(
     const seB0 = Math.sqrt(mse * (1 / n + xMean ** 2 / ssXX));
     const tB1 = seB1 > 0 ? b1 / seB1 : 0;
     const tB0 = seB0 > 0 ? b0 / seB0 : 0;
-    const fStat = mse > 0 ? (ssTot - ssRes) / mse : 0;
+    const fStat = mse > 0 ? (ssTot - ssRes) / mse : (ssTot > ssRes ? 1e6 : 0);
 
     return {
       dependent: depVar,
