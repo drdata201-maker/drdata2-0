@@ -139,8 +139,6 @@ function gammainc(a: number, x: number): number {
   const Q = Math.exp(-x + a * Math.log(x) - lnGamma(a)) * f;
   return 1 - Q;
 }
-
-  // Use series expansion for x < a+1
   if (x < a + 1) {
     let sum = 1 / a;
     let term = 1 / a;
