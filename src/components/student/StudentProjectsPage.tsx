@@ -47,10 +47,10 @@ export function StudentProjectsPage({ baseRoute, userType }: { baseRoute: string
 
   const statusVariant = (s: string) => {
     switch (s) {
-      case "created": return "outline";
-      case "data_uploaded": return "secondary";
-      case "analysis_running": return "default";
+      case "draft": return "outline";
+      case "active": return "secondary";
       case "completed": return "default";
+      case "archived": return "outline";
       default: return "outline";
     }
   };
