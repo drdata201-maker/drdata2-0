@@ -328,7 +328,9 @@ Keep under 80 words.`;
   };
 
   const confirmAnalyses = () => {
-    const selected = selectedAnalyses.map(a => t(`student.analysis.${a}`)).join(", ");
+    const selected = selectedAnalyses.map(a =>
+      a.startsWith("custom:") ? a.slice(7) : t(`student.analysis.${a}`)
+    ).join(", ");
     setMessages(prev => [
       ...prev,
       { role: "user", content: `${t("joel.selectedAnalyses")}: ${selected}` },
@@ -336,7 +338,12 @@ Keep under 80 words.`;
     setPhase("ready");
     scrollToBottom();
 
+    const variableInfo = dataset
+      ? `Available variables: ${dataset.variables.map(v => `${v.name} (${v.type})`).join(", ")}.`
+      : "";
+
     const prompt = `Selected analyses: ${selected}. Software: ${selectedSoftware}. Dataset: ${file?.name || "uploaded dataset"}.
+${variableInfo}
 
 Respond concisely:
 - Confirm analyses are running using ${selectedSoftware}-style output
