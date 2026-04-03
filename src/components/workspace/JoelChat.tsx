@@ -426,6 +426,45 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
           </div>
         )}
 
+        {/* Software selection */}
+        {phase === "software" && !isStreaming && (
+          <div className="mt-2 space-y-3">
+            <p className="text-xs font-medium text-muted-foreground">{t("joel.selectSoftware")}</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {SOFTWARE_OPTIONS.map(sw => (
+                <Button
+                  key={sw}
+                  variant="outline"
+                  size="sm"
+                  className="h-auto py-2 text-xs font-medium"
+                  onClick={() => handleSoftwareSelect(sw)}
+                >
+                  {sw}
+                </Button>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-auto py-2 text-xs font-medium"
+                onClick={() => {
+                  if (customSoftware.trim()) handleSoftwareSelect("other");
+                }}
+              >
+                {t("joel.otherSoftware")}
+              </Button>
+            </div>
+            <Input
+              value={customSoftware}
+              onChange={e => setCustomSoftware(e.target.value)}
+              placeholder={t("joel.specifySoftware")}
+              className="text-xs"
+              onKeyDown={e => {
+                if (e.key === "Enter" && customSoftware.trim()) handleSoftwareSelect("other");
+              }}
+            />
+          </div>
+        )}
+
         {/* Analysis selection */}
         {phase === "analysis" && !isStreaming && (
           <div className="mt-2 space-y-3">
