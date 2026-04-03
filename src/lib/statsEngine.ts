@@ -101,7 +101,44 @@ function lnGamma(x: number): number {
   return 0.5 * Math.log(2 * Math.PI) + (x + 0.5) * Math.log(t) - t + Math.log(a);
 }
 
-/** Regularized lower incomplete gamma function P(a, x) via series expansion */
+/** Regularized lower incomplete gamma function P(a, x) */
+function gammainc(a: number, x: number): number {
+  if (x <= 0) return 0;
+  if (x > a + 200) return 1;
+
+  // Use series expansion for x < a+1 (converges fast)
+  if (x < a + 1) {
+    let sum = 1 / a;
+    let term = 1 / a;
+    for (let n = 1; n < 300; n++) {
+      term *= x / (a + n);
+      sum += term;
+      if (Math.abs(term) < sum * 1e-14) break;
+    }
+    return sum * Math.exp(-x + a * Math.log(x) - lnGamma(a));
+  }
+
+  // Use continued fraction for Q(a,x) when x >= a+1, then P = 1 - Q
+  // Legendre CF: Q(a,x) = e^(-x)*x^a/Gamma(a) * CF
+  let b = x + 1 - a;
+  let c = 1e30;
+  let d = 1 / b;
+  let f = d;
+  for (let i = 1; i <= 300; i++) {
+    const an = -i * (i - a);
+    b += 2;
+    d = an * d + b;
+    if (Math.abs(d) < 1e-30) d = 1e-30;
+    c = b + an / c;
+    if (Math.abs(c) < 1e-30) c = 1e-30;
+    d = 1 / d;
+    const delta = d * c;
+    f *= delta;
+    if (Math.abs(delta - 1) < 1e-14) break;
+  }
+  const Q = Math.exp(-x + a * Math.log(x) - lnGamma(a)) * f;
+  return 1 - Q;
+}
 function gammainc(a: number, x: number): number {
   if (x <= 0) return 0;
   if (x > a + 200) return 1; // large x → converges to 1
