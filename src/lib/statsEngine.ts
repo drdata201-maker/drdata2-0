@@ -502,7 +502,7 @@ export function computeRegression(
     const seB0 = Math.sqrt(mse * (1 / n + xMean ** 2 / ssXX));
     const tB1 = seB1 > 0 ? b1 / seB1 : 0;
     const tB0 = seB0 > 0 ? b0 / seB0 : 0;
-    const fStat = mse > 0 ? (ssTot - ssRes) / mse : 0;
+    const fStat = mse > 0 ? (ssTot - ssRes) / mse : (ssTot > ssRes ? 1e6 : 0);
 
     return {
       dependent: depVar,
