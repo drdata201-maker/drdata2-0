@@ -9,10 +9,44 @@ import ReactMarkdown from "react-markdown";
 
 const ACCEPTED_FORMATS = ".xlsx,.xls,.csv,.sav,.dta";
 
-const ANALYSIS_OPTIONS_BY_LEVEL: Record<string, string[]> = {
-  student_license: ["descriptive_stats", "frequencies", "correlation", "t_test", "chi_square", "crosstab"],
-  student_master: ["descriptive_stats", "correlation", "simple_regression", "multiple_regression", "anova", "chi_square", "factor_analysis", "pca", "cronbach_alpha"],
-  student_doctorate: ["multiple_regression", "panel_data", "time_series", "sem", "advanced_factor_analysis", "logistic_regression", "survival_analysis", "multilevel_modeling"],
+interface AnalysisCategory {
+  key: string;
+  analyses: string[];
+}
+
+const ANALYSIS_CATEGORIES_BY_LEVEL: Record<string, AnalysisCategory[]> = {
+  student_license: [
+    { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
+    { key: "comparative", analyses: ["t_test", "chi_square", "anova_basic"] },
+    { key: "relationship", analyses: ["correlation"] },
+  ],
+  student_master: [
+    { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
+    { key: "comparative", analyses: ["t_test", "chi_square", "anova", "nonparametric"] },
+    { key: "relationship", analyses: ["correlation", "simple_regression", "multiple_regression"] },
+    { key: "predictive", analyses: ["logistic_regression", "factor_analysis"] },
+    { key: "reliability", analyses: ["cronbach_alpha", "pca"] },
+  ],
+  student_doctorate: [
+    { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
+    { key: "comparative", analyses: ["t_test", "chi_square", "anova", "nonparametric"] },
+    { key: "relationship", analyses: ["correlation", "simple_regression", "multiple_regression"] },
+    { key: "predictive", analyses: ["logistic_regression", "factor_analysis", "sem"] },
+    { key: "advanced", analyses: ["pca", "cluster_analysis", "panel_data", "time_series", "survival_analysis", "multilevel_modeling", "multivariate"] },
+  ],
+};
+
+// Analyses that require variable selection
+const VARIABLE_REQUIRING: Record<string, { dependent?: boolean; independent?: boolean; variables?: number }> = {
+  correlation: { variables: 2 },
+  simple_regression: { dependent: true, independent: true },
+  multiple_regression: { dependent: true, independent: true },
+  logistic_regression: { dependent: true, independent: true },
+  t_test: { dependent: true, independent: true },
+  anova: { dependent: true, independent: true },
+  anova_basic: { dependent: true, independent: true },
+  chi_square: { variables: 2 },
+  crosstab: { variables: 2 },
 };
 
 type Msg = { role: "assistant" | "user"; content: string; type?: string };
@@ -112,11 +146,13 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
   const { processFile, dataset } = useDataset();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
-  const [phase, setPhase] = useState<"confirm" | "upload" | "software" | "analysis" | "ready">("confirm");
+  const [phase, setPhase] = useState<"confirm" | "upload" | "software" | "analysis" | "variables" | "ready">("confirm");
   const [file, setFile] = useState<File | null>(null);
   const [selectedSoftware, setSelectedSoftware] = useState<string>("");
   const [customSoftware, setCustomSoftware] = useState("");
+  const [customAnalysis, setCustomAnalysis] = useState("");
   const [selectedAnalyses, setSelectedAnalyses] = useState<string[]>([]);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [greetingSent, setGreetingSent] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -292,7 +328,9 @@ Keep under 80 words.`;
   };
 
   const confirmAnalyses = () => {
-    const selected = selectedAnalyses.map(a => t(`student.analysis.${a}`)).join(", ");
+    const selected = selectedAnalyses.map(a =>
+      a.startsWith("custom:") ? a.slice(7) : t(`student.analysis.${a}`)
+    ).join(", ");
     setMessages(prev => [
       ...prev,
       { role: "user", content: `${t("joel.selectedAnalyses")}: ${selected}` },
@@ -300,7 +338,12 @@ Keep under 80 words.`;
     setPhase("ready");
     scrollToBottom();
 
+    const variableInfo = dataset
+      ? `Available variables: ${dataset.variables.map(v => `${v.name} (${v.type})`).join(", ")}.`
+      : "";
+
     const prompt = `Selected analyses: ${selected}. Software: ${selectedSoftware}. Dataset: ${file?.name || "uploaded dataset"}.
+${variableInfo}
 
 Respond concisely:
 - Confirm analyses are running using ${selectedSoftware}-style output
@@ -346,7 +389,7 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
     sendToAI(`Based on the analysis results, recommend and describe the most appropriate charts and visualizations for this research. Include: which chart type for each variable/relationship, what it would show, and how to interpret it academically. Suggest: histogram, bar chart, scatter plot, box plot, heatmap, pie chart, or correlation matrix as appropriate.`);
   };
 
-  const analyses = ANALYSIS_OPTIONS_BY_LEVEL[level] || ANALYSIS_OPTIONS_BY_LEVEL.student_license;
+  const categories = ANALYSIS_CATEGORIES_BY_LEVEL[level] || ANALYSIS_CATEGORIES_BY_LEVEL.student_license;
 
   return (
     <>
@@ -465,23 +508,54 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
           </div>
         )}
 
-        {/* Analysis selection */}
+        {/* Analysis selection - categorized */}
         {phase === "analysis" && !isStreaming && (
           <div className="mt-2 space-y-3">
             <p className="text-xs font-medium text-muted-foreground">{t("joel.askAnalysis")}</p>
-            <div className="grid grid-cols-2 gap-1.5">
-              {analyses.map(key => (
-                <Button
-                  key={key}
-                  variant={selectedAnalyses.includes(key) ? "default" : "outline"}
-                  size="sm"
-                  className="h-auto py-1.5 text-xs"
-                  onClick={() => toggleAnalysis(key)}
+            {categories.map(cat => (
+              <div key={cat.key} className="space-y-1.5">
+                <button
+                  onClick={() => setExpandedCategory(expandedCategory === cat.key ? null : cat.key)}
+                  className="flex w-full items-center justify-between rounded-md bg-muted/50 px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted transition-colors"
                 >
-                  {t(`student.analysis.${key}`)}
-                </Button>
-              ))}
+                  {t(`joel.category.${cat.key}`)}
+                  <span className="text-muted-foreground">{expandedCategory === cat.key ? "−" : "+"}</span>
+                </button>
+                {(expandedCategory === cat.key || expandedCategory === null) && (
+                  <div className="grid grid-cols-2 gap-1 pl-1">
+                    {cat.analyses.map(key => (
+                      <Button
+                        key={key}
+                        variant={selectedAnalyses.includes(key) ? "default" : "outline"}
+                        size="sm"
+                        className="h-auto py-1.5 text-xs justify-start"
+                        onClick={() => toggleAnalysis(key)}
+                      >
+                        {t(`student.analysis.${key}`)}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Other analysis */}
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">{t("joel.otherAnalysis")}</p>
+              <Input
+                value={customAnalysis}
+                onChange={e => setCustomAnalysis(e.target.value)}
+                placeholder={t("joel.specifyAnalysis")}
+                className="text-xs"
+                onKeyDown={e => {
+                  if (e.key === "Enter" && customAnalysis.trim()) {
+                    setSelectedAnalyses(prev => [...prev, `custom:${customAnalysis.trim()}`]);
+                    setCustomAnalysis("");
+                  }
+                }}
+              />
             </div>
+
             {selectedAnalyses.length > 0 && (
               <Button size="sm" className="w-full" onClick={confirmAnalyses}>
                 <Sparkles className="mr-1 h-3 w-3" />
