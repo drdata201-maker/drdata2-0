@@ -291,5 +291,6 @@ export default function AnalysisWorkspace() {
         </Tabs>
       </div>
     </div>
+    </DatasetProvider>
   );
 }
