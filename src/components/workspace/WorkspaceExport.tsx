@@ -20,16 +20,12 @@ type FormatType = "docx" | "pdf" | "xlsx";
 
 export function WorkspaceExport({ projectTitle, projectType, projectDomain, projectDescription, level }: WorkspaceExportProps) {
   const { t, lang } = useLanguage();
-  const { dataset, analysisResults } = useDataset();
+  const { dataset, analysisResults, interpretationData } = useDataset();
   const [loading, setLoading] = useState<string | null>(null);
 
   const buildData = (): ExportData => {
-    // Build stats table from real analysis results
     const statsTable: ExportData["statsTable"] = [];
     const testResults: ExportData["testResults"] = [];
-    let interpretation = "";
-    let conclusion = "";
-    let recommendations = "";
 
     for (const result of analysisResults) {
       if (result.descriptive) {
@@ -71,12 +67,40 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
       }
     }
 
-    // Fallback texts
-    if (statsTable.length === 0) {
-      interpretation = t("export.sampleInterpretation");
-      conclusion = t("export.sampleConclusion");
-      recommendations = t("export.sampleRecommendations");
+    // Build interpretation/conclusion/recommendations from real AI data
+    let interpretation = "";
+    let conclusion = "";
+    let recommendations = "";
+
+    if (interpretationData) {
+      // Combine all section interpretations
+      interpretation = interpretationData.sections
+        .map(s => `${s.analysisType}\n\n${s.interpretation}`)
+        .join("\n\n---\n\n");
+
+      // Combine section conclusions + global conclusion
+      const sectionConclusions = interpretationData.sections
+        .filter(s => s.conclusion)
+        .map(s => s.conclusion);
+      if (interpretationData.globalConclusion) {
+        sectionConclusions.push(interpretationData.globalConclusion);
+      }
+      conclusion = sectionConclusions.join("\n\n");
+
+      // Combine section recommendations + global recommendations
+      const sectionRecs = interpretationData.sections
+        .filter(s => s.recommendations)
+        .map(s => s.recommendations);
+      if (interpretationData.globalRecommendations) {
+        sectionRecs.push(interpretationData.globalRecommendations);
+      }
+      recommendations = sectionRecs.join("\n\n");
     }
+
+    // Fallback to sample texts only if no AI interpretation available
+    if (!interpretation) interpretation = t("export.sampleInterpretation");
+    if (!conclusion) conclusion = t("export.sampleConclusion");
+    if (!recommendations) recommendations = t("export.sampleRecommendations");
 
     return {
       projectTitle: projectTitle || "Untitled Project",
@@ -87,9 +111,9 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
       lang,
       statsTable,
       testResults,
-      interpretation: interpretation || t("export.sampleInterpretation"),
-      conclusion: conclusion || t("export.sampleConclusion"),
-      recommendations: recommendations || t("export.sampleRecommendations"),
+      interpretation,
+      conclusion,
+      recommendations,
     };
   };
 

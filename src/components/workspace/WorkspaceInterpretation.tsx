@@ -1,24 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset } from "@/contexts/DatasetContext";
+import type { InterpretationData } from "@/contexts/DatasetContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BookOpen, GraduationCap, Target, Lightbulb, Loader2, RefreshCw, AlertCircle } from "lucide-react";
 
-interface InterpretationSection {
-  analysisType: string;
-  interpretation: string;
-  conclusion: string;
-  recommendations: string;
-}
-
-interface InterpretationData {
-  sections: InterpretationSection[];
-  globalConclusion: string;
-  globalRecommendations: string;
-}
+// Types are now imported from DatasetContext
 
 interface WorkspaceInterpretationProps {
   level: string;
@@ -29,8 +19,8 @@ interface WorkspaceInterpretationProps {
 
 export function WorkspaceInterpretation({ level, projectTitle, projectType, projectDomain }: WorkspaceInterpretationProps) {
   const { t, lang: language } = useLanguage();
-  const { analysisResults } = useDataset();
-  const [data, setData] = useState<InterpretationData | null>(null);
+  const { analysisResults, interpretationData, setInterpretationData } = useDataset();
+  const data = interpretationData;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,7 +47,7 @@ export function WorkspaceInterpretation({ level, projectTitle, projectType, proj
 
       if (fnError) throw fnError;
       if (respData?.error) throw new Error(respData.error);
-      setData(respData as InterpretationData);
+      setInterpretationData(respData as InterpretationData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Interpretation error");
     } finally {

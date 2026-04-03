@@ -37,12 +37,27 @@ export interface DatasetSummary {
 
 type PrepStatus = "idle" | "uploading" | "reading" | "cleaning" | "ready" | "error";
 
+export interface InterpretationSection {
+  analysisType: string;
+  interpretation: string;
+  conclusion: string;
+  recommendations: string;
+}
+
+export interface InterpretationData {
+  sections: InterpretationSection[];
+  globalConclusion: string;
+  globalRecommendations: string;
+}
+
 interface DatasetContextType {
   dataset: DatasetSummary | null;
   prepStatus: PrepStatus;
   prepError: string | null;
   cleanedData: Record<string, unknown>[] | null;
   analysisResults: AnalysisResultItem[];
+  interpretationData: InterpretationData | null;
+  setInterpretationData: (data: InterpretationData | null) => void;
   processFile: (file: File) => Promise<DatasetSummary>;
   runCleaning: () => void;
   runAnalyses: (analysisKeys: string[], software: string) => void;
@@ -162,6 +177,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   const [prepError, setPrepError] = useState<string | null>(null);
   const [cleanedData, setCleanedData] = useState<Record<string, unknown>[] | null>(null);
   const [analysisResults, setAnalysisResults] = useState<AnalysisResultItem[]>([]);
+  const [interpretationData, setInterpretationData] = useState<InterpretationData | null>(null);
 
   const processFile = useCallback(async (file: File): Promise<DatasetSummary> => {
     setPrepStatus("uploading");
@@ -286,10 +302,11 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     setPrepError(null);
     setCleanedData(null);
     setAnalysisResults([]);
+    setInterpretationData(null);
   }, []);
 
   return (
-    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, processFile, runCleaning, runAnalyses, reset }}>
+    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, interpretationData, setInterpretationData, processFile, runCleaning, runAnalyses, reset }}>
       {children}
     </DatasetContext.Provider>
   );
