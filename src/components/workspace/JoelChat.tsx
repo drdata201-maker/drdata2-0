@@ -380,7 +380,7 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
     sendToAI(`Based on the analysis results, recommend and describe the most appropriate charts and visualizations for this research. Include: which chart type for each variable/relationship, what it would show, and how to interpret it academically. Suggest: histogram, bar chart, scatter plot, box plot, heatmap, pie chart, or correlation matrix as appropriate.`);
   };
 
-  const analyses = ANALYSIS_OPTIONS_BY_LEVEL[level] || ANALYSIS_OPTIONS_BY_LEVEL.student_license;
+  const categories = ANALYSIS_CATEGORIES_BY_LEVEL[level] || ANALYSIS_CATEGORIES_BY_LEVEL.student_license;
 
   return (
     <>
