@@ -165,6 +165,24 @@ async function parseFile(file: File): Promise<Record<string, unknown>[]> {
     return XLSX.utils.sheet_to_json(sheet, { defval: null });
   }
 
+  // .sav (SPSS) and .dta (Stata) — xlsx library does not support these natively.
+  // Attempt to parse as generic binary; if it fails, provide a clear error.
+  if (ext === "sav" || ext === "dta") {
+    try {
+      const wb = XLSX.read(buffer, { type: "array" });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: null });
+      if (rows.length > 0) return rows;
+    } catch {
+      // Fall through to error
+    }
+    throw new Error(
+      ext === "sav"
+        ? "SPSS (.sav) file detected. Please export your data as .xlsx or .csv from SPSS (File → Save As → Excel/CSV) and re-upload."
+        : "Stata (.dta) file detected. Please export your data as .xlsx or .csv from Stata (export delimited / export excel) and re-upload."
+    );
+  }
+
   // xlsx, xls, and other formats supported by xlsx library
   const wb = XLSX.read(buffer, { type: "array" });
   const sheet = wb.Sheets[wb.SheetNames[0]];
