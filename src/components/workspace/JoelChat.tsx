@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset } from "@/contexts/DatasetContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Send, Upload, Sparkles, Bot, Loader2, CheckCircle, Edit3, RotateCcw, CheckCheck } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Send, Upload, Sparkles, Bot, Loader2, CheckCircle, Edit3, RotateCcw, CheckCheck, Variable } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 
@@ -157,6 +158,8 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [greetingSent, setGreetingSent] = useState(false);
+  const [selectedDepVar, setSelectedDepVar] = useState("");
+  const [selectedIndVars, setSelectedIndVars] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const chatHistoryRef = useRef<{ role: string; content: string }[]>([]);
 
@@ -329,19 +332,69 @@ Keep under 80 words.`;
     setSelectedAnalyses(prev => prev.includes(key) ? prev.filter(a => a !== key) : [...prev, key]);
   };
 
-  const confirmAnalyses = async () => {
+  // Check if any selected analysis needs variable selection
+  const needsVariableSelection = useMemo(() => {
+    return selectedAnalyses.some(a => VARIABLE_REQUIRING[a]);
+  }, [selectedAnalyses]);
+
+  const numericVars = useMemo(() =>
+    dataset?.variables.filter(v => v.type === "numeric").map(v => v.name) || [],
+    [dataset]
+  );
+
+  const categoricalVars = useMemo(() =>
+    dataset?.variables.filter(v => v.type === "categorical" || v.type === "ordinal").map(v => v.name) || [],
+    [dataset]
+  );
+
+  const allVarNames = useMemo(() =>
+    dataset?.variables.map(v => v.name) || [],
+    [dataset]
+  );
+
+  const toggleIndVar = (varName: string) => {
+    setSelectedIndVars(prev =>
+      prev.includes(varName) ? prev.filter(v => v !== varName) : [...prev, varName]
+    );
+  };
+
+  const handleConfirmAnalysesStep = () => {
+    if (needsVariableSelection) {
+      const selected = selectedAnalyses.map(a =>
+        a.startsWith("custom:") ? a.slice(7) : t(`student.analysis.${a}`)
+      ).join(", ");
+      setMessages(prev => [
+        ...prev,
+        { role: "user", content: `${t("joel.selectedAnalyses")}: ${selected}` },
+      ]);
+      setPhase("variables");
+      setSelectedDepVar("");
+      setSelectedIndVars([]);
+      scrollToBottom();
+      sendToAI(`Selected analyses: ${selected}. Now ask the student to select the variables for their analysis. Keep under 40 words.`);
+    } else {
+      executeAnalyses();
+    }
+  };
+
+  const confirmVariablesAndRun = () => {
+    const varInfo = selectedDepVar
+      ? `${t("joel.varDependent")}: ${selectedDepVar}, ${t("joel.varIndependent")}: ${selectedIndVars.join(", ")}`
+      : `${t("joel.varSelected")}: ${selectedIndVars.join(", ")}`;
+    setMessages(prev => [...prev, { role: "user", content: `📊 ${varInfo}` }]);
+    scrollToBottom();
+    executeAnalyses();
+  };
+
+  const executeAnalyses = async () => {
     const selected = selectedAnalyses.map(a =>
       a.startsWith("custom:") ? a.slice(7) : t(`student.analysis.${a}`)
     ).join(", ");
-    setMessages(prev => [
-      ...prev,
-      { role: "user", content: `${t("joel.selectedAnalyses")}: ${selected}` },
-    ]);
-    setPhase("ready");
-    scrollToBottom();
 
-    // Trigger real statistical computations
-    runAnalyses(selectedAnalyses, selectedSoftware);
+    setPhase("ready");
+
+    // Run analyses with selected variables
+    runAnalyses(selectedAnalyses, selectedSoftware, selectedDepVar || undefined, selectedIndVars.length > 0 ? selectedIndVars : undefined);
 
     // Auto-save analysis to database
     try {
@@ -354,10 +407,9 @@ Keep under 80 words.`;
           type: selectedAnalyses.join(","),
           status: "completed",
           user_type: level.includes("master") ? "student_master" : level.includes("doctor") ? "student_doctorate" : "student_license",
-          results: { analyses: selectedAnalyses, software: selectedSoftware, dataset: file?.name } as any,
+          results: { analyses: selectedAnalyses, software: selectedSoftware, dataset: file?.name, depVar: selectedDepVar, indVars: selectedIndVars } as any,
         } as any);
 
-        // Update project status to active
         if (projectId) {
           await supabase.from("projects").update({ status: "active" } as any).eq("id", projectId);
         }
@@ -371,6 +423,7 @@ Keep under 80 words.`;
       : "";
 
     const prompt = `Selected analyses: ${selected}. Software: ${selectedSoftware}. Dataset: ${file?.name || "uploaded dataset"}.
+${selectedDepVar ? `Dependent variable: ${selectedDepVar}. Independent: ${selectedIndVars.join(", ")}.` : ""}
 ${variableInfo}
 
 Respond concisely:
@@ -611,9 +664,96 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
             </div>
 
             {selectedAnalyses.length > 0 && (
-              <Button size="sm" className="w-full" onClick={confirmAnalyses}>
+              <Button size="sm" className="w-full" onClick={handleConfirmAnalysesStep}>
                 <Sparkles className="mr-1 h-3 w-3" />
                 {t("joel.startAnalysis")} ({selectedAnalyses.length})
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Variable selection */}
+        {phase === "variables" && !isStreaming && dataset && (
+          <div className="mt-2 space-y-3">
+            <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+              <Variable className="h-3.5 w-3.5" />
+              {t("joel.selectVariables") || "Select variables for your analysis"}
+            </p>
+
+            {/* Show dependent variable selector for analyses that need it */}
+            {selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.dependent) && (
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">
+                  {t("joel.varDependent") || "Dependent variable"}
+                </label>
+                <Select value={selectedDepVar} onValueChange={setSelectedDepVar}>
+                  <SelectTrigger className="text-xs h-8">
+                    <SelectValue placeholder={t("joel.varSelectPlaceholder") || "Select variable..."} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {numericVars.map(v => (
+                      <SelectItem key={v} value={v} className="text-xs">{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Independent / paired variable selection */}
+            {selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.independent) && (
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">
+                  {t("joel.varIndependent") || "Independent variable(s)"}
+                </label>
+                <div className="flex flex-wrap gap-1">
+                  {allVarNames.filter(v => v !== selectedDepVar).map(v => (
+                    <Button
+                      key={v}
+                      variant={selectedIndVars.includes(v) ? "default" : "outline"}
+                      size="sm"
+                      className="h-auto py-1 text-xs"
+                      onClick={() => toggleIndVar(v)}
+                    >
+                      {v}
+                      <Badge variant="secondary" className="ml-1 text-[10px] px-1">
+                        {dataset.variables.find(dv => dv.name === v)?.type === "numeric" ? "N" : "C"}
+                      </Badge>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* For chi-square / correlation: just pick 2 variables */}
+            {selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.variables) && !selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.dependent) && (
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">
+                  {t("joel.varSelect2") || "Select variables"}
+                </label>
+                <div className="flex flex-wrap gap-1">
+                  {allVarNames.map(v => (
+                    <Button
+                      key={v}
+                      variant={selectedIndVars.includes(v) ? "default" : "outline"}
+                      size="sm"
+                      className="h-auto py-1 text-xs"
+                      onClick={() => toggleIndVar(v)}
+                    >
+                      {v}
+                      <Badge variant="secondary" className="ml-1 text-[10px] px-1">
+                        {dataset.variables.find(dv => dv.name === v)?.type === "numeric" ? "N" : "C"}
+                      </Badge>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Confirm variables */}
+            {(selectedDepVar || selectedIndVars.length >= 2 || (selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.independent) && selectedIndVars.length >= 1)) && (
+              <Button size="sm" className="w-full" onClick={confirmVariablesAndRun}>
+                <Sparkles className="mr-1 h-3 w-3" />
+                {t("joel.runWithVariables") || "Run analysis"}
               </Button>
             )}
           </div>
