@@ -1,5 +1,17 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import * as XLSX from "xlsx";
+import {
+  AnalysisResultItem,
+  computeDescriptive,
+  computeFrequencies,
+  computeCorrelations,
+  computeTTest,
+  computeChiSquare,
+  computeAnova,
+  computeRegression,
+} from "@/lib/statsEngine";
+
+export type { AnalysisResultItem };
 
 export interface VariableInfo {
   name: string;
@@ -30,8 +42,10 @@ interface DatasetContextType {
   prepStatus: PrepStatus;
   prepError: string | null;
   cleanedData: Record<string, unknown>[] | null;
+  analysisResults: AnalysisResultItem[];
   processFile: (file: File) => Promise<DatasetSummary>;
   runCleaning: () => void;
+  runAnalyses: (analysisKeys: string[], software: string) => void;
   reset: () => void;
 }
 
