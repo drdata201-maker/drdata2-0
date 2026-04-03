@@ -142,11 +142,11 @@ export function StudentProjectsPage({ baseRoute, userType }: { baseRoute: string
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           {p.status !== "completed" && (
-                            <Button variant="ghost" size="icon" title={t("student.projects.continue")} onClick={() => navigate(`${baseRoute}/quick-analysis?project=${p.id}`)}>
+                            <Button variant="ghost" size="icon" title={t("student.projects.continue")} onClick={() => navigate(`/analysis/workspace?project=${p.id}&level=${userType}`)}>
                               <Play className="h-4 w-4 text-primary" />
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon" title={t("student.projects.viewResults")} onClick={() => navigate(`${baseRoute}/quick-analysis?project=${p.id}`)}>
+                          <Button variant="ghost" size="icon" title={t("student.projects.viewResults")} onClick={() => navigate(`/analysis/workspace?project=${p.id}&level=${userType}`)}>
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)}>

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useDataset } from "@/contexts/DatasetContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Table2, BarChart3, MessageSquare, BookOpen, Download, Loader2 } from "lucide-react";
+import { FileText, Table2, MessageSquare, BookOpen, Download, Loader2, Upload } from "lucide-react";
 import { exportDocx, exportPdf, exportXlsx, type ExportData } from "@/lib/exportUtils";
 
 interface WorkspaceExportProps {
@@ -14,39 +15,83 @@ interface WorkspaceExportProps {
   level: string;
 }
 
-const mockStats = [
-  { variable: "Age", n: 150, mean: 28.4, std: 5.2, min: 18, max: 45 },
-  { variable: "Score", n: 150, mean: 72.1, std: 12.8, min: 35, max: 98 },
-  { variable: "Revenue", n: 150, mean: 45200, std: 15800, min: 12000, max: 95000 },
-];
-
-const mockTestResults = [
-  { label: "p-value", value: "0.003" },
-  { label: "t-statistic", value: "3.12" },
-  { label: "R²", value: "0.78" },
-  { label: "Coefficient", value: "0.45" },
-];
-
-type ContentType = "full" | "results" | "graphs" | "interpretation" | "conclusion";
+type ContentType = "full" | "results" | "interpretation" | "conclusion";
 type FormatType = "docx" | "pdf" | "xlsx";
 
 export function WorkspaceExport({ projectTitle, projectType, projectDomain, projectDescription, level }: WorkspaceExportProps) {
   const { t, lang } = useLanguage();
+  const { dataset, analysisResults } = useDataset();
   const [loading, setLoading] = useState<string | null>(null);
 
-  const buildData = (): ExportData => ({
-    projectTitle: projectTitle || "Untitled Project",
-    projectType,
-    projectDomain,
-    projectDescription,
-    level,
-    lang,
-    statsTable: mockStats,
-    testResults: mockTestResults,
-    interpretation: t("export.sampleInterpretation"),
-    conclusion: t("export.sampleConclusion"),
-    recommendations: t("export.sampleRecommendations"),
-  });
+  const buildData = (): ExportData => {
+    // Build stats table from real analysis results
+    const statsTable: ExportData["statsTable"] = [];
+    const testResults: ExportData["testResults"] = [];
+    let interpretation = "";
+    let conclusion = "";
+    let recommendations = "";
+
+    for (const result of analysisResults) {
+      if (result.descriptive) {
+        for (const d of result.descriptive) {
+          statsTable.push({ variable: d.variable, n: d.n, mean: d.mean, std: d.std, min: d.min, max: d.max });
+        }
+      }
+      if (result.correlations) {
+        for (const c of result.correlations) {
+          testResults.push({ label: `r(${c.var1}, ${c.var2})`, value: String(c.r) });
+          testResults.push({ label: `p-value (${c.var1}, ${c.var2})`, value: String(c.pValue) });
+        }
+      }
+      if (result.regressions) {
+        for (const reg of result.regressions) {
+          testResults.push({ label: `R² (${reg.dependent})`, value: String(reg.rSquared) });
+          testResults.push({ label: `Adj. R² (${reg.dependent})`, value: String(reg.adjustedR2) });
+          testResults.push({ label: `F (${reg.dependent})`, value: String(reg.fStat) });
+        }
+      }
+      if (result.tTests) {
+        for (const tt of result.tTests) {
+          testResults.push({ label: `t(${tt.df})`, value: String(tt.tStat) });
+          testResults.push({ label: `p-value (${tt.variable})`, value: String(tt.pValue) });
+        }
+      }
+      if (result.anovas) {
+        for (const a of result.anovas) {
+          testResults.push({ label: `F(${a.dfBetween},${a.dfWithin})`, value: String(a.fStat) });
+          testResults.push({ label: `p-value (${a.dependent})`, value: String(a.pValue) });
+        }
+      }
+      if (result.chiSquares) {
+        for (const c of result.chiSquares) {
+          testResults.push({ label: `χ² (${c.var1}×${c.var2})`, value: String(c.chiSquare) });
+          testResults.push({ label: `p-value (${c.var1}×${c.var2})`, value: String(c.pValue) });
+          testResults.push({ label: `Cramér's V`, value: String(c.cramersV) });
+        }
+      }
+    }
+
+    // Fallback texts
+    if (statsTable.length === 0) {
+      interpretation = t("export.sampleInterpretation");
+      conclusion = t("export.sampleConclusion");
+      recommendations = t("export.sampleRecommendations");
+    }
+
+    return {
+      projectTitle: projectTitle || "Untitled Project",
+      projectType,
+      projectDomain,
+      projectDescription,
+      level,
+      lang,
+      statsTable,
+      testResults,
+      interpretation: interpretation || t("export.sampleInterpretation"),
+      conclusion: conclusion || t("export.sampleConclusion"),
+      recommendations: recommendations || t("export.sampleRecommendations"),
+    };
+  };
 
   const handleExport = async (content: ContentType, format: FormatType) => {
     const key = `${content}-${format}`;
@@ -62,6 +107,17 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
       setLoading(null);
     }
   };
+
+  if (!dataset || analysisResults.length === 0) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center gap-4 py-12">
+          <Upload className="h-12 w-12 text-muted-foreground/50" />
+          <p className="text-sm font-medium text-muted-foreground">{t("export.noData") || "Run analyses first to export results."}</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const exportOptions: { content: ContentType; icon: typeof FileText; labelKey: string }[] = [
     { content: "full", icon: FileText, labelKey: "export.fullReport" },
@@ -85,6 +141,9 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
             <Badge variant="outline">{projectType || "—"}</Badge>
             <Badge variant="outline">{projectDomain || "—"}</Badge>
           </div>
+          <p className="text-xs text-muted-foreground">
+            {analysisResults.length} {t("dashboard.stats.analyses").toLowerCase()} · {dataset.observations} obs
+          </p>
         </CardContent>
       </Card>
 

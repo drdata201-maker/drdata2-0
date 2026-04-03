@@ -100,7 +100,7 @@ export default function AnalysisWorkspace() {
     (supabase.from("projects") as any)
       .select("title, description")
       .eq("id", projectId)
-      .single()
+      .maybeSingle()
       .then(({ data }: any) => {
         if (data?.title) setProjectTitle(data.title);
         if (data?.description) setProjectDescription(data.description);
