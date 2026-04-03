@@ -143,7 +143,7 @@ async function streamChat({
 
 export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, level }: JoelChatProps) {
   const { t, lang } = useLanguage();
-  const { processFile, dataset } = useDataset();
+  const { processFile, dataset, runAnalyses } = useDataset();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [phase, setPhase] = useState<"confirm" | "upload" | "software" | "analysis" | "variables" | "ready">("confirm");
