@@ -64,6 +64,7 @@ export function DashboardHeader({ title, userName, userLevel, onLogout }: Dashbo
     <header className="flex h-16 items-center justify-between border-b border-border px-6">
       <h2 className="text-lg font-semibold text-foreground">{title}</h2>
       <div className="flex items-center gap-3">
+        <NotificationBell />
         <LanguageSwitcher />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
