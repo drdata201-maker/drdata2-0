@@ -773,5 +773,16 @@
   "notifications.markRead": "Marquer comme lu",
   "notifications.justNow": "À l'instant",
   "quickAnalysis.saveAsProject": "Sauvegarder comme projet",
-  "quickAnalysis.savedAsProject": "Analyse sauvegardée comme projet !"
+  "quickAnalysis.savedAsProject": "Analyse sauvegardée comme projet !",
+  "history.filters": "Filtres",
+  "history.clearFilters": "Effacer",
+  "history.searchPlaceholder": "Rechercher par titre ou domaine...",
+  "history.filterType": "Type",
+  "history.allTypes": "Tous les types",
+  "history.filterStatus": "Statut",
+  "history.allStatuses": "Tous les statuts",
+  "history.from": "Du",
+  "history.to": "Au",
+  "history.resultsShown": "résultats affichés",
+  "history.noResults": "Aucun résultat pour ces filtres"
 }

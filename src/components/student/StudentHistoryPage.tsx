@@ -1,17 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { useNavigate } from "react-router-dom";
-import { Clock, FolderOpen, BarChart3, Eye } from "lucide-react";
+import { Clock, FolderOpen, BarChart3, Eye, Search, CalendarIcon, X, Filter } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface HistoryItem {
   id: string;
   title: string;
   type: "project" | "analysis";
+  analysisType?: string;
   status: string;
   domain?: string | null;
   created_at: string;
@@ -23,15 +30,22 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
   const [items, setItems] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Filters
+  const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState<"all" | "project" | "analysis">("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
+
   useEffect(() => {
     const fetchAll = async () => {
       const [projRes, analRes] = await Promise.all([
-        (supabase.from("projects") as any).select("id,title,status,domain,created_at").eq("user_type", userType).order("created_at", { ascending: false }).limit(50),
-        supabase.from("analyses").select("id,title,type,status,created_at").eq("user_type", userType).order("created_at", { ascending: false }).limit(50),
+        (supabase.from("projects") as any).select("id,title,status,domain,created_at").eq("user_type", userType).order("created_at", { ascending: false }).limit(200),
+        supabase.from("analyses").select("id,title,type,status,created_at").eq("user_type", userType).order("created_at", { ascending: false }).limit(200),
       ]);
       const combined: HistoryItem[] = [
         ...(projRes.data || []).map((d: any) => ({ ...d, type: "project" as const })),
-        ...(analRes.data || []).map((d: any) => ({ ...d, type: "analysis" as const })),
+        ...(analRes.data || []).map((d: any) => ({ ...d, type: "analysis" as const, analysisType: d.type })),
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setItems(combined);
       setLoading(false);
@@ -39,8 +53,53 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
     fetchAll();
   }, [userType]);
 
-  const typeIcon = (type: string) => {
-    return type === "project" ? <FolderOpen className="h-4 w-4 text-primary" /> : <BarChart3 className="h-4 w-4 text-primary" />;
+  // Unique statuses for filter
+  const allStatuses = useMemo(() => {
+    const s = new Set(items.map(i => i.status));
+    return Array.from(s).sort();
+  }, [items]);
+
+  // Filtered items
+  const filtered = useMemo(() => {
+    return items.filter(item => {
+      if (filterType !== "all" && item.type !== filterType) return false;
+      if (filterStatus !== "all" && item.status !== filterStatus) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        if (!item.title.toLowerCase().includes(q) && !(item.domain || "").toLowerCase().includes(q)) return false;
+      }
+      const d = new Date(item.created_at);
+      if (dateFrom && d < dateFrom) return false;
+      if (dateTo) {
+        const end = new Date(dateTo);
+        end.setHours(23, 59, 59, 999);
+        if (d > end) return false;
+      }
+      return true;
+    });
+  }, [items, filterType, filterStatus, search, dateFrom, dateTo]);
+
+  const hasActiveFilters = filterType !== "all" || filterStatus !== "all" || !!search || !!dateFrom || !!dateTo;
+
+  const clearFilters = () => {
+    setSearch("");
+    setFilterType("all");
+    setFilterStatus("all");
+    setDateFrom(undefined);
+    setDateTo(undefined);
+  };
+
+  const typeIcon = (type: string) =>
+    type === "project" ? <FolderOpen className="h-4 w-4 text-primary" /> : <BarChart3 className="h-4 w-4 text-primary" />;
+
+  const statusColor = (status: string) => {
+    const map: Record<string, string> = {
+      active: "bg-accent text-accent-foreground",
+      completed: "bg-primary/20 text-primary",
+      pending: "bg-muted text-muted-foreground",
+      draft: "bg-muted text-muted-foreground",
+    };
+    return map[status] || "";
   };
 
   return (
@@ -50,10 +109,11 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
         <p className="mt-1 text-muted-foreground">{t("pme.history.desc")}</p>
       </div>
 
+      {/* Stats cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[
-          { icon: FolderOpen, label: t("pme.history.project"), count: items.filter((i) => i.type === "project").length },
-          { icon: BarChart3, label: t("pme.history.analysis"), count: items.filter((i) => i.type === "analysis").length },
+          { icon: FolderOpen, label: t("pme.history.project"), count: items.filter(i => i.type === "project").length },
+          { icon: BarChart3, label: t("pme.history.analysis"), count: items.filter(i => i.type === "analysis").length },
           { icon: Clock, label: t("student.history.total"), count: items.length },
         ].map((s, i) => (
           <Card key={i}>
@@ -65,15 +125,114 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
         ))}
       </div>
 
+      {/* Filters */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Filter className="h-4 w-4" />
+              {t("history.filters") || "Filtres"}
+            </CardTitle>
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs gap-1">
+                <X className="h-3 w-3" />
+                {t("history.clearFilters") || "Effacer"}
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={t("history.searchPlaceholder") || "Rechercher..."}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            {/* Type filter */}
+            <Select value={filterType} onValueChange={(v) => setFilterType(v as any)}>
+              <SelectTrigger>
+                <SelectValue placeholder={t("history.filterType") || "Type"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("history.allTypes") || "Tous les types"}</SelectItem>
+                <SelectItem value="project">{t("pme.history.project") || "Projet"}</SelectItem>
+                <SelectItem value="analysis">{t("pme.history.analysis") || "Analyse"}</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Status filter */}
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger>
+                <SelectValue placeholder={t("history.filterStatus") || "Statut"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("history.allStatuses") || "Tous les statuts"}</SelectItem>
+                {allStatuses.map(s => (
+                  <SelectItem key={s} value={s}>{t(`student.status.${s}`) || s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Date range */}
+            <div className="flex gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("flex-1 justify-start text-left text-xs font-normal", !dateFrom && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-1 h-3 w-3" />
+                    {dateFrom ? format(dateFrom, "dd/MM/yy") : (t("history.from") || "Du")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("flex-1 justify-start text-left text-xs font-normal", !dateTo && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-1 h-3 w-3" />
+                    {dateTo ? format(dateTo, "dd/MM/yy") : (t("history.to") || "Au")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          {hasActiveFilters && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              {filtered.length} / {items.length} {t("history.resultsShown") || "résultats affichés"}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Table */}
       <Card>
         <CardHeader><CardTitle>{t("pme.history.recent")}</CardTitle></CardHeader>
         <CardContent>
           {loading ? (
             <p className="text-muted-foreground py-8 text-center">{t("pme.projects.loading")}</p>
-          ) : items.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center py-12 text-center">
               <Clock className="mb-4 h-12 w-12 text-muted-foreground" />
-              <p className="text-muted-foreground">{t("pme.history.empty")}</p>
+              <p className="text-muted-foreground">
+                {hasActiveFilters
+                  ? (t("history.noResults") || "Aucun résultat pour ces filtres")
+                  : t("pme.history.empty")}
+              </p>
+              {hasActiveFilters && (
+                <Button variant="link" size="sm" onClick={clearFilters} className="mt-2">
+                  {t("history.clearFilters") || "Effacer les filtres"}
+                </Button>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -89,7 +248,7 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.map((item) => (
+                  {filtered.map(item => (
                     <TableRow key={`${item.type}-${item.id}`}>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -100,7 +259,9 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
                       <TableCell className="font-medium">{item.title}</TableCell>
                       <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">{item.domain || "—"}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{t(`student.status.${item.status}`) || item.status}</Badge>
+                        <Badge variant="outline" className={statusColor(item.status)}>
+                          {t(`student.status.${item.status}`) || item.status}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-sm">{new Date(item.created_at).toLocaleDateString()}</TableCell>
                       <TableCell className="text-right">
