@@ -294,5 +294,6 @@ export default function AnalysisWorkspace() {
       </div>
     </div>
     </DatasetProvider>
+    </ChartStyleProvider>
   );
 }
