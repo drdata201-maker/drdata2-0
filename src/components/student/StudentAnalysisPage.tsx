@@ -1,153 +1,216 @@
-import { useEffect, useState } from "react";
+import { useState, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { FolderOpen, Play } from "lucide-react";
+import { Zap, Upload, FileSpreadsheet, ArrowRight, Info } from "lucide-react";
 
-interface ProjectRow {
-  id: string;
-  title: string;
-  status: string;
-  domain: string | null;
-  created_at: string;
-}
+const quickLabels: Record<string, Record<string, string>> = {
+  fr: {
+    title: "Analyse Rapide",
+    desc: "Uploadez un fichier et lancez une analyse immédiatement, sans créer de projet.",
+    uploadTitle: "Importer vos données",
+    uploadDesc: "Glissez un fichier ou cliquez pour sélectionner",
+    formats: "Formats acceptés : CSV, Excel (.xlsx, .xls)",
+    maxSize: "Taille maximale : 10 Mo",
+    start: "Lancer l'analyse",
+    noFile: "Aucun fichier sélectionné",
+    tip: "Astuce",
+    tipText: "L'analyse rapide est idéale pour des explorations ponctuelles. Pour un suivi complet, créez un projet.",
+    or: "ou",
+    browseFiles: "Parcourir les fichiers",
+    fileReady: "Fichier prêt",
+  },
+  en: {
+    title: "Quick Analysis",
+    desc: "Upload a file and start analyzing immediately, without creating a project.",
+    uploadTitle: "Import your data",
+    uploadDesc: "Drag a file or click to select",
+    formats: "Accepted formats: CSV, Excel (.xlsx, .xls)",
+    maxSize: "Maximum size: 10 MB",
+    start: "Start Analysis",
+    noFile: "No file selected",
+    tip: "Tip",
+    tipText: "Quick analysis is ideal for one-off explorations. For full tracking, create a project.",
+    or: "or",
+    browseFiles: "Browse files",
+    fileReady: "File ready",
+  },
+  es: {
+    title: "Análisis Rápido",
+    desc: "Sube un archivo y comienza a analizar inmediatamente, sin crear un proyecto.",
+    uploadTitle: "Importar sus datos",
+    uploadDesc: "Arrastre un archivo o haga clic para seleccionar",
+    formats: "Formatos aceptados: CSV, Excel (.xlsx, .xls)",
+    maxSize: "Tamaño máximo: 10 MB",
+    start: "Iniciar análisis",
+    noFile: "Ningún archivo seleccionado",
+    tip: "Consejo",
+    tipText: "El análisis rápido es ideal para exploraciones puntuales. Para un seguimiento completo, cree un proyecto.",
+    or: "o",
+    browseFiles: "Buscar archivos",
+    fileReady: "Archivo listo",
+  },
+  de: {
+    title: "Schnellanalyse",
+    desc: "Laden Sie eine Datei hoch und starten Sie sofort die Analyse, ohne ein Projekt zu erstellen.",
+    uploadTitle: "Daten importieren",
+    uploadDesc: "Datei ziehen oder klicken zum Auswählen",
+    formats: "Akzeptierte Formate: CSV, Excel (.xlsx, .xls)",
+    maxSize: "Maximale Größe: 10 MB",
+    start: "Analyse starten",
+    noFile: "Keine Datei ausgewählt",
+    tip: "Tipp",
+    tipText: "Die Schnellanalyse ist ideal für einmalige Untersuchungen. Erstellen Sie ein Projekt für vollständige Nachverfolgung.",
+    or: "oder",
+    browseFiles: "Dateien durchsuchen",
+    fileReady: "Datei bereit",
+  },
+  pt: {
+    title: "Análise Rápida",
+    desc: "Carregue um arquivo e comece a analisar imediatamente, sem criar um projeto.",
+    uploadTitle: "Importar seus dados",
+    uploadDesc: "Arraste um arquivo ou clique para selecionar",
+    formats: "Formatos aceitos: CSV, Excel (.xlsx, .xls)",
+    maxSize: "Tamanho máximo: 10 MB",
+    start: "Iniciar análise",
+    noFile: "Nenhum arquivo selecionado",
+    tip: "Dica",
+    tipText: "A análise rápida é ideal para explorações pontuais. Para acompanhamento completo, crie um projeto.",
+    or: "ou",
+    browseFiles: "Procurar arquivos",
+    fileReady: "Arquivo pronto",
+  },
+};
 
 export function StudentAnalysisPage({ userType, baseRoute }: { userType: string; baseRoute?: string }) {
-  const { t } = useLanguage();
+  const { lang } = useLanguage();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const projectIdParam = searchParams.get("project");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
 
-  const [projects, setProjects] = useState<ProjectRow[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(projectIdParam || "");
-  const [projectCount, setProjectCount] = useState(0);
-  const [analysisCount, setAnalysisCount] = useState(0);
-  const [monthlyData, setMonthlyData] = useState<{ name: string; projects: number }[]>([]);
-  const [loading, setLoading] = useState(true);
+  const l = quickLabels[lang] || quickLabels.en;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const [pRes, aRes] = await Promise.all([
-        (supabase.from("projects") as any).select("id,title,status,domain,created_at").eq("user_type", userType).order("created_at", { ascending: false }),
-        supabase.from("analyses").select("id,created_at").eq("user_type", userType),
-      ]);
-      const projectsData = (pRes.data || []) as ProjectRow[];
-      setProjects(projectsData);
-      setProjectCount(projectsData.length);
-      setAnalysisCount(aRes.data?.length || 0);
+  const handleFile = (f: File | null) => {
+    if (!f) return;
+    const ext = f.name.split(".").pop()?.toLowerCase();
+    if (!["csv", "xlsx", "xls"].includes(ext || "")) return;
+    if (f.size > 10 * 1024 * 1024) return;
+    setFile(f);
+  };
 
-      if (!selectedProjectId && projectsData.length > 0) {
-        setSelectedProjectId(projectsData[0].id);
-      }
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const f = e.dataTransfer.files[0];
+    handleFile(f);
+  };
 
-      const months: typeof monthlyData = [];
-      const now = new Date();
-      for (let i = 5; i >= 0; i--) {
-        const dt = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const label = dt.toLocaleDateString(undefined, { month: "short" });
-        const start = dt.toISOString();
-        const end = new Date(dt.getFullYear(), dt.getMonth() + 1, 1).toISOString();
-        const pC = projectsData.filter((x) => x.created_at >= start && x.created_at < end).length;
-        months.push({ name: label, projects: pC });
-      }
-      setMonthlyData(months);
-      setLoading(false);
+  const handleStart = () => {
+    // Store file in sessionStorage as base64 for the workspace to pick up
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      sessionStorage.setItem("quickAnalysisFile", JSON.stringify({
+        name: file.name,
+        type: file.type,
+        data: reader.result,
+      }));
+      navigate(`/analysis/workspace?level=${encodeURIComponent(userType)}&mode=quick`);
     };
-    fetchData();
-  }, [userType]);
-
-  const selectedProject = projects.find((p) => p.id === selectedProjectId);
-  const pieData = [
-    { name: t("pme.history.project"), value: projectCount, color: "hsl(var(--primary))" },
-    { name: t("pme.history.analysis"), value: analysisCount, color: "hsl(var(--accent))" },
-  ];
-
-  if (loading) return <p className="text-muted-foreground py-8 text-center">{t("pme.projects.loading")}</p>;
+    reader.readAsDataURL(file);
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-2xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">{t("dashboard.quickAnalysis")}</h1>
-        <p className="mt-1 text-muted-foreground">{t("student.analysis.desc")}</p>
+        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+          <Zap className="h-6 w-6 text-primary" />
+          {l.title}
+        </h1>
+        <p className="mt-1 text-muted-foreground">{l.desc}</p>
       </div>
 
-      {/* Project selector */}
+      {/* Upload zone */}
       <Card>
-        <CardHeader><CardTitle>{t("student.analysis.selectProject")}</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-base">{l.uploadTitle}</CardTitle>
+        </CardHeader>
         <CardContent className="space-y-4">
-          {projects.length === 0 ? (
-            <div className="flex flex-col items-center py-8 text-center">
-              <FolderOpen className="mb-3 h-10 w-10 text-muted-foreground" />
-              <p className="text-muted-foreground">{t("student.analysis.noProjects")}</p>
-              {baseRoute && (
-                <Button variant="outline" className="mt-3" onClick={() => navigate(`${baseRoute}/new-project`)}>
-                  {t("pme.projects.create")}
+          <div
+            className={`relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors cursor-pointer ${
+              dragOver
+                ? "border-primary bg-primary/5"
+                : file
+                ? "border-primary/50 bg-primary/5"
+                : "border-border hover:border-primary/50 hover:bg-muted/50"
+            }`}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              className="hidden"
+              onChange={(e) => handleFile(e.target.files?.[0] || null)}
+            />
+            {file ? (
+              <>
+                <FileSpreadsheet className="h-10 w-10 text-primary mb-3" />
+                <p className="font-medium text-foreground">{file.name}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {(file.size / 1024).toFixed(0)} Ko
+                </p>
+                <Badge variant="secondary" className="mt-2">
+                  {l.fileReady}
+                </Badge>
+              </>
+            ) : (
+              <>
+                <Upload className="h-10 w-10 text-muted-foreground/50 mb-3" />
+                <p className="text-sm font-medium text-muted-foreground">{l.uploadDesc}</p>
+                <p className="text-xs text-muted-foreground mt-1">{l.or}</p>
+                <Button variant="outline" size="sm" className="mt-2" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}>
+                  {l.browseFiles}
                 </Button>
-              )}
-            </div>
-          ) : (
-            <>
-              <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-                <SelectTrigger><SelectValue placeholder={t("student.analysis.choosePlaceholder")} /></SelectTrigger>
-                <SelectContent>
-                  {projects.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.title} — <span className="text-muted-foreground">{p.domain || t("student.analysis.noDomain")}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedProject && (
-                <div className="flex items-center gap-3 rounded-lg border border-border p-3">
-                  <div className="flex-1">
-                    <p className="font-medium text-foreground">{selectedProject.title}</p>
-                    <p className="text-sm text-muted-foreground">{selectedProject.domain || "—"}</p>
-                  </div>
-                  <Badge variant="outline">{t(`student.status.${selectedProject.status}`)}</Badge>
-                  <Button size="sm">
-                    <Play className="mr-1 h-3 w-3" /> {t("student.analysis.startAnalysis")}
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
+              </>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+            <span>{l.formats}</span>
+            <span>{l.maxSize}</span>
+          </div>
+
+          <Button
+            className="w-full"
+            size="lg"
+            disabled={!file}
+            onClick={handleStart}
+          >
+            <ArrowRight className="mr-2 h-4 w-4" />
+            {l.start}
+          </Button>
         </CardContent>
       </Card>
 
-      {/* Charts */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle>{t("pme.charts.monthlyActivity")}</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" /><YAxis allowDecimals={false} />
-                <Tooltip /><Legend />
-                <Bar dataKey="projects" name={t("pme.history.project")} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle>{t("pme.charts.distribution")}</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label>
-                  {pieData.map((entry, i) => (<Cell key={i} fill={entry.color} />))}
-                </Pie>
-                <Tooltip /><Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Tip */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="flex items-start gap-3 py-4">
+          <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-foreground">{l.tip}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{l.tipText}</p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
