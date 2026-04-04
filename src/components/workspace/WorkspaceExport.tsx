@@ -356,7 +356,7 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {charts.slice(0, 8).map(chart => (
                         <div key={chart.key} className="rounded-md border border-border p-3 bg-card">
-                          <MiniChart chart={chart} />
+                          <MiniChart chart={chart} colors={chartColors} barRadius={barRadius} showGrid={chartSettings.showGrid} showLabels={chartSettings.showLabels} />
                         </div>
                       ))}
                     </div>
