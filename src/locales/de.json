@@ -799,5 +799,10 @@
   "stats.analysisTypes": "Meistgenutzte Analysetypen",
   "stats.statusBreakdown": "Statusverteilung",
   "stats.trend": "Analysetrend",
-  "stats.noData": "Keine Daten verfügbar"
+  "stats.noData": "Keine Daten verfügbar",
+  "history.deleteTitle": "Dieses Element löschen?",
+  "history.deleteDesc": "Diese Aktion kann nicht rückgängig gemacht werden.",
+  "history.deleted": "Element gelöscht",
+  "common.cancel": "Abbrechen",
+  "common.delete": "Löschen"
 }

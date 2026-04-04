@@ -10,7 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useNavigate } from "react-router-dom";
-import { Clock, FolderOpen, BarChart3, Eye, Search, CalendarIcon, X, Filter, Download, FileSpreadsheet, FileText } from "lucide-react";
+import { Clock, FolderOpen, BarChart3, Eye, Search, CalendarIcon, X, Filter, FileSpreadsheet, FileText, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import * as XLSX from "xlsx";
@@ -120,6 +122,18 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
     const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
     saveAs(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), `historique_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
   }, [buildExportRows]);
+
+  const handleDelete = useCallback(async (item: HistoryItem) => {
+    try {
+      const table = item.type === "project" ? "projects" : "analyses";
+      const { error } = await (supabase.from(table) as any).delete().eq("id", item.id);
+      if (error) throw error;
+      setItems(prev => prev.filter(i => !(i.id === item.id && i.type === item.type)));
+      toast.success(t("history.deleted") || "Élément supprimé");
+    } catch (e: any) {
+      toast.error(e?.message || "Erreur lors de la suppression");
+    }
+  }, [t]);
 
   const typeIcon = (type: string) =>
     type === "project" ? <FolderOpen className="h-4 w-4 text-primary" /> : <BarChart3 className="h-4 w-4 text-primary" />;
@@ -309,11 +323,34 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
                       </TableCell>
                       <TableCell className="text-sm">{new Date(item.created_at).toLocaleDateString()}</TableCell>
                       <TableCell className="text-right">
-                        {item.type === "project" && (
-                          <Button variant="ghost" size="icon" onClick={() => navigate(`/analysis/workspace?project=${item.id}&level=${userType}`)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        )}
+                        <div className="flex items-center justify-end gap-1">
+                          {item.type === "project" && (
+                            <Button variant="ghost" size="icon" onClick={() => navigate(`/analysis/workspace?project=${item.id}&level=${userType}`)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>{t("history.deleteTitle") || "Supprimer cet élément ?"}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {t("history.deleteDesc") || "Cette action est irréversible. L'élément sera définitivement supprimé."}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>{t("common.cancel") || "Annuler"}</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(item)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                  {t("common.delete") || "Supprimer"}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

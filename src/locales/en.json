@@ -799,5 +799,10 @@
   "stats.analysisTypes": "Most Used Analysis Types",
   "stats.statusBreakdown": "Status Breakdown",
   "stats.trend": "Analysis Trend",
-  "stats.noData": "No data available"
+  "stats.noData": "No data available",
+  "history.deleteTitle": "Delete this item?",
+  "history.deleteDesc": "This action cannot be undone. The item will be permanently deleted.",
+  "history.deleted": "Item deleted",
+  "common.cancel": "Cancel",
+  "common.delete": "Delete"
 }
