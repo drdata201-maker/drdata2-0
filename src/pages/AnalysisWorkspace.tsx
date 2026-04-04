@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Loader2, Table2, BarChart3, FileText, Bot, ClipboardList, BookOpen, Maximize2, Minimize2, Check } from "lucide-react";
 import { SaveAsProjectDialog } from "@/components/workspace/SaveAsProjectDialog";
+import { ProjectRestorer } from "@/components/workspace/ProjectRestorer";
 import { JoelChat } from "@/components/workspace/JoelChat";
 import { WorkspaceResults } from "@/components/workspace/WorkspaceResults";
 import { WorkspaceCharts } from "@/components/workspace/WorkspaceCharts";
