@@ -323,11 +323,34 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
                       </TableCell>
                       <TableCell className="text-sm">{new Date(item.created_at).toLocaleDateString()}</TableCell>
                       <TableCell className="text-right">
-                        {item.type === "project" && (
-                          <Button variant="ghost" size="icon" onClick={() => navigate(`/analysis/workspace?project=${item.id}&level=${userType}`)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        )}
+                        <div className="flex items-center justify-end gap-1">
+                          {item.type === "project" && (
+                            <Button variant="ghost" size="icon" onClick={() => navigate(`/analysis/workspace?project=${item.id}&level=${userType}`)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>{t("history.deleteTitle") || "Supprimer cet élément ?"}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {t("history.deleteDesc") || "Cette action est irréversible. L'élément sera définitivement supprimé."}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>{t("common.cancel") || "Annuler"}</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(item)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                  {t("common.delete") || "Supprimer"}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
