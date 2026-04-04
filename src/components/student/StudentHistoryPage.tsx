@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,9 +10,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useNavigate } from "react-router-dom";
-import { Clock, FolderOpen, BarChart3, Eye, Search, CalendarIcon, X, Filter } from "lucide-react";
+import { Clock, FolderOpen, BarChart3, Eye, Search, CalendarIcon, X, Filter, Download, FileSpreadsheet, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 interface HistoryItem {
   id: string;
@@ -89,6 +91,36 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
     setDateTo(undefined);
   };
 
+  const buildExportRows = useCallback(() => {
+    return filtered.map(item => ({
+      [t("pme.history.itemType") || "Type"]: item.type === "project" ? t("pme.history.project") : t("pme.history.analysis"),
+      [t("pme.recentProjects.name") || "Nom"]: item.title,
+      [t("student.wizard.domain") || "Domaine"]: item.domain || "—",
+      [t("pme.recentProjects.status") || "Statut"]: t(`student.status.${item.status}`) || item.status,
+      [t("pme.recentProjects.date") || "Date"]: new Date(item.created_at).toLocaleDateString(),
+    }));
+  }, [filtered, t]);
+
+  const exportCSV = useCallback(() => {
+    const rows = buildExportRows();
+    if (rows.length === 0) return;
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const csv = XLSX.utils.sheet_to_csv(ws);
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    saveAs(blob, `historique_${format(new Date(), "yyyy-MM-dd")}.csv`);
+  }, [buildExportRows]);
+
+  const exportExcel = useCallback(() => {
+    const rows = buildExportRows();
+    if (rows.length === 0) return;
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws["!cols"] = Object.keys(rows[0]).map(() => ({ wch: 20 }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Historique");
+    const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    saveAs(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), `historique_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+  }, [buildExportRows]);
+
   const typeIcon = (type: string) =>
     type === "project" ? <FolderOpen className="h-4 w-4 text-primary" /> : <BarChart3 className="h-4 w-4 text-primary" />;
 
@@ -128,17 +160,29 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
       {/* Filters */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <Filter className="h-4 w-4" />
               {t("history.filters") || "Filtres"}
             </CardTitle>
-            {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs gap-1">
-                <X className="h-3 w-3" />
-                {t("history.clearFilters") || "Effacer"}
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {filtered.length > 0 && (
+                <>
+                  <Button variant="outline" size="sm" onClick={exportCSV} className="text-xs gap-1">
+                    <FileText className="h-3 w-3" /> CSV
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={exportExcel} className="text-xs gap-1">
+                    <FileSpreadsheet className="h-3 w-3" /> Excel
+                  </Button>
+                </>
+              )}
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs gap-1">
+                  <X className="h-3 w-3" />
+                  {t("history.clearFilters") || "Effacer"}
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
