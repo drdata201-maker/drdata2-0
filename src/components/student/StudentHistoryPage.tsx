@@ -123,6 +123,18 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
     saveAs(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), `historique_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
   }, [buildExportRows]);
 
+  const handleDelete = useCallback(async (item: HistoryItem) => {
+    try {
+      const table = item.type === "project" ? "projects" : "analyses";
+      const { error } = await (supabase.from(table) as any).delete().eq("id", item.id);
+      if (error) throw error;
+      setItems(prev => prev.filter(i => !(i.id === item.id && i.type === item.type)));
+      toast.success(t("history.deleted") || "Élément supprimé");
+    } catch (e: any) {
+      toast.error(e?.message || "Erreur lors de la suppression");
+    }
+  }, [t]);
+
   const typeIcon = (type: string) =>
     type === "project" ? <FolderOpen className="h-4 w-4 text-primary" /> : <BarChart3 className="h-4 w-4 text-primary" />;
 
