@@ -6,16 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { User, Camera, Sun, Moon, Monitor, Trash2, Lock } from "lucide-react";
+import { User, Camera, Sun, Moon, Monitor, Trash2, Lock, Globe, Bell } from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
+import type { Language } from "@/lib/i18n";
 
 interface SettingsViewProps {
   userName: string;
@@ -25,8 +23,38 @@ interface SettingsViewProps {
   onLogout: () => void;
 }
 
+const langOptions: { value: Language; label: string; flag: string }[] = [
+  { value: "fr", label: "Français", flag: "🇫🇷" },
+  { value: "en", label: "English", flag: "🇬🇧" },
+  { value: "es", label: "Español", flag: "🇪🇸" },
+  { value: "de", label: "Deutsch", flag: "🇩🇪" },
+  { value: "pt", label: "Português", flag: "🇧🇷" },
+];
+
+const notifLabels: Record<string, Record<string, string>> = {
+  fr: { emailReports: "Rapports par email", analysisComplete: "Analyse terminée", weeklySummary: "Résumé hebdomadaire", section: "Notifications", desc: "Gérez vos préférences de notification" },
+  en: { emailReports: "Email reports", analysisComplete: "Analysis complete", weeklySummary: "Weekly summary", section: "Notifications", desc: "Manage your notification preferences" },
+  es: { emailReports: "Informes por email", analysisComplete: "Análisis completado", weeklySummary: "Resumen semanal", section: "Notificaciones", desc: "Gestione sus preferencias de notificación" },
+  de: { emailReports: "E-Mail-Berichte", analysisComplete: "Analyse abgeschlossen", weeklySummary: "Wöchentliche Zusammenfassung", section: "Benachrichtigungen", desc: "Verwalten Sie Ihre Benachrichtigungseinstellungen" },
+  pt: { emailReports: "Relatórios por email", analysisComplete: "Análise concluída", weeklySummary: "Resumo semanal", section: "Notificações", desc: "Gerencie suas preferências de notificação" },
+};
+
+const langSectionLabels: Record<string, Record<string, string>> = {
+  fr: { title: "Langue par défaut", desc: "La langue sera sauvegardée dans votre profil" },
+  en: { title: "Default language", desc: "Language will be saved to your profile" },
+  es: { title: "Idioma por defecto", desc: "El idioma se guardará en su perfil" },
+  de: { title: "Standardsprache", desc: "Die Sprache wird in Ihrem Profil gespeichert" },
+  pt: { title: "Idioma padrão", desc: "O idioma será salvo no seu perfil" },
+};
+
+interface NotifPrefs {
+  email_reports: boolean;
+  analysis_complete: boolean;
+  weekly_summary: boolean;
+}
+
 export function SettingsView({ userName, userEmail, userLevel, userCountry, onLogout }: SettingsViewProps) {
-  const { t } = useLanguage();
+  const { t, lang, setLang } = useLanguage();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -47,15 +75,45 @@ export function SettingsView({ userName, userEmail, userLevel, userCountry, onLo
   const [deletePassword, setDeletePassword] = useState("");
   const [deleting, setDeleting] = useState(false);
 
+  const [notifPrefs, setNotifPrefs] = useState<NotifPrefs>({
+    email_reports: true,
+    analysis_complete: true,
+    weekly_summary: false,
+  });
+
+  // Load user data + preferences from DB
   useEffect(() => {
     setName(userName);
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        const meta = session.user.user_metadata;
-        setInstitution(meta?.institution || "");
-        setAvatarUrl(meta?.avatar_url || null);
+    const load = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const meta = session.user.user_metadata;
+      setInstitution(meta?.institution || "");
+      setAvatarUrl(meta?.avatar_url || null);
+
+      // Load from profiles table
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("preferred_language, preferred_theme, notification_preferences")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      if (profile) {
+        if (profile.preferred_theme) {
+          setActiveTheme(profile.preferred_theme);
+          localStorage.setItem("dr-data-theme", profile.preferred_theme);
+        }
+        if (profile.notification_preferences) {
+          const np = profile.notification_preferences as unknown as NotifPrefs;
+          setNotifPrefs({
+            email_reports: np.email_reports ?? true,
+            analysis_complete: np.analysis_complete ?? true,
+            weekly_summary: np.weekly_summary ?? false,
+          });
+        }
       }
-    });
+    };
+    load();
   }, [userName]);
 
   useEffect(() => {
@@ -65,14 +123,41 @@ export function SettingsView({ userName, userEmail, userLevel, userCountry, onLo
     localStorage.setItem("dr-data-theme", activeTheme);
   }, [activeTheme]);
 
+  // Save theme to DB
+  const handleThemeChange = async (theme: string) => {
+    setActiveTheme(theme);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from("profiles").update({ preferred_theme: theme }).eq("user_id", user.id);
+    }
+  };
+
+  // Save language to DB
+  const handleLangChange = async (newLang: Language) => {
+    setLang(newLang);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from("profiles").update({ preferred_language: newLang }).eq("user_id", user.id);
+    }
+  };
+
+  // Save notification prefs to DB
+  const handleNotifChange = async (key: keyof NotifPrefs, value: boolean) => {
+    const updated = { ...notifPrefs, [key]: value };
+    setNotifPrefs(updated);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from("profiles").update({
+        notification_preferences: JSON.parse(JSON.stringify(updated)),
+      }).eq("user_id", user.id);
+    }
+  };
+
   const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const allowed = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
-    if (!allowed.includes(file.type)) {
-      toast.error(t("settings.profile.invalidFormat"));
-      return;
-    }
+    if (!allowed.includes(file.type)) { toast.error(t("settings.profile.invalidFormat")); return; }
     setPendingFile(file);
     const reader = new FileReader();
     reader.onload = (ev) => setAvatarPreview(ev.target?.result as string);
@@ -94,25 +179,18 @@ export function SettingsView({ userName, userEmail, userLevel, userCountry, onLo
       setAvatarPreview(null);
       setPendingFile(null);
       toast.success(t("settings.profile.avatarSuccess"));
-    } catch {
-      toast.error(t("settings.profile.avatarError"));
-    }
+    } catch { toast.error(t("settings.profile.avatarError")); }
   };
 
   const handleSaveProfile = async () => {
     setSavingProfile(true);
     try {
       if (pendingFile) await uploadAvatar();
-      const { error } = await supabase.auth.updateUser({
-        data: { full_name: name, name, institution },
-      });
+      const { error } = await supabase.auth.updateUser({ data: { full_name: name, name, institution } });
       if (error) throw error;
       toast.success(t("settings.profile.saveSuccess"));
-    } catch {
-      toast.error(t("settings.profile.saveError"));
-    } finally {
-      setSavingProfile(false);
-    }
+    } catch { toast.error(t("settings.profile.saveError")); }
+    finally { setSavingProfile(false); }
   };
 
   const handleChangePassword = async () => {
@@ -123,38 +201,22 @@ export function SettingsView({ userName, userEmail, userLevel, userCountry, onLo
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
       toast.success(t("settings.account.passwordSuccess"));
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch {
-      toast.error(t("settings.account.passwordError"));
-    } finally {
-      setSavingPassword(false);
-    }
+      setNewPassword(""); setConfirmPassword("");
+    } catch { toast.error(t("settings.account.passwordError")); }
+    finally { setSavingPassword(false); }
   };
 
   const handleDeleteAccount = async () => {
     if (!deletePassword) return;
     setDeleting(true);
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: userEmail,
-        password: deletePassword,
-      });
-      if (signInError) {
-        toast.error(t("settings.account.wrongPassword"));
-        setDeleting(false);
-        return;
-      }
-      // Sign out and redirect - actual deletion requires admin/edge function
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email: userEmail, password: deletePassword });
+      if (signInError) { toast.error(t("settings.account.wrongPassword")); setDeleting(false); return; }
       await supabase.auth.signOut();
       toast.success(t("settings.account.deleteSuccess"));
       navigate("/login");
-    } catch {
-      toast.error(t("settings.account.deleteError"));
-    } finally {
-      setDeleting(false);
-      setDeleteOpen(false);
-    }
+    } catch { toast.error(t("settings.account.deleteError")); }
+    finally { setDeleting(false); setDeleteOpen(false); }
   };
 
   const themes = [
@@ -170,6 +232,8 @@ export function SettingsView({ userName, userEmail, userLevel, userCountry, onLo
     : userLevel || "—";
 
   const displayAvatar = avatarPreview || avatarUrl;
+  const nl = notifLabels[lang] || notifLabels.en;
+  const ll = langSectionLabels[lang] || langSectionLabels.en;
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
@@ -191,9 +255,7 @@ export function SettingsView({ userName, userEmail, userLevel, userCountry, onLo
                 {t("settings.profile.upload")}
               </Button>
               <p className="text-xs text-muted-foreground">PNG, JPG, WEBP</p>
-              {avatarPreview && (
-                <p className="text-xs text-primary font-medium">{t("settings.profile.previewReady")}</p>
-              )}
+              {avatarPreview && <p className="text-xs text-primary font-medium">{t("settings.profile.previewReady")}</p>}
             </div>
             <input ref={fileRef} type="file" accept=".png,.jpg,.jpeg,.webp" className="hidden" onChange={handleAvatarSelect} />
           </div>
@@ -221,7 +283,33 @@ export function SettingsView({ userName, userEmail, userLevel, userCountry, onLo
         </div>
       </section>
 
-      {/* Interface Section */}
+      {/* Language Section */}
+      <section>
+        <h2 className="mb-4 text-lg font-semibold text-foreground flex items-center gap-2">
+          <Globe className="h-5 w-5 text-primary" />
+          {ll.title}
+        </h2>
+        <div className="rounded-xl border border-border bg-card p-6 space-y-3">
+          <Select value={lang} onValueChange={(v) => handleLangChange(v as Language)}>
+            <SelectTrigger className="w-full sm:w-64">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {langOptions.map(opt => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  <span className="flex items-center gap-2">
+                    <span>{opt.flag}</span>
+                    <span>{opt.label}</span>
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">{ll.desc}</p>
+        </div>
+      </section>
+
+      {/* Interface / Theme Section */}
       <section>
         <h2 className="mb-4 text-lg font-semibold text-foreground">{t("settings.interface")}</h2>
         <div className="rounded-xl border border-border bg-card p-6">
@@ -230,7 +318,7 @@ export function SettingsView({ userName, userEmail, userLevel, userCountry, onLo
             {themes.map((theme) => (
               <button
                 key={theme.key}
-                onClick={() => setActiveTheme(theme.key)}
+                onClick={() => handleThemeChange(theme.key)}
                 className={`flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${
                   activeTheme === theme.key
                     ? "border-primary bg-accent text-accent-foreground"
@@ -241,6 +329,31 @@ export function SettingsView({ userName, userEmail, userLevel, userCountry, onLo
                 {t(theme.label)}
               </button>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Notifications Section */}
+      <section>
+        <h2 className="mb-4 text-lg font-semibold text-foreground flex items-center gap-2">
+          <Bell className="h-5 w-5 text-primary" />
+          {nl.section}
+        </h2>
+        <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+          <p className="text-sm text-muted-foreground">{nl.desc}</p>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm">{nl.emailReports}</Label>
+              <Switch checked={notifPrefs.email_reports} onCheckedChange={(v) => handleNotifChange("email_reports", v)} />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm">{nl.analysisComplete}</Label>
+              <Switch checked={notifPrefs.analysis_complete} onCheckedChange={(v) => handleNotifChange("analysis_complete", v)} />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm">{nl.weeklySummary}</Label>
+              <Switch checked={notifPrefs.weekly_summary} onCheckedChange={(v) => handleNotifChange("weekly_summary", v)} />
+            </div>
           </div>
         </div>
       </section>
@@ -288,12 +401,7 @@ export function SettingsView({ userName, userEmail, userLevel, userCountry, onLo
           </DialogHeader>
           <div className="space-y-3 py-2">
             <Label className="text-muted-foreground">{t("settings.account.confirmPasswordLabel")}</Label>
-            <Input
-              type="password"
-              value={deletePassword}
-              onChange={(e) => setDeletePassword(e.target.value)}
-              placeholder={t("settings.account.enterPassword")}
-            />
+            <Input type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} placeholder={t("settings.account.enterPassword")} />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteOpen(false)}>{t("student.wizard.back")}</Button>
