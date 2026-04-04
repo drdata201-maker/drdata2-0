@@ -98,10 +98,8 @@ export function ChartStyleProvider({ children }: { children: ReactNode }) {
     const serialized = serializeSettings(newSettings);
     await supabase
       .from("profiles")
-      .upsert(
-        { user_id: userId, chart_preferences: serialized as unknown as Record<string, unknown> },
-        { onConflict: "user_id" }
-      );
+      .update({ chart_preferences: serialized as unknown as Record<string, unknown> })
+      .eq("user_id", userId);
   }, [userId]);
 
   const updateSettings = useCallback((updater: (s: ChartStyleSettings) => ChartStyleSettings) => {
