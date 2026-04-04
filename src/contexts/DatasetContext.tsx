@@ -63,6 +63,7 @@ interface DatasetContextType {
   runCleaning: () => void;
   runAnalyses: (analysisKeys: string[], software: string, depVar?: string, indVars?: string[]) => void;
   reset: () => void;
+  restoreState: (results: AnalysisResultItem[], interpretation: InterpretationData | null) => void;
 }
 
 const DatasetContext = createContext<DatasetContextType | null>(null);
