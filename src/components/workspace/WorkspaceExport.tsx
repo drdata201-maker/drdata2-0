@@ -37,7 +37,7 @@ const levelLabels: Record<string, Record<string, string>> = {
   pt: { student_license: "Licenciatura", student_master: "Mestrado", student_doctorat: "Doutorado" },
 };
 
-function MiniChart({ chart }: { chart: ChartItem }) {
+function MiniChart({ chart, colors, barRadius, showGrid, showLabels }: { chart: ChartItem; colors: string[]; barRadius: [number,number,number,number]; showGrid: boolean; showLabels: boolean }) {
   const data = chart.data;
   return (
     <div className="w-full">
@@ -46,26 +46,26 @@ function MiniChart({ chart }: { chart: ChartItem }) {
         {chart.type === "pie" ? (
           <PieChart>
             <Pie data={data as { name: string; value: number }[]} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={65}
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-              {(data as { name: string }[]).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+              label={showLabels ? ({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%` : false}>
+              {(data as { name: string }[]).map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
             </Pie>
             <Tooltip />
           </PieChart>
         ) : chart.type === "scatter" ? (
           <ScatterChart>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
             <XAxis dataKey="x" type="number" tick={{ fontSize: 9 }} />
             <YAxis dataKey="y" type="number" tick={{ fontSize: 9 }} />
             <Tooltip />
-            <Scatter data={data as { x: number; y: number }[]} fill="hsl(var(--primary))" />
+            <Scatter data={data as { x: number; y: number }[]} fill={colors[0]} />
           </ScatterChart>
         ) : (
           <BarChart data={data as { name: string; value: number }[]}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-            <XAxis dataKey="name" tick={{ fontSize: 9 }} />
+            {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
+            <XAxis dataKey="name" tick={showLabels ? { fontSize: 9 } : false} />
             <YAxis tick={{ fontSize: 9 }} />
             <Tooltip />
-            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="value" fill={colors[0]} radius={barRadius} />
           </BarChart>
         )}
       </ResponsiveContainer>
