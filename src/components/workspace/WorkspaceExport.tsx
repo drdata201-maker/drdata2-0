@@ -168,7 +168,7 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
       const data = { ...buildData! };
       // Generate chart images for Word/PDF
       if (format !== "xlsx" && charts.length > 0) {
-        data.chartImages = renderChartsToImages(charts);
+        data.chartImages = renderChartsToImages(charts, chartSettings);
       }
       if (format === "docx") await exportDocx(data, content);
       else if (format === "pdf") exportPdf(data, content);
