@@ -765,5 +765,11 @@
   "charts.pieChart": "Pie Chart",
   "charts.scatter": "Scatter Plot",
   "charts.boxPlot": "Box Plot",
-  "charts.regression": "Regression"
+  "charts.regression": "Regression",
+  "notifications.title": "Notifications",
+  "notifications.empty": "No notifications",
+  "notifications.loading": "Loading...",
+  "notifications.markAllRead": "Mark all read",
+  "notifications.markRead": "Mark as read",
+  "notifications.justNow": "Just now"
 }

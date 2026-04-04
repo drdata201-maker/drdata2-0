@@ -765,5 +765,11 @@
   "charts.pieChart": "Kreisdiagramm",
   "charts.scatter": "Streudiagramm",
   "charts.boxPlot": "Boxplot",
-  "charts.regression": "Regression"
+  "charts.regression": "Regression",
+  "notifications.title": "Benachrichtigungen",
+  "notifications.empty": "Keine Benachrichtigungen",
+  "notifications.loading": "Laden...",
+  "notifications.markAllRead": "Alle lesen",
+  "notifications.markRead": "Als gelesen markieren",
+  "notifications.justNow": "Gerade eben"
 }
