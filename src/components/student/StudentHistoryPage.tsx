@@ -160,17 +160,29 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
       {/* Filters */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <Filter className="h-4 w-4" />
               {t("history.filters") || "Filtres"}
             </CardTitle>
-            {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs gap-1">
-                <X className="h-3 w-3" />
-                {t("history.clearFilters") || "Effacer"}
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {filtered.length > 0 && (
+                <>
+                  <Button variant="outline" size="sm" onClick={exportCSV} className="text-xs gap-1">
+                    <FileText className="h-3 w-3" /> CSV
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={exportExcel} className="text-xs gap-1">
+                    <FileSpreadsheet className="h-3 w-3" /> Excel
+                  </Button>
+                </>
+              )}
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs gap-1">
+                  <X className="h-3 w-3" />
+                  {t("history.clearFilters") || "Effacer"}
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
