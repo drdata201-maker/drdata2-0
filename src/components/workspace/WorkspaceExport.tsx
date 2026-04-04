@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset } from "@/contexts/DatasetContext";
+import { useChartStyle } from "@/contexts/ChartStyleContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,8 +17,6 @@ import {
   BarChart, Bar, ScatterChart, Scatter, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-
-const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
 interface WorkspaceExportProps {
   projectTitle: string;
