@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 const licenceProjectTypes = [
   "memoir_licence", "academic_project", "questionnaire_analysis",
@@ -53,19 +53,12 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
       ? doctoratProjectTypes
       : licenceProjectTypes;
 
-  const getLevelLabel = () => {
-    if (resolvedUserType === "student_master") return t("auth.level.master");
-    if (resolvedUserType === "student_doctorate") return t("auth.level.doctorat");
-    return t("auth.level.licence");
-  };
-
   const handleCreate = async () => {
     if (!title.trim() || !projectType) return;
     setLoading(true);
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
-        console.error("createProject:auth error", authError?.message);
         toast.error("Authentication error – please log in again.");
         navigate("/login");
         return;
@@ -78,17 +71,14 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
         status: "draft",
         user_type: resolvedUserType,
       };
-      console.log("createProject:payload", payload);
       const { data, error } = await (supabase.from("projects") as any)
         .insert(payload)
         .select("id")
         .single();
-      console.log("createProject:response", { data, error });
       if (error) throw new Error(error.message);
       toast.success(t("student.newProject.success"));
       navigate(`/analysis/workspace?project=${data.id}&level=${resolvedUserType}&type=${encodeURIComponent(projectType)}&domain=${encodeURIComponent(domain || "")}`);
     } catch (err: any) {
-      console.error("createProject:error", err);
       toast.error(err?.message || t("pme.newAnalysis.error"));
     } finally {
       setLoading(false);
@@ -96,59 +86,90 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
   };
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-3xl space-y-8 py-2 lg:py-4">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">{t("dashboard.newProject")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("student.newProject.desc")}</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl">
+          {t("dashboard.newProject")}
+        </h1>
+        <p className="mt-1.5 text-sm text-muted-foreground lg:text-base">
+          {t("student.newProject.desc")}
+        </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <BookOpen className="h-5 w-5 text-primary" />
+      <Card className="border border-border/60 shadow-sm">
+        <CardContent className="p-6 lg:p-8">
+          <h2 className="mb-6 text-lg font-semibold text-foreground">
+            {t("student.wizard.step1Title")}
+          </h2>
+
+          <div className="space-y-5">
+            {/* Title */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">
+                {t("pme.newAnalysis.analysisTitle")}
+              </label>
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={t("student.newProject.titlePlaceholder")}
+                className="h-11"
+              />
             </div>
-            <div>
-              <CardTitle>{t("student.wizard.step1Title")}</CardTitle>
-              <CardDescription>{t("student.wizard.step1Desc")}</CardDescription>
+
+            {/* Project Type */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">
+                {t("student.wizard.projectType")}
+              </label>
+              <Select value={projectType} onValueChange={setProjectType}>
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder={t("student.wizard.selectType")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {types.map((pt) => (
+                    <SelectItem key={pt} value={pt}>{t(`student.type.${pt}`)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
-            <p className="text-sm text-primary font-medium">
-              <Sparkles className="mr-1 inline h-4 w-4" />
-              {t("joel.redirectInfo")} — {getLevelLabel()}
-            </p>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">{t("pme.newAnalysis.analysisTitle")}</label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("student.newProject.titlePlaceholder")} />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">{t("student.wizard.projectType")}</label>
-            <Select value={projectType} onValueChange={setProjectType}>
-              <SelectTrigger><SelectValue placeholder={t("student.wizard.selectType")} /></SelectTrigger>
-              <SelectContent>
-                {types.map((pt) => (
-                  <SelectItem key={pt} value={pt}>{t(`student.type.${pt}`)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">{t("student.wizard.domain")}</label>
-            <Input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder={t("student.wizard.domainPlaceholder")} />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">{t("pme.newAnalysis.description")}</label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("student.newProject.descPlaceholder")} rows={3} />
+
+            {/* Domain */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">
+                {t("student.wizard.domain")}
+              </label>
+              <Input
+                value={domain}
+                onChange={(e) => setDomain(e.target.value)}
+                placeholder={t("student.wizard.domainPlaceholder")}
+                className="h-11"
+              />
+            </div>
+
+            {/* Description */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">
+                {t("pme.newAnalysis.description")}
+              </label>
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={t("student.newProject.descPlaceholder")}
+                rows={4}
+                className="min-h-[110px] resize-none"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
-        <Button onClick={handleCreate} disabled={loading || !title.trim() || !projectType} size="lg">
+      <div className="flex justify-end pb-4">
+        <Button
+          onClick={handleCreate}
+          disabled={loading || !title.trim() || !projectType}
+          size="lg"
+          className="h-12 px-8 text-base font-medium shadow-sm"
+        >
           <Sparkles className="mr-2 h-4 w-4" />
           {loading ? "..." : t("joel.createAndStart")}
         </Button>
