@@ -1,7 +1,7 @@
-import { Component, ReactNode, useEffect, useState } from "react";
+import { Component, ReactNode, useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { DatasetProvider } from "@/contexts/DatasetContext";
+import { DatasetProvider, useDataset } from "@/contexts/DatasetContext";
 import { ChartStyleProvider } from "@/contexts/ChartStyleContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,33 @@ function PanelLoading() {
   return <div className="p-4 text-sm text-muted-foreground">Assistant Joël Loading...</div>;
 }
 
+function QuickFileLoader({ onLoaded }: { onLoaded: () => void }) {
+  const { processFile } = useDataset();
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (loaded) return;
+    const raw = sessionStorage.getItem("quickAnalysisFile");
+    if (!raw) return;
+    sessionStorage.removeItem("quickAnalysisFile");
+    setLoaded(true);
+    try {
+      const { name, type, data } = JSON.parse(raw);
+      // Convert data URL back to File
+      const byteString = atob(data.split(",")[1]);
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+      const file = new File([ab], name, { type: type || "text/csv" });
+      processFile(file).then(() => onLoaded());
+    } catch (e) {
+      console.error("Quick file load error:", e);
+    }
+  }, [loaded, processFile, onLoaded]);
+
+  return null;
+}
+
 export default function AnalysisWorkspace() {
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -46,16 +73,17 @@ export default function AnalysisWorkspace() {
   const level = searchParams.get("level") || "student_license";
   const projectType = searchParams.get("type") || "";
   const projectDomain = decodeURIComponent(searchParams.get("domain") || "");
+  const isQuickMode = searchParams.get("mode") === "quick";
 
   const [projectTitle, setProjectTitle] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
   const [mounted, setMounted] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [workspaceReady, setWorkspaceReady] = useState(false);
-  const [activeTab, setActiveTab] = useState("assistant");
+  const [activeTab, setActiveTab] = useState(isQuickMode ? "dataprep" : "assistant");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
-  const [visitedSteps, setVisitedSteps] = useState<Set<string>>(new Set(["assistant"]));
+  const [visitedSteps, setVisitedSteps] = useState<Set<string>>(new Set([isQuickMode ? "dataprep" : "assistant"]));
 
   const WORKFLOW_STEPS = [
     { key: "assistant", label: "Assistant" },
@@ -108,6 +136,17 @@ export default function AnalysisWorkspace() {
       });
   }, [projectId]);
 
+  const handleQuickFileLoaded = useCallback(() => {
+    setCompletedSteps(prev => new Set([...prev, "assistant"]));
+    setActiveTab("dataprep");
+  }, []);
+
+  useEffect(() => {
+    if (isQuickMode && !projectTitle) {
+      setProjectTitle(t("dashboard.quickAnalysis") || "Quick Analysis");
+    }
+  }, [isQuickMode, projectTitle, t]);
+
   if (!mounted || !authed || !workspaceReady) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -140,6 +179,7 @@ export default function AnalysisWorkspace() {
   return (
     <ChartStyleProvider>
     <DatasetProvider>
+    {isQuickMode && <QuickFileLoader onLoaded={handleQuickFileLoaded} />}
     <div className={cn(
       "flex min-h-screen flex-col bg-background transition-all duration-300",
       isFullscreen && "fixed inset-0 z-50"
@@ -154,7 +194,8 @@ export default function AnalysisWorkspace() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-lg font-bold text-foreground truncate">{t("joel.workspaceTitle")}</h1>
-          {projectTitle && <Badge variant="secondary" className="hidden sm:inline-flex">{projectTitle}</Badge>}
+           {isQuickMode && <Badge variant="outline" className="hidden sm:inline-flex border-primary/50 text-primary">⚡ {t("dashboard.quickAnalysis")}</Badge>}
+          {projectTitle && !isQuickMode && <Badge variant="secondary" className="hidden sm:inline-flex">{projectTitle}</Badge>}
           <div className="ml-auto flex items-center gap-2">
             <span className="text-xs text-muted-foreground hidden sm:inline">{progressPct}%</span>
             <Button variant="ghost" size="icon" onClick={() => setIsFullscreen(f => !f)} title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}>
