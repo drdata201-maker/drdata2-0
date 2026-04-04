@@ -353,8 +353,13 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     setInterpretationData(null);
   }, []);
 
+  const restoreState = useCallback((results: AnalysisResultItem[], interpretation: InterpretationData | null) => {
+    setAnalysisResults(results);
+    setInterpretationData(interpretation);
+  }, []);
+
   return (
-    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, interpretationData, setInterpretationData, processFile, runCleaning, runAnalyses, reset }}>
+    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, interpretationData, setInterpretationData, processFile, runCleaning, runAnalyses, reset, restoreState }}>
       {children}
     </DatasetContext.Provider>
   );
