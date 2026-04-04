@@ -165,9 +165,22 @@ export default function AnalysisWorkspace() {
     full: "max-w-full",
   };
 
+  const handleQuickFileLoaded = useCallback(() => {
+    setCompletedSteps(prev => new Set([...prev, "assistant"]));
+    setActiveTab("dataprep");
+  }, []);
+
+  // Set quick mode title
+  useEffect(() => {
+    if (isQuickMode && !projectTitle) {
+      setProjectTitle(t("dashboard.quickAnalysis") || "Quick Analysis");
+    }
+  }, [isQuickMode, projectTitle, t]);
+
   return (
     <ChartStyleProvider>
     <DatasetProvider>
+    {isQuickMode && <QuickFileLoader onLoaded={handleQuickFileLoaded} />}
     <div className={cn(
       "flex min-h-screen flex-col bg-background transition-all duration-300",
       isFullscreen && "fixed inset-0 z-50"
