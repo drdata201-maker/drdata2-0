@@ -98,7 +98,7 @@ export function ChartStyleProvider({ children }: { children: ReactNode }) {
     const serialized = serializeSettings(newSettings);
     await supabase
       .from("profiles")
-      .update({ chart_preferences: serialized as unknown as Record<string, unknown> })
+      .update({ chart_preferences: JSON.parse(JSON.stringify(serialized)) })
       .eq("user_id", userId);
   }, [userId]);
 
