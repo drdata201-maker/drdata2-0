@@ -136,6 +136,17 @@ export default function AnalysisWorkspace() {
       });
   }, [projectId]);
 
+  const handleQuickFileLoaded = useCallback(() => {
+    setCompletedSteps(prev => new Set([...prev, "assistant"]));
+    setActiveTab("dataprep");
+  }, []);
+
+  useEffect(() => {
+    if (isQuickMode && !projectTitle) {
+      setProjectTitle(t("dashboard.quickAnalysis") || "Quick Analysis");
+    }
+  }, [isQuickMode, projectTitle, t]);
+
   if (!mounted || !authed || !workspaceReady) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -164,18 +175,6 @@ export default function AnalysisWorkspace() {
     "6xl": "max-w-6xl",
     full: "max-w-full",
   };
-
-  const handleQuickFileLoaded = useCallback(() => {
-    setCompletedSteps(prev => new Set([...prev, "assistant"]));
-    setActiveTab("dataprep");
-  }, []);
-
-  // Set quick mode title
-  useEffect(() => {
-    if (isQuickMode && !projectTitle) {
-      setProjectTitle(t("dashboard.quickAnalysis") || "Quick Analysis");
-    }
-  }, [isQuickMode, projectTitle, t]);
 
   return (
     <ChartStyleProvider>
