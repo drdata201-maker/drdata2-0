@@ -135,6 +135,9 @@ export type Database = {
           chart_preferences: Json | null
           created_at: string
           id: string
+          notification_preferences: Json | null
+          preferred_language: string | null
+          preferred_theme: string | null
           updated_at: string
           user_id: string
         }
@@ -142,6 +145,9 @@ export type Database = {
           chart_preferences?: Json | null
           created_at?: string
           id?: string
+          notification_preferences?: Json | null
+          preferred_language?: string | null
+          preferred_theme?: string | null
           updated_at?: string
           user_id: string
         }
@@ -149,6 +155,9 @@ export type Database = {
           chart_preferences?: Json | null
           created_at?: string
           id?: string
+          notification_preferences?: Json | null
+          preferred_language?: string | null
+          preferred_theme?: string | null
           updated_at?: string
           user_id?: string
         }
