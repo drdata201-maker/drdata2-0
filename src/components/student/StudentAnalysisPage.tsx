@@ -1,10 +1,9 @@
 import { useState, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Zap, Upload, FileSpreadsheet, ArrowRight, Info } from "lucide-react";
 
@@ -111,7 +110,6 @@ export function StudentAnalysisPage({ userType, baseRoute }: { userType: string;
   };
 
   const handleStart = () => {
-    // Store file in sessionStorage as base64 for the workspace to pick up
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
@@ -126,84 +124,88 @@ export function StudentAnalysisPage({ userType, baseRoute }: { userType: string;
   };
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="mx-auto w-full max-w-3xl space-y-8 py-2 lg:py-4">
       <div>
-        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <Zap className="h-6 w-6 text-primary" />
+        <h1 className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl flex items-center gap-2.5">
+          <Zap className="h-6 w-6 text-primary lg:h-7 lg:w-7" />
           {l.title}
         </h1>
-        <p className="mt-1 text-muted-foreground">{l.desc}</p>
+        <p className="mt-1.5 text-sm text-muted-foreground lg:text-base">{l.desc}</p>
       </div>
 
       {/* Upload zone */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{l.uploadTitle}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div
-            className={`relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors cursor-pointer ${
-              dragOver
-                ? "border-primary bg-primary/5"
-                : file
-                ? "border-primary/50 bg-primary/5"
-                : "border-border hover:border-primary/50 hover:bg-muted/50"
-            }`}
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv,.xlsx,.xls"
-              className="hidden"
-              onChange={(e) => handleFile(e.target.files?.[0] || null)}
-            />
-            {file ? (
-              <>
-                <FileSpreadsheet className="h-10 w-10 text-primary mb-3" />
-                <p className="font-medium text-foreground">{file.name}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {(file.size / 1024).toFixed(0)} Ko
-                </p>
-                <Badge variant="secondary" className="mt-2">
-                  {l.fileReady}
-                </Badge>
-              </>
-            ) : (
-              <>
-                <Upload className="h-10 w-10 text-muted-foreground/50 mb-3" />
-                <p className="text-sm font-medium text-muted-foreground">{l.uploadDesc}</p>
-                <p className="text-xs text-muted-foreground mt-1">{l.or}</p>
-                <Button variant="outline" size="sm" className="mt-2" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}>
-                  {l.browseFiles}
-                </Button>
-              </>
-            )}
-          </div>
+      <Card className="border border-border/60 shadow-sm">
+        <CardContent className="p-6 lg:p-8">
+          <h2 className="mb-6 text-lg font-semibold text-foreground">{l.uploadTitle}</h2>
 
-          <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-            <span>{l.formats}</span>
-            <span>{l.maxSize}</span>
-          </div>
+          <div className="space-y-5">
+            <div
+              className={`relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-10 lg:p-14 transition-colors cursor-pointer ${
+                dragOver
+                  ? "border-primary bg-primary/5"
+                  : file
+                  ? "border-primary/50 bg-primary/5"
+                  : "border-border hover:border-primary/50 hover:bg-muted/30"
+              }`}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                className="hidden"
+                onChange={(e) => handleFile(e.target.files?.[0] || null)}
+              />
+              {file ? (
+                <>
+                  <FileSpreadsheet className="h-12 w-12 text-primary mb-3" />
+                  <p className="font-medium text-foreground text-base">{file.name}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {(file.size / 1024).toFixed(0)} Ko
+                  </p>
+                  <Badge variant="secondary" className="mt-3">
+                    {l.fileReady}
+                  </Badge>
+                </>
+              ) : (
+                <>
+                  <Upload className="h-12 w-12 text-muted-foreground/40 mb-3" />
+                  <p className="text-sm font-medium text-muted-foreground">{l.uploadDesc}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{l.or}</p>
+                  <Button variant="outline" size="sm" className="mt-3" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}>
+                    {l.browseFiles}
+                  </Button>
+                </>
+              )}
+            </div>
 
-          <Button
-            className="w-full"
-            size="lg"
-            disabled={!file}
-            onClick={handleStart}
-          >
-            <ArrowRight className="mr-2 h-4 w-4" />
-            {l.start}
-          </Button>
+            <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+              <span>{l.formats}</span>
+              <span>{l.maxSize}</span>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
+      {/* Start button */}
+      <div className="flex justify-end">
+        <Button
+          size="lg"
+          disabled={!file}
+          onClick={handleStart}
+          className="h-12 px-8 text-base font-medium shadow-sm"
+        >
+          <ArrowRight className="mr-2 h-4 w-4" />
+          {l.start}
+        </Button>
+      </div>
+
       {/* Tip */}
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="flex items-start gap-3 py-4">
+      <Card className="border border-primary/20 bg-primary/5 shadow-none">
+        <CardContent className="flex items-start gap-3 p-5">
           <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
           <div>
             <p className="text-sm font-medium text-foreground">{l.tip}</p>
