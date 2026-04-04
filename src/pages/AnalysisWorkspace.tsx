@@ -138,6 +138,7 @@ export default function AnalysisWorkspace() {
   };
 
   return (
+    <ChartStyleProvider>
     <DatasetProvider>
     <div className={cn(
       "flex min-h-screen flex-col bg-background transition-all duration-300",
