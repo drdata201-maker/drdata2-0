@@ -2,6 +2,7 @@ import { Component, ReactNode, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { DatasetProvider } from "@/contexts/DatasetContext";
+import { ChartStyleProvider } from "@/contexts/ChartStyleContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -137,6 +138,7 @@ export default function AnalysisWorkspace() {
   };
 
   return (
+    <ChartStyleProvider>
     <DatasetProvider>
     <div className={cn(
       "flex min-h-screen flex-col bg-background transition-all duration-300",
@@ -292,5 +294,6 @@ export default function AnalysisWorkspace() {
       </div>
     </div>
     </DatasetProvider>
+    </ChartStyleProvider>
   );
 }

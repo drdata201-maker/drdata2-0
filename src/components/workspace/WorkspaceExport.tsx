@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset } from "@/contexts/DatasetContext";
+import { useChartStyle } from "@/contexts/ChartStyleContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,8 +17,6 @@ import {
   BarChart, Bar, ScatterChart, Scatter, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-
-const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
 interface WorkspaceExportProps {
   projectTitle: string;
@@ -38,7 +37,7 @@ const levelLabels: Record<string, Record<string, string>> = {
   pt: { student_license: "Licenciatura", student_master: "Mestrado", student_doctorat: "Doutorado" },
 };
 
-function MiniChart({ chart }: { chart: ChartItem }) {
+function MiniChart({ chart, colors, barRadius, showGrid, showLabels }: { chart: ChartItem; colors: string[]; barRadius: [number,number,number,number]; showGrid: boolean; showLabels: boolean }) {
   const data = chart.data;
   return (
     <div className="w-full">
@@ -47,26 +46,26 @@ function MiniChart({ chart }: { chart: ChartItem }) {
         {chart.type === "pie" ? (
           <PieChart>
             <Pie data={data as { name: string; value: number }[]} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={65}
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-              {(data as { name: string }[]).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+              label={showLabels ? ({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%` : false}>
+              {(data as { name: string }[]).map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
             </Pie>
             <Tooltip />
           </PieChart>
         ) : chart.type === "scatter" ? (
           <ScatterChart>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
             <XAxis dataKey="x" type="number" tick={{ fontSize: 9 }} />
             <YAxis dataKey="y" type="number" tick={{ fontSize: 9 }} />
             <Tooltip />
-            <Scatter data={data as { x: number; y: number }[]} fill="hsl(var(--primary))" />
+            <Scatter data={data as { x: number; y: number }[]} fill={colors[0]} />
           </ScatterChart>
         ) : (
           <BarChart data={data as { name: string; value: number }[]}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-            <XAxis dataKey="name" tick={{ fontSize: 9 }} />
+            {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
+            <XAxis dataKey="name" tick={showLabels ? { fontSize: 9 } : false} />
             <YAxis tick={{ fontSize: 9 }} />
             <Tooltip />
-            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="value" fill={colors[0]} radius={barRadius} />
           </BarChart>
         )}
       </ResponsiveContainer>
@@ -77,8 +76,12 @@ function MiniChart({ chart }: { chart: ChartItem }) {
 export function WorkspaceExport({ projectTitle, projectType, projectDomain, projectDescription, level }: WorkspaceExportProps) {
   const { t, lang } = useLanguage();
   const { dataset, analysisResults, interpretationData } = useDataset();
+  const { settings: chartSettings } = useChartStyle();
   const [loading, setLoading] = useState<string | null>(null);
   const [previewContent, setPreviewContent] = useState<ContentType | null>(null);
+
+  const chartColors = chartSettings.palette.colors;
+  const barRadius: [number, number, number, number] = chartSettings.style === "rounded" ? [3, 3, 0, 0] : chartSettings.style === "sharp" ? [1, 1, 0, 0] : [0, 0, 0, 0];
 
   const charts = useMemo((): ChartItem[] => {
     if (!dataset) return [];
@@ -165,7 +168,7 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
       const data = { ...buildData! };
       // Generate chart images for Word/PDF
       if (format !== "xlsx" && charts.length > 0) {
-        data.chartImages = renderChartsToImages(charts);
+        data.chartImages = renderChartsToImages(charts, chartSettings);
       }
       if (format === "docx") await exportDocx(data, content);
       else if (format === "pdf") exportPdf(data, content);
@@ -353,7 +356,7 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {charts.slice(0, 8).map(chart => (
                         <div key={chart.key} className="rounded-md border border-border p-3 bg-card">
-                          <MiniChart chart={chart} />
+                          <MiniChart chart={chart} colors={chartColors} barRadius={barRadius} showGrid={chartSettings.showGrid} showLabels={chartSettings.showLabels} />
                         </div>
                       ))}
                     </div>
