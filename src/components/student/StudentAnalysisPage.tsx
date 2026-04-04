@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Zap, Upload, FileSpreadsheet, ArrowRight, Info } from "lucide-react";
+import { motion } from "framer-motion";
 
 const quickLabels: Record<string, Record<string, string>> = {
   fr: {
@@ -85,6 +86,15 @@ const quickLabels: Record<string, Record<string, string>> = {
   },
 };
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.1, duration: 0.4, ease: [0, 0, 0.2, 1] as const },
+  }),
+};
+
 export function StudentAnalysisPage({ userType, baseRoute }: { userType: string; baseRoute?: string }) {
   const { lang } = useLanguage();
   const navigate = useNavigate();
@@ -125,73 +135,73 @@ export function StudentAnalysisPage({ userType, baseRoute }: { userType: string;
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-8 py-2 lg:py-4">
-      <div>
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0}>
         <h1 className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl flex items-center gap-2.5">
           <Zap className="h-6 w-6 text-primary lg:h-7 lg:w-7" />
           {l.title}
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground lg:text-base">{l.desc}</p>
-      </div>
+      </motion.div>
 
-      {/* Upload zone */}
-      <Card className="border border-border/60 shadow-sm">
-        <CardContent className="p-6 lg:p-8">
-          <h2 className="mb-6 text-lg font-semibold text-foreground">{l.uploadTitle}</h2>
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1}>
+        <Card className="border border-border/60 shadow-sm">
+          <CardContent className="p-6 lg:p-8">
+            <h2 className="mb-6 text-lg font-semibold text-foreground">{l.uploadTitle}</h2>
 
-          <div className="space-y-5">
-            <div
-              className={`relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-10 lg:p-14 transition-colors cursor-pointer ${
-                dragOver
-                  ? "border-primary bg-primary/5"
-                  : file
-                  ? "border-primary/50 bg-primary/5"
-                  : "border-border hover:border-primary/50 hover:bg-muted/30"
-              }`}
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv,.xlsx,.xls"
-                className="hidden"
-                onChange={(e) => handleFile(e.target.files?.[0] || null)}
-              />
-              {file ? (
-                <>
-                  <FileSpreadsheet className="h-12 w-12 text-primary mb-3" />
-                  <p className="font-medium text-foreground text-base">{file.name}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {(file.size / 1024).toFixed(0)} Ko
-                  </p>
-                  <Badge variant="secondary" className="mt-3">
-                    {l.fileReady}
-                  </Badge>
-                </>
-              ) : (
-                <>
-                  <Upload className="h-12 w-12 text-muted-foreground/40 mb-3" />
-                  <p className="text-sm font-medium text-muted-foreground">{l.uploadDesc}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{l.or}</p>
-                  <Button variant="outline" size="sm" className="mt-3" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}>
-                    {l.browseFiles}
-                  </Button>
-                </>
-              )}
+            <div className="space-y-5">
+              <div
+                className={`relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-10 lg:p-14 transition-colors cursor-pointer ${
+                  dragOver
+                    ? "border-primary bg-primary/5"
+                    : file
+                    ? "border-primary/50 bg-primary/5"
+                    : "border-border hover:border-primary/50 hover:bg-muted/30"
+                }`}
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  className="hidden"
+                  onChange={(e) => handleFile(e.target.files?.[0] || null)}
+                />
+                {file ? (
+                  <>
+                    <FileSpreadsheet className="h-12 w-12 text-primary mb-3" />
+                    <p className="font-medium text-foreground text-base">{file.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {(file.size / 1024).toFixed(0)} Ko
+                    </p>
+                    <Badge variant="secondary" className="mt-3">
+                      {l.fileReady}
+                    </Badge>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-12 w-12 text-muted-foreground/40 mb-3" />
+                    <p className="text-sm font-medium text-muted-foreground">{l.uploadDesc}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{l.or}</p>
+                    <Button variant="outline" size="sm" className="mt-3" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}>
+                      {l.browseFiles}
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+                <span>{l.formats}</span>
+                <span>{l.maxSize}</span>
+              </div>
             </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
-            <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
-              <span>{l.formats}</span>
-              <span>{l.maxSize}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Start button */}
-      <div className="flex justify-end">
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2} className="flex justify-end">
         <Button
           size="lg"
           disabled={!file}
@@ -201,18 +211,19 @@ export function StudentAnalysisPage({ userType, baseRoute }: { userType: string;
           <ArrowRight className="mr-2 h-4 w-4" />
           {l.start}
         </Button>
-      </div>
+      </motion.div>
 
-      {/* Tip */}
-      <Card className="border border-primary/20 bg-primary/5 shadow-none">
-        <CardContent className="flex items-start gap-3 p-5">
-          <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-          <div>
-            <p className="text-sm font-medium text-foreground">{l.tip}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{l.tipText}</p>
-          </div>
-        </CardContent>
-      </Card>
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={3}>
+        <Card className="border border-primary/20 bg-primary/5 shadow-none">
+          <CardContent className="flex items-start gap-3 p-5">
+            <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-foreground">{l.tip}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{l.tipText}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }
