@@ -76,8 +76,12 @@ function MiniChart({ chart, colors, barRadius, showGrid, showLabels }: { chart: 
 export function WorkspaceExport({ projectTitle, projectType, projectDomain, projectDescription, level }: WorkspaceExportProps) {
   const { t, lang } = useLanguage();
   const { dataset, analysisResults, interpretationData } = useDataset();
+  const { settings: chartSettings } = useChartStyle();
   const [loading, setLoading] = useState<string | null>(null);
   const [previewContent, setPreviewContent] = useState<ContentType | null>(null);
+
+  const chartColors = chartSettings.palette.colors;
+  const barRadius: [number, number, number, number] = chartSettings.style === "rounded" ? [3, 3, 0, 0] : chartSettings.style === "sharp" ? [1, 1, 0, 0] : [0, 0, 0, 0];
 
   const charts = useMemo((): ChartItem[] => {
     if (!dataset) return [];
