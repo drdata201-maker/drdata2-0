@@ -799,5 +799,10 @@
   "stats.analysisTypes": "Tipos de análise mais usados",
   "stats.statusBreakdown": "Distribuição por status",
   "stats.trend": "Tendência de análises",
-  "stats.noData": "Nenhum dado disponível"
+  "stats.noData": "Nenhum dado disponível",
+  "history.deleteTitle": "Excluir este item?",
+  "history.deleteDesc": "Esta ação não pode ser desfeita. O item será excluído permanentemente.",
+  "history.deleted": "Item excluído",
+  "common.cancel": "Cancelar",
+  "common.delete": "Excluir"
 }
