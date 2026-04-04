@@ -771,5 +771,7 @@
   "notifications.loading": "Laden...",
   "notifications.markAllRead": "Alle lesen",
   "notifications.markRead": "Als gelesen markieren",
-  "notifications.justNow": "Gerade eben"
+  "notifications.justNow": "Gerade eben",
+  "quickAnalysis.saveAsProject": "Als Projekt speichern",
+  "quickAnalysis.savedAsProject": "Analyse als Projekt gespeichert!"
 }

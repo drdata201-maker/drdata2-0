@@ -771,5 +771,7 @@
   "notifications.loading": "Loading...",
   "notifications.markAllRead": "Mark all read",
   "notifications.markRead": "Mark as read",
-  "notifications.justNow": "Just now"
+  "notifications.justNow": "Just now",
+  "quickAnalysis.saveAsProject": "Save as project",
+  "quickAnalysis.savedAsProject": "Analysis saved as project!"
 }
