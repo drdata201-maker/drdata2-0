@@ -8,6 +8,7 @@ import {
   Zap,
   Clock,
   Settings,
+  BarChart3,
 } from "lucide-react";
 
 interface DashboardSidebarProps {
