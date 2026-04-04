@@ -10,6 +10,14 @@ import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Table2, MessageSquare, BookOpen, Download, Loader2, Upload, Eye } from "lucide-react";
 import { exportDocx, exportPdf, exportXlsx, type ExportData } from "@/lib/exportUtils";
+import { buildChartData, type ChartItem } from "@/lib/chartDataBuilder";
+import { renderChartsToImages } from "@/lib/chartImageRenderer";
+import {
+  BarChart, Bar, ScatterChart, Scatter, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from "recharts";
+
+const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
 interface WorkspaceExportProps {
   projectTitle: string;
@@ -30,11 +38,52 @@ const levelLabels: Record<string, Record<string, string>> = {
   pt: { student_license: "Licenciatura", student_master: "Mestrado", student_doctorat: "Doutorado" },
 };
 
+function MiniChart({ chart }: { chart: ChartItem }) {
+  const data = chart.data;
+  return (
+    <div className="w-full">
+      <p className="text-xs font-medium text-muted-foreground mb-1 truncate">{chart.title}</p>
+      <ResponsiveContainer width="100%" height={180}>
+        {chart.type === "pie" ? (
+          <PieChart>
+            <Pie data={data as { name: string; value: number }[]} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={65}
+              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+              {(data as { name: string }[]).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+            </Pie>
+            <Tooltip />
+          </PieChart>
+        ) : chart.type === "scatter" ? (
+          <ScatterChart>
+            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            <XAxis dataKey="x" type="number" tick={{ fontSize: 9 }} />
+            <YAxis dataKey="y" type="number" tick={{ fontSize: 9 }} />
+            <Tooltip />
+            <Scatter data={data as { x: number; y: number }[]} fill="hsl(var(--primary))" />
+          </ScatterChart>
+        ) : (
+          <BarChart data={data as { name: string; value: number }[]}>
+            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            <XAxis dataKey="name" tick={{ fontSize: 9 }} />
+            <YAxis tick={{ fontSize: 9 }} />
+            <Tooltip />
+            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
+          </BarChart>
+        )}
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 export function WorkspaceExport({ projectTitle, projectType, projectDomain, projectDescription, level }: WorkspaceExportProps) {
   const { t, lang } = useLanguage();
   const { dataset, analysisResults, interpretationData } = useDataset();
   const [loading, setLoading] = useState<string | null>(null);
   const [previewContent, setPreviewContent] = useState<ContentType | null>(null);
+
+  const charts = useMemo((): ChartItem[] => {
+    if (!dataset) return [];
+    return buildChartData(dataset.rawData, dataset.variables, analysisResults, t);
+  }, [dataset, analysisResults, t]);
 
   const buildData = useMemo((): ExportData | null => {
     if (!dataset || analysisResults.length === 0) return null;
@@ -90,11 +139,9 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
       interpretation = interpretationData.sections
         .map(s => `${s.analysisType}\n\n${s.interpretation}`)
         .join("\n\n---\n\n");
-
       const sectionConclusions = interpretationData.sections.filter(s => s.conclusion).map(s => s.conclusion);
       if (interpretationData.globalConclusion) sectionConclusions.push(interpretationData.globalConclusion);
       conclusion = sectionConclusions.join("\n\n");
-
       const sectionRecs = interpretationData.sections.filter(s => s.recommendations).map(s => s.recommendations);
       if (interpretationData.globalRecommendations) sectionRecs.push(interpretationData.globalRecommendations);
       recommendations = sectionRecs.join("\n\n");
@@ -115,7 +162,11 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
     const key = `${content}-${format}`;
     setLoading(key);
     try {
-      const data = buildData!;
+      const data = { ...buildData! };
+      // Generate chart images for Word/PDF
+      if (format !== "xlsx" && charts.length > 0) {
+        data.chartImages = renderChartsToImages(charts);
+      }
       if (format === "docx") await exportDocx(data, content);
       else if (format === "pdf") exportPdf(data, content);
       else exportXlsx(data, content);
@@ -149,6 +200,7 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
 
   const showProjectInfo = (ct: ContentType) => ct === "full" || ct === "results";
   const showStats = (ct: ContentType) => ct === "full" || ct === "results";
+  const showCharts = (ct: ContentType) => ct === "full" || ct === "results";
   const showInterp = (ct: ContentType) => ct === "full" || ct === "interpretation";
   const showConc = (ct: ContentType) => ct === "full" || ct === "conclusion";
 
@@ -168,7 +220,7 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
             <Badge variant="outline">{projectDomain || "—"}</Badge>
           </div>
           <p className="text-xs text-muted-foreground">
-            {analysisResults.length} {t("dashboard.stats.analyses").toLowerCase()} · {dataset.observations} obs
+            {analysisResults.length} {t("dashboard.stats.analyses").toLowerCase()} · {dataset.observations} obs · {charts.length} {t("workspace.graphs").toLowerCase()}
           </p>
         </CardContent>
       </Card>
@@ -183,12 +235,7 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setPreviewContent(content)}
-                className="min-w-[100px]"
-              >
+              <Button variant="secondary" size="sm" onClick={() => setPreviewContent(content)} className="min-w-[100px]">
                 <Eye className="mr-1 h-3 w-3" />
                 {t("export.preview") || "Preview"}
               </Button>
@@ -196,14 +243,7 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                 const key = `${content}-${format}`;
                 const isLoading = loading === key;
                 return (
-                  <Button
-                    key={format}
-                    variant="outline"
-                    size="sm"
-                    disabled={!!loading}
-                    onClick={() => handleExport(content, format)}
-                    className="min-w-[100px]"
-                  >
+                  <Button key={format} variant="outline" size="sm" disabled={!!loading} onClick={() => handleExport(content, format)} className="min-w-[100px]">
                     {isLoading ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : null}
                     {format === "docx" ? "Word (.docx)" : format === "pdf" ? "PDF (.pdf)" : "Excel (.xlsx)"}
                   </Button>
@@ -244,9 +284,7 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                       <div><span className="font-medium text-foreground">{t("export.type") || "Type"}:</span> <span className="text-muted-foreground">{data.projectType || "—"}</span></div>
                       <div><span className="font-medium text-foreground">{t("export.domain") || "Domain"}:</span> <span className="text-muted-foreground">{data.projectDomain || "—"}</span></div>
                     </div>
-                    {data.projectDescription && (
-                      <p className="text-sm text-muted-foreground">{data.projectDescription}</p>
-                    )}
+                    {data.projectDescription && <p className="text-sm text-muted-foreground">{data.projectDescription}</p>}
                   </section>
                 )}
 
@@ -307,6 +345,21 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                   </section>
                 )}
 
+                {/* Charts in preview */}
+                {showCharts(previewContent) && charts.length > 0 && (
+                  <section className="space-y-3">
+                    <Separator />
+                    <h2 className="text-lg font-semibold text-foreground">{t("workspace.graphs") || "Charts"}</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {charts.slice(0, 8).map(chart => (
+                        <div key={chart.key} className="rounded-md border border-border p-3 bg-card">
+                          <MiniChart chart={chart} />
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
                 <Separator />
 
                 {/* Interpretation */}
@@ -327,20 +380,14 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                   </section>
                 )}
 
-                {/* Export buttons at bottom of preview */}
+                {/* Export buttons */}
                 <Separator />
                 <div className="flex flex-wrap gap-2 justify-center pb-2">
                   {(["docx", "pdf", "xlsx"] as FormatType[]).map(format => {
                     const key = `${previewContent}-${format}`;
                     const isLoading = loading === key;
                     return (
-                      <Button
-                        key={format}
-                        variant="default"
-                        size="sm"
-                        disabled={!!loading}
-                        onClick={() => handleExport(previewContent!, format)}
-                      >
+                      <Button key={format} variant="default" size="sm" disabled={!!loading} onClick={() => handleExport(previewContent!, format)}>
                         {isLoading ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Download className="mr-1 h-3 w-3" />}
                         {format === "docx" ? "Word (.docx)" : format === "pdf" ? "PDF (.pdf)" : "Excel (.xlsx)"}
                       </Button>
