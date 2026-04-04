@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,9 +10,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useNavigate } from "react-router-dom";
-import { Clock, FolderOpen, BarChart3, Eye, Search, CalendarIcon, X, Filter } from "lucide-react";
+import { Clock, FolderOpen, BarChart3, Eye, Search, CalendarIcon, X, Filter, Download, FileSpreadsheet, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 interface HistoryItem {
   id: string;
