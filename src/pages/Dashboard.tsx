@@ -100,6 +100,8 @@ export default function Dashboard() {
         return <StudentAnalysisPage userType={userType} baseRoute={baseRoute} />;
       case "history":
         return <StudentHistoryPage userType={userType} baseRoute={baseRoute} />;
+      case "usage-stats":
+        return <UsageStatsPage userType={userType} />;
       case "memory-assistant":
         return <MemoryAssistantPage />;
       default:
