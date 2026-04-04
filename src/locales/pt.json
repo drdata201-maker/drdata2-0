@@ -784,5 +784,20 @@
   "history.from": "De",
   "history.to": "Até",
   "history.resultsShown": "resultados exibidos",
-  "history.noResults": "Nenhum resultado para estes filtros"
+  "history.noResults": "Nenhum resultado para estes filtros",
+  "dashboard.usageStats": "Estatísticas",
+  "stats.usageTitle": "Estatísticas de uso",
+  "stats.usageDesc": "Visão geral da sua atividade",
+  "stats.last6months": "Últimos 6 meses",
+  "stats.last12months": "Últimos 12 meses",
+  "stats.allTime": "Todo o tempo",
+  "stats.totalAnalyses": "Análises totais",
+  "stats.totalProjects": "Projetos totais",
+  "stats.completed": "Concluídas",
+  "stats.avgPerMonth": "Média/mês",
+  "stats.monthlyActivity": "Atividade mensal",
+  "stats.analysisTypes": "Tipos de análise mais usados",
+  "stats.statusBreakdown": "Distribuição por status",
+  "stats.trend": "Tendência de análises",
+  "stats.noData": "Nenhum dado disponível"
 }

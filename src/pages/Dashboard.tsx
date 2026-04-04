@@ -17,6 +17,7 @@ import { StudentProjectsPage } from "@/components/student/StudentProjectsPage";
 import { StudentAnalysisPage } from "@/components/student/StudentAnalysisPage";
 import { StudentHistoryPage } from "@/components/student/StudentHistoryPage";
 import { MemoryAssistantPage } from "@/components/student/MemoryAssistantPage";
+import { UsageStatsPage } from "@/components/student/UsageStatsPage";
 
 export default function Dashboard() {
   const { t } = useLanguage();
@@ -80,6 +81,7 @@ export default function Dashboard() {
     "projects": "dashboard.myProjects",
     "quick-analysis": "dashboard.quickAnalysis",
     "history": "dashboard.history",
+    "usage-stats": "dashboard.usageStats",
     "settings": "settings.title",
     "memory-assistant": "memoryAssistant.title",
   };
@@ -98,6 +100,8 @@ export default function Dashboard() {
         return <StudentAnalysisPage userType={userType} baseRoute={baseRoute} />;
       case "history":
         return <StudentHistoryPage userType={userType} baseRoute={baseRoute} />;
+      case "usage-stats":
+        return <UsageStatsPage userType={userType} />;
       case "memory-assistant":
         return <MemoryAssistantPage />;
       default:

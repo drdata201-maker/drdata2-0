@@ -8,6 +8,7 @@ import {
   Zap,
   Clock,
   Settings,
+  BarChart3,
 } from "lucide-react";
 
 interface DashboardSidebarProps {
@@ -21,6 +22,7 @@ const sidebarItems = [
   { key: "projects", icon: FolderOpen, label: "dashboard.myProjects" },
   { key: "quick-analysis", icon: Zap, label: "dashboard.quickAnalysis" },
   { key: "history", icon: Clock, label: "dashboard.history" },
+  { key: "usage-stats", icon: BarChart3, label: "dashboard.usageStats" },
   { key: "settings", icon: Settings, label: "dashboard.settings" },
 ];
 
