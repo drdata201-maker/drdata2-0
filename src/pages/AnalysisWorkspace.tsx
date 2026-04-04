@@ -143,6 +143,15 @@ export default function AnalysisWorkspace() {
     setActiveTab("dataprep");
   }, []);
 
+  const handleProjectRestored = useCallback((hasResults: boolean) => {
+    if (hasResults) {
+      // Mark earlier steps as completed and jump to results
+      setCompletedSteps(new Set(["assistant", "dataprep"]));
+      setVisitedSteps(new Set(["assistant", "dataprep", "results"]));
+      setActiveTab("results");
+    }
+  }, []);
+
   useEffect(() => {
     if (isQuickMode && !projectTitle) {
       setProjectTitle(t("dashboard.quickAnalysis") || "Quick Analysis");
