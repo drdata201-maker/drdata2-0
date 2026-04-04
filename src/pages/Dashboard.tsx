@@ -81,6 +81,7 @@ export default function Dashboard() {
     "projects": "dashboard.myProjects",
     "quick-analysis": "dashboard.quickAnalysis",
     "history": "dashboard.history",
+    "usage-stats": "dashboard.usageStats",
     "settings": "settings.title",
     "memory-assistant": "memoryAssistant.title",
   };
