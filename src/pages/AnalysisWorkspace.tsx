@@ -1,7 +1,7 @@
-import { Component, ReactNode, useEffect, useState } from "react";
+import { Component, ReactNode, useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { DatasetProvider } from "@/contexts/DatasetContext";
+import { DatasetProvider, useDataset } from "@/contexts/DatasetContext";
 import { ChartStyleProvider } from "@/contexts/ChartStyleContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
