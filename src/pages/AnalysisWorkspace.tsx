@@ -194,7 +194,8 @@ export default function AnalysisWorkspace() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-lg font-bold text-foreground truncate">{t("joel.workspaceTitle")}</h1>
-          {projectTitle && <Badge variant="secondary" className="hidden sm:inline-flex">{projectTitle}</Badge>}
+           {isQuickMode && <Badge variant="outline" className="hidden sm:inline-flex border-primary/50 text-primary">⚡ {t("dashboard.quickAnalysis")}</Badge>}
+          {projectTitle && !isQuickMode && <Badge variant="secondary" className="hidden sm:inline-flex">{projectTitle}</Badge>}
           <div className="ml-auto flex items-center gap-2">
             <span className="text-xs text-muted-foreground hidden sm:inline">{progressPct}%</span>
             <Button variant="ghost" size="icon" onClick={() => setIsFullscreen(f => !f)} title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}>
