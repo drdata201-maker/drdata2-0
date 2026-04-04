@@ -38,6 +38,33 @@ function PanelLoading() {
   return <div className="p-4 text-sm text-muted-foreground">Assistant Joël Loading...</div>;
 }
 
+function QuickFileLoader({ onLoaded }: { onLoaded: () => void }) {
+  const { processFile } = useDataset();
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (loaded) return;
+    const raw = sessionStorage.getItem("quickAnalysisFile");
+    if (!raw) return;
+    sessionStorage.removeItem("quickAnalysisFile");
+    setLoaded(true);
+    try {
+      const { name, type, data } = JSON.parse(raw);
+      // Convert data URL back to File
+      const byteString = atob(data.split(",")[1]);
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+      const file = new File([ab], name, { type: type || "text/csv" });
+      processFile(file).then(() => onLoaded());
+    } catch (e) {
+      console.error("Quick file load error:", e);
+    }
+  }, [loaded, processFile, onLoaded]);
+
+  return null;
+}
+
 export default function AnalysisWorkspace() {
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -46,16 +73,17 @@ export default function AnalysisWorkspace() {
   const level = searchParams.get("level") || "student_license";
   const projectType = searchParams.get("type") || "";
   const projectDomain = decodeURIComponent(searchParams.get("domain") || "");
+  const isQuickMode = searchParams.get("mode") === "quick";
 
   const [projectTitle, setProjectTitle] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
   const [mounted, setMounted] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [workspaceReady, setWorkspaceReady] = useState(false);
-  const [activeTab, setActiveTab] = useState("assistant");
+  const [activeTab, setActiveTab] = useState(isQuickMode ? "dataprep" : "assistant");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
-  const [visitedSteps, setVisitedSteps] = useState<Set<string>>(new Set(["assistant"]));
+  const [visitedSteps, setVisitedSteps] = useState<Set<string>>(new Set([isQuickMode ? "dataprep" : "assistant"]));
 
   const WORKFLOW_STEPS = [
     { key: "assistant", label: "Assistant" },
