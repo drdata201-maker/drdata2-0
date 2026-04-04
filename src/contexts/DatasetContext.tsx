@@ -63,6 +63,7 @@ interface DatasetContextType {
   runCleaning: () => void;
   runAnalyses: (analysisKeys: string[], software: string, depVar?: string, indVars?: string[]) => void;
   reset: () => void;
+  restoreState: (results: AnalysisResultItem[], interpretation: InterpretationData | null) => void;
 }
 
 const DatasetContext = createContext<DatasetContextType | null>(null);
@@ -352,8 +353,13 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     setInterpretationData(null);
   }, []);
 
+  const restoreState = useCallback((results: AnalysisResultItem[], interpretation: InterpretationData | null) => {
+    setAnalysisResults(results);
+    setInterpretationData(interpretation);
+  }, []);
+
   return (
-    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, interpretationData, setInterpretationData, processFile, runCleaning, runAnalyses, reset }}>
+    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, interpretationData, setInterpretationData, processFile, runCleaning, runAnalyses, reset, restoreState }}>
       {children}
     </DatasetContext.Provider>
   );

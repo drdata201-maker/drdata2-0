@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Loader2, Table2, BarChart3, FileText, Bot, ClipboardList, BookOpen, Maximize2, Minimize2, Check } from "lucide-react";
 import { SaveAsProjectDialog } from "@/components/workspace/SaveAsProjectDialog";
+import { ProjectRestorer } from "@/components/workspace/ProjectRestorer";
 import { JoelChat } from "@/components/workspace/JoelChat";
 import { WorkspaceResults } from "@/components/workspace/WorkspaceResults";
 import { WorkspaceCharts } from "@/components/workspace/WorkspaceCharts";
@@ -142,6 +143,15 @@ export default function AnalysisWorkspace() {
     setActiveTab("dataprep");
   }, []);
 
+  const handleProjectRestored = useCallback((hasResults: boolean) => {
+    if (hasResults) {
+      // Mark earlier steps as completed and jump to results
+      setCompletedSteps(new Set(["assistant", "dataprep"]));
+      setVisitedSteps(new Set(["assistant", "dataprep", "results"]));
+      setActiveTab("results");
+    }
+  }, []);
+
   useEffect(() => {
     if (isQuickMode && !projectTitle) {
       setProjectTitle(t("dashboard.quickAnalysis") || "Quick Analysis");
@@ -181,6 +191,7 @@ export default function AnalysisWorkspace() {
     <ChartStyleProvider>
     <DatasetProvider>
     {isQuickMode && <QuickFileLoader onLoaded={handleQuickFileLoaded} />}
+    {projectId && !isQuickMode && <ProjectRestorer projectId={projectId} onRestored={handleProjectRestored} />}
     <div className={cn(
       "flex min-h-screen flex-col bg-background transition-all duration-300",
       isFullscreen && "fixed inset-0 z-50"
