@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import * as XLSX from "xlsx";
+import { supabase } from "@/integrations/supabase/client";
 import {
   AnalysisResultItem,
   computeDescriptive,
@@ -325,6 +326,21 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     }
 
     setAnalysisResults(prev => [...prev, ...newResults]);
+
+    // Create notification for completed analysis
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from("notifications").insert({
+            user_id: user.id,
+            title: `Analyse terminée`,
+            message: `${newResults.length} analyse(s) complétée(s) : ${analysisKeys.join(", ")}`,
+            type: "analysis_complete",
+          });
+        }
+      } catch (_) { /* silent */ }
+    })();
   }, [dataset, cleanedData]);
 
   const reset = useCallback(() => {

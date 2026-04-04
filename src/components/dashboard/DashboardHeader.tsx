@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Settings, LogOut } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,6 +64,7 @@ export function DashboardHeader({ title, userName, userLevel, onLogout }: Dashbo
     <header className="flex h-16 items-center justify-between border-b border-border px-6">
       <h2 className="text-lg font-semibold text-foreground">{title}</h2>
       <div className="flex items-center gap-3">
+        <NotificationBell />
         <LanguageSwitcher />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

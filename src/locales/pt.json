@@ -765,5 +765,11 @@
   "charts.pieChart": "Gráfico circular",
   "charts.scatter": "Diagrama de dispersão",
   "charts.boxPlot": "Box plot",
-  "charts.regression": "Regressão"
+  "charts.regression": "Regressão",
+  "notifications.title": "Notificações",
+  "notifications.empty": "Nenhuma notificação",
+  "notifications.loading": "Carregando...",
+  "notifications.markAllRead": "Marcar tudo",
+  "notifications.markRead": "Marcar como lido",
+  "notifications.justNow": "Agora"
 }

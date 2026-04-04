@@ -765,5 +765,11 @@
   "charts.pieChart": "Diagramme circulaire",
   "charts.scatter": "Nuage de points",
   "charts.boxPlot": "Boîte à moustaches",
-  "charts.regression": "Régression"
+  "charts.regression": "Régression",
+  "notifications.title": "Notifications",
+  "notifications.empty": "Aucune notification",
+  "notifications.loading": "Chargement...",
+  "notifications.markAllRead": "Tout lire",
+  "notifications.markRead": "Marquer comme lu",
+  "notifications.justNow": "À l'instant"
 }
