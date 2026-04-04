@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 
 const licenceProjectTypes = [
   "memoir_licence", "academic_project", "questionnaire_analysis",
@@ -24,6 +25,15 @@ const doctoratProjectTypes = [
   "phd_thesis", "scientific_research", "scientific_publication",
   "advanced_analysis", "scientific_modeling", "experimental_research",
 ];
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.1, duration: 0.4, ease: "easeOut" },
+  }),
+};
 
 export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: string; userType: string }) {
   const { t } = useLanguage();
@@ -87,83 +97,92 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-8 py-2 lg:py-4">
-      <div>
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        animate="visible"
+        custom={0}
+      >
         <h1 className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl">
           {t("dashboard.newProject")}
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground lg:text-base">
           {t("student.newProject.desc")}
         </p>
-      </div>
+      </motion.div>
 
-      <Card className="border border-border/60 shadow-sm">
-        <CardContent className="p-6 lg:p-8">
-          <h2 className="mb-6 text-lg font-semibold text-foreground">
-            {t("student.wizard.step1Title")}
-          </h2>
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1}>
+        <Card className="border border-border/60 shadow-sm">
+          <CardContent className="p-6 lg:p-8">
+            <h2 className="mb-6 text-lg font-semibold text-foreground">
+              {t("student.wizard.step1Title")}
+            </h2>
 
-          <div className="space-y-5">
-            {/* Title */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground">
-                {t("pme.newAnalysis.analysisTitle")}
-              </label>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder={t("student.newProject.titlePlaceholder")}
-                className="h-11"
-              />
+            <div className="space-y-5">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">
+                  {t("pme.newAnalysis.analysisTitle")}
+                </label>
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder={t("student.newProject.titlePlaceholder")}
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">
+                  {t("student.wizard.projectType")}
+                </label>
+                <Select value={projectType} onValueChange={setProjectType}>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder={t("student.wizard.selectType")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {types.map((pt) => (
+                      <SelectItem key={pt} value={pt}>{t(`student.type.${pt}`)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">
+                  {t("student.wizard.domain")}
+                </label>
+                <Input
+                  value={domain}
+                  onChange={(e) => setDomain(e.target.value)}
+                  placeholder={t("student.wizard.domainPlaceholder")}
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">
+                  {t("pme.newAnalysis.description")}
+                </label>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder={t("student.newProject.descPlaceholder")}
+                  rows={4}
+                  className="min-h-[110px] resize-none"
+                />
+              </div>
             </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
-            {/* Project Type */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground">
-                {t("student.wizard.projectType")}
-              </label>
-              <Select value={projectType} onValueChange={setProjectType}>
-                <SelectTrigger className="h-11">
-                  <SelectValue placeholder={t("student.wizard.selectType")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {types.map((pt) => (
-                    <SelectItem key={pt} value={pt}>{t(`student.type.${pt}`)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Domain */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground">
-                {t("student.wizard.domain")}
-              </label>
-              <Input
-                value={domain}
-                onChange={(e) => setDomain(e.target.value)}
-                placeholder={t("student.wizard.domainPlaceholder")}
-                className="h-11"
-              />
-            </div>
-
-            {/* Description */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground">
-                {t("pme.newAnalysis.description")}
-              </label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder={t("student.newProject.descPlaceholder")}
-                rows={4}
-                className="min-h-[110px] resize-none"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="flex justify-end pb-4">
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        animate="visible"
+        custom={2}
+        className="flex justify-end pb-4"
+      >
         <Button
           onClick={handleCreate}
           disabled={loading || !title.trim() || !projectType}
@@ -173,7 +192,7 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
           <Sparkles className="mr-2 h-4 w-4" />
           {loading ? "..." : t("joel.createAndStart")}
         </Button>
-      </div>
+      </motion.div>
     </div>
   );
 }
