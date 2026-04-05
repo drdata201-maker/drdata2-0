@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -143,7 +144,7 @@ export function UsageStatsPage({ userType }: { userType: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <motion.div className="flex items-center justify-between flex-wrap gap-3" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0, 0, 0.2, 1] }}>
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t("stats.usageTitle") || "Statistiques d'utilisation"}</h1>
           <p className="mt-1 text-muted-foreground">{t("stats.usageDesc") || "Vue d'ensemble de votre activité"}</p>
@@ -158,10 +159,10 @@ export function UsageStatsPage({ userType }: { userType: string }) {
             <SelectItem value="all">{t("stats.allTime") || "Tout le temps"}</SelectItem>
           </SelectContent>
         </Select>
-      </div>
+      </motion.div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <motion.div className="grid grid-cols-2 gap-4 sm:grid-cols-4" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4, ease: [0, 0, 0.2, 1] }}>
         {[
           { icon: BarChart3, label: t("stats.totalAnalyses") || "Analyses", value: totalAnalyses, color: "text-primary" },
           { icon: FolderOpen, label: t("stats.totalProjects") || "Projets", value: totalProjects, color: "text-primary" },
@@ -178,10 +179,10 @@ export function UsageStatsPage({ userType }: { userType: string }) {
             </CardContent>
           </Card>
         ))}
-      </div>
+      </motion.div>
 
       {/* Monthly activity chart */}
-      <Card>
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.4, ease: [0, 0, 0.2, 1] }}><Card>
         <CardHeader>
           <CardTitle className="text-base">{t("stats.monthlyActivity") || "Activité mensuelle"}</CardTitle>
         </CardHeader>
@@ -202,9 +203,9 @@ export function UsageStatsPage({ userType }: { userType: string }) {
             </ResponsiveContainer>
           )}
         </CardContent>
-      </Card>
+      </Card></motion.div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <motion.div className="grid grid-cols-1 gap-6 lg:grid-cols-2" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.4, ease: [0, 0, 0.2, 1] }}>
         {/* Analysis types pie chart */}
         <Card>
           <CardHeader>
@@ -272,11 +273,11 @@ export function UsageStatsPage({ userType }: { userType: string }) {
             )}
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
 
       {/* Trend line */}
       {analysesByMonth.length >= 2 && (
-        <Card>
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.4, ease: [0, 0, 0.2, 1] }}><Card>
           <CardHeader>
             <CardTitle className="text-base">{t("stats.trend") || "Tendance des analyses"}</CardTitle>
           </CardHeader>
@@ -291,7 +292,7 @@ export function UsageStatsPage({ userType }: { userType: string }) {
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
-        </Card>
+        </Card></motion.div>
       )}
     </div>
   );
