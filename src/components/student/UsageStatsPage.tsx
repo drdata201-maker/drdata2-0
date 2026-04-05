@@ -182,7 +182,7 @@ export function UsageStatsPage({ userType }: { userType: string }) {
       </motion.div>
 
       {/* Monthly activity chart */}
-      <Card>
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.4, ease: [0, 0, 0.2, 1] }}><Card>
         <CardHeader>
           <CardTitle className="text-base">{t("stats.monthlyActivity") || "Activité mensuelle"}</CardTitle>
         </CardHeader>
