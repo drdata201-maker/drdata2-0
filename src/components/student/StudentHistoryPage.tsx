@@ -170,7 +170,7 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
             </CardContent>
           </Card>
         ))}
-      </div>
+      </motion.div>
 
       {/* Filters */}
       <Card>
