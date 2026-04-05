@@ -292,7 +292,7 @@ export function UsageStatsPage({ userType }: { userType: string }) {
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
-        </Card>
+        </Card></motion.div>
       )}
     </div>
   );
