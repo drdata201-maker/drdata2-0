@@ -179,7 +179,7 @@ export function UsageStatsPage({ userType }: { userType: string }) {
             </CardContent>
           </Card>
         ))}
-      </div>
+      </motion.div>
 
       {/* Monthly activity chart */}
       <Card>
