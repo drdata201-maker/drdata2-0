@@ -273,7 +273,7 @@ export function UsageStatsPage({ userType }: { userType: string }) {
             )}
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
 
       {/* Trend line */}
       {analysesByMonth.length >= 2 && (
