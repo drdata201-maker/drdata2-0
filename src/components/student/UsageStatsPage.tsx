@@ -203,7 +203,7 @@ export function UsageStatsPage({ userType }: { userType: string }) {
             </ResponsiveContainer>
           )}
         </CardContent>
-      </Card>
+      </Card></motion.div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Analysis types pie chart */}
