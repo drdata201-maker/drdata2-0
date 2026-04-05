@@ -157,7 +157,7 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
       </motion.div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <motion.div className="grid grid-cols-1 gap-4 sm:grid-cols-3" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4, ease: [0, 0, 0.2, 1] }}>
         {[
           { icon: FolderOpen, label: t("pme.history.project"), count: items.filter(i => i.type === "project").length },
           { icon: BarChart3, label: t("pme.history.analysis"), count: items.filter(i => i.type === "analysis").length },
