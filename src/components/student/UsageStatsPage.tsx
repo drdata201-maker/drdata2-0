@@ -144,7 +144,7 @@ export function UsageStatsPage({ userType }: { userType: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <motion.div className="flex items-center justify-between flex-wrap gap-3" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0, 0, 0.2, 1] }}>
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t("stats.usageTitle") || "Statistiques d'utilisation"}</h1>
           <p className="mt-1 text-muted-foreground">{t("stats.usageDesc") || "Vue d'ensemble de votre activité"}</p>
