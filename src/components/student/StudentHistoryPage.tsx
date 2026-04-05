@@ -271,7 +271,7 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
             </p>
           )}
         </CardContent>
-      </Card>
+      </Card></motion.div>
 
       {/* Table */}
       <Card>
