@@ -274,7 +274,7 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
       </Card></motion.div>
 
       {/* Table */}
-      <Card>
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.4, ease: [0, 0, 0.2, 1] }}><Card>
         <CardHeader><CardTitle>{t("pme.history.recent")}</CardTitle></CardHeader>
         <CardContent>
           {loading ? (
