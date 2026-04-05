@@ -162,7 +162,7 @@ export function UsageStatsPage({ userType }: { userType: string }) {
       </motion.div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <motion.div className="grid grid-cols-2 gap-4 sm:grid-cols-4" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4, ease: [0, 0, 0.2, 1] }}>
         {[
           { icon: BarChart3, label: t("stats.totalAnalyses") || "Analyses", value: totalAnalyses, color: "text-primary" },
           { icon: FolderOpen, label: t("stats.totalProjects") || "Projets", value: totalProjects, color: "text-primary" },
