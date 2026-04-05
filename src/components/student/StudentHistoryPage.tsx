@@ -360,7 +360,7 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
             </div>
           )}
         </CardContent>
-      </Card>
+      </Card></motion.div>
     </div>
   );
 }
