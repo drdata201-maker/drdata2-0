@@ -159,7 +159,7 @@ export function UsageStatsPage({ userType }: { userType: string }) {
             <SelectItem value="all">{t("stats.allTime") || "Tout le temps"}</SelectItem>
           </SelectContent>
         </Select>
-      </div>
+      </motion.div>
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
