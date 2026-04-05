@@ -277,7 +277,7 @@ export function UsageStatsPage({ userType }: { userType: string }) {
 
       {/* Trend line */}
       {analysesByMonth.length >= 2 && (
-        <Card>
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.4, ease: [0, 0, 0.2, 1] }}><Card>
           <CardHeader>
             <CardTitle className="text-base">{t("stats.trend") || "Tendance des analyses"}</CardTitle>
           </CardHeader>
