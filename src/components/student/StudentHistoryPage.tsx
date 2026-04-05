@@ -151,10 +151,10 @@ export function StudentHistoryPage({ userType, baseRoute }: { userType: string; 
 
   return (
     <div className="space-y-6">
-      <div>
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0, 0, 0.2, 1] }}>
         <h1 className="text-2xl font-bold text-foreground">{t("pme.sidebar.history")}</h1>
         <p className="mt-1 text-muted-foreground">{t("pme.history.desc")}</p>
-      </div>
+      </motion.div>
 
       {/* Stats cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
