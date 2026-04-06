@@ -80,6 +80,7 @@ interface DatasetContextType {
   runAnalyses: (analysisKeys: string[], software: string, depVar?: string, indVars?: string[]) => void;
   reset: () => void;
   restoreState: (results: AnalysisResultItem[], interpretation: InterpretationData | null) => void;
+  restoreDatasetSummary: (summary: DatasetSummary) => void;
   chatState: ChatState;
   setChatState: React.Dispatch<React.SetStateAction<ChatState>>;
 }
