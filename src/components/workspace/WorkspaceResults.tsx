@@ -356,18 +356,19 @@ function TTestTable({ data }: { data: NonNullable<AnalysisResultItem["tTests"]> 
   );
 }
 
-function PCATable({ data }: { data: NonNullable<AnalysisResultItem["pca"]> }) {
+function PCATable({ data, level }: { data: NonNullable<AnalysisResultItem["pca"]>; level: StudyLevel }) {
   const { t } = useLanguage();
+  const cfg = getLevelConfig(level);
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-sm">
+          <CardTitle className="flex items-center gap-2 text-sm font-academic">
             <Layers className="h-4 w-4 text-primary" />
             {t("results.pcaVariance")}
           </CardTitle>
           <div className="flex gap-2 mt-1">
-            <Badge variant="outline">KMO = {data.kmo}</Badge>
+            {cfg.showKMO && <Badge variant="outline">KMO = {data.kmo}</Badge>}
             <Badge variant="outline">{t("results.totalVariance")}: {data.totalVarianceExplained}%</Badge>
           </div>
         </CardHeader>
