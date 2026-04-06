@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { stripLatex } from "@/lib/latexSanitizer";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset } from "@/contexts/DatasetContext";
 import type { InterpretationData, InterpretationSection } from "@/contexts/DatasetContext";
