@@ -383,8 +383,18 @@ function interpFactor(fa: NonNullable<AnalysisResultItem["factorAnalysis"]>, lan
   return templates[lang] || templates.en;
 }
 
-function interpCluster(cl: NonNullable<AnalysisResultItem["clusterAnalysis"]>, lang: string) {
+function interpCluster(cl: NonNullable<AnalysisResultItem["clusterAnalysis"]>, lang: string, lvl: string) {
   const bssRatio = cl.totalSS > 0 ? ((cl.betweenSS / cl.totalSS) * 100).toFixed(1) : "0";
+  if (lvl === "licence") {
+    const templates: Record<string, string> = {
+      fr: `L'analyse de clusters identifie ${cl.k} groupes distincts dans les données.`,
+      en: `Cluster analysis identifies ${cl.k} distinct groups in the data.`,
+      es: `El análisis de clusters identifica ${cl.k} grupos distintos en los datos.`,
+      de: `Die Clusteranalyse identifiziert ${cl.k} verschiedene Gruppen in den Daten.`,
+      pt: `A análise de clusters identifica ${cl.k} grupos distintos nos dados.`,
+    };
+    return templates[lang] || templates.en;
+  }
   const templates: Record<string, string> = {
     fr: `L'analyse de clusters identifie ${cl.k} groupes distincts (silhouette = ${cl.silhouetteScore}, BSS/TSS = ${bssRatio}%).`,
     en: `Cluster analysis identifies ${cl.k} distinct groups (silhouette = ${cl.silhouetteScore}, BSS/TSS = ${bssRatio}%).`,
