@@ -617,7 +617,7 @@ export function exportPdf(data: ExportData, content: ExportContent) {
 
   if (content === "full" || content === "interpretation") {
     addH2(t.interpretation);
-    addBody(data.interpretation || t.noData);
+    addBody(stripLatex(data.interpretation || t.noData));
   }
 
   if (content === "full" || content === "conclusion") {
