@@ -11,6 +11,7 @@ import { ArrowLeft, Loader2, Table2, BarChart3, FileText, Bot, ClipboardList, Bo
 import { EditProjectDialog } from "@/components/workspace/EditProjectDialog";
 import { SaveAsProjectDialog } from "@/components/workspace/SaveAsProjectDialog";
 import { ProjectRestorer } from "@/components/workspace/ProjectRestorer";
+import { AutoSaver } from "@/components/workspace/AutoSaver";
 import { JoelChat } from "@/components/workspace/JoelChat";
 import { WorkspaceResults } from "@/components/workspace/WorkspaceResults";
 import { WorkspaceCharts } from "@/components/workspace/WorkspaceCharts";
@@ -147,11 +148,12 @@ export default function AnalysisWorkspace() {
 
   const handleProjectRestored = useCallback((hasResults: boolean) => {
     if (hasResults) {
-      // Mark earlier steps as completed and jump to results
       setCompletedSteps(new Set(["assistant", "dataprep"]));
       setVisitedSteps(new Set(["assistant", "dataprep", "results"]));
       setActiveTab("results");
     }
+    // If no results but dataset was restored, the user will land on assistant
+    // and can navigate to dataprep where the dataset will be visible
   }, []);
 
   useEffect(() => {
@@ -194,6 +196,7 @@ export default function AnalysisWorkspace() {
     <DatasetProvider>
     {isQuickMode && <QuickFileLoader onLoaded={handleQuickFileLoaded} />}
     {projectId && !isQuickMode && <ProjectRestorer projectId={projectId} onRestored={handleProjectRestored} />}
+    {projectId && <AutoSaver projectId={projectId} />}
     <div className={cn(
       "flex min-h-screen flex-col bg-background transition-all duration-300",
       isFullscreen && "fixed inset-0 z-50"

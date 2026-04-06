@@ -80,6 +80,7 @@ interface DatasetContextType {
   runAnalyses: (analysisKeys: string[], software: string, depVar?: string, indVars?: string[]) => void;
   reset: () => void;
   restoreState: (results: AnalysisResultItem[], interpretation: InterpretationData | null) => void;
+  restoreDatasetSummary: (summary: DatasetSummary) => void;
   chatState: ChatState;
   setChatState: React.Dispatch<React.SetStateAction<ChatState>>;
 }
@@ -396,8 +397,13 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     setInterpretationData(interpretation);
   }, []);
 
+  const restoreDatasetSummary = useCallback((summary: DatasetSummary) => {
+    setDataset(summary);
+    setPrepStatus("ready");
+  }, []);
+
   return (
-    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, interpretationData, setInterpretationData, processFile, runCleaning, runAnalyses, reset, restoreState, chatState, setChatState }}>
+    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, interpretationData, setInterpretationData, processFile, runCleaning, runAnalyses, reset, restoreState, restoreDatasetSummary, chatState, setChatState }}>
       {children}
     </DatasetContext.Provider>
   );

@@ -649,6 +649,7 @@
   "student.status.draft": "Rascunho",
   "student.projects.progress": "Progresso",
   "student.projects.continue": "Continuar análise",
+  "student.projects.lastModified": "Última modificação",
   "student.projects.viewResults": "Ver resultados",
   "student.analysis.selectProject": "Selecionar um projeto",
   "student.analysis.choosePlaceholder": "Escolher um projeto existente...",

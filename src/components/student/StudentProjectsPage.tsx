@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
-import { Plus, FolderOpen, Trash2, Play, Eye } from "lucide-react";
+import { Plus, FolderOpen, Trash2, Play, Eye, Download } from "lucide-react";
 import { toast } from "sonner";
 
 interface ProjectRow {
@@ -16,6 +16,7 @@ interface ProjectRow {
   domain: string | null;
   status: string;
   created_at: string;
+  updated_at: string;
 }
 
 const STATUS_ORDER = ["draft", "active", "completed", "archived"];
@@ -27,8 +28,8 @@ export function StudentProjectsPage({ baseRoute, userType }: { baseRoute: string
   const [loading, setLoading] = useState(true);
 
   const fetchProjects = async () => {
-    const { data } = await (supabase.from("projects") as any)
-      .select("id,title,description,domain,status,created_at")
+      const { data } = await (supabase.from("projects") as any)
+        .select("id,title,description,domain,status,created_at,updated_at")
       .eq("user_type", userType)
       .order("created_at", { ascending: false });
     if (data) setProjects(data as ProjectRow[]);
@@ -107,12 +108,13 @@ export function StudentProjectsPage({ baseRoute, userType }: { baseRoute: string
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{t("pme.recentProjects.name")}</TableHead>
-                    <TableHead className="hidden md:table-cell">{t("student.wizard.domain")}</TableHead>
-                    <TableHead>{t("pme.recentProjects.status")}</TableHead>
-                    <TableHead className="hidden sm:table-cell">{t("student.projects.progress")}</TableHead>
-                    <TableHead>{t("pme.recentProjects.date")}</TableHead>
-                    <TableHead className="text-right">{t("pme.projects.actions")}</TableHead>
+                     <TableHead>{t("pme.recentProjects.name")}</TableHead>
+                     <TableHead className="hidden md:table-cell">{t("student.wizard.domain")}</TableHead>
+                     <TableHead>{t("pme.recentProjects.status")}</TableHead>
+                     <TableHead className="hidden sm:table-cell">{t("student.projects.progress")}</TableHead>
+                     <TableHead className="hidden lg:table-cell">{t("pme.recentProjects.date")}</TableHead>
+                     <TableHead className="hidden lg:table-cell">{t("student.projects.lastModified")}</TableHead>
+                     <TableHead className="text-right">{t("pme.projects.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -138,22 +140,21 @@ export function StudentProjectsPage({ baseRoute, userType }: { baseRoute: string
                           <span className="text-xs text-muted-foreground">{statusProgress(p.status)}%</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm">{new Date(p.created_at).toLocaleDateString()}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          {p.status !== "completed" && (
-                            <Button variant="ghost" size="icon" title={t("student.projects.continue")} onClick={() => navigate(`/analysis/workspace?project=${p.id}&level=${userType}`)}>
-                              <Play className="h-4 w-4 text-primary" />
-                            </Button>
-                          )}
-                          <Button variant="ghost" size="icon" title={t("student.projects.viewResults")} onClick={() => navigate(`/analysis/workspace?project=${p.id}&level=${userType}`)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                       <TableCell className="text-sm hidden lg:table-cell">{new Date(p.created_at).toLocaleDateString()}</TableCell>
+                       <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">{new Date(p.updated_at).toLocaleDateString()}</TableCell>
+                       <TableCell className="text-right">
+                         <div className="flex items-center justify-end gap-1">
+                           <Button variant="ghost" size="icon" title={t("student.projects.continue")} onClick={() => navigate(`/analysis/workspace?project=${p.id}&level=${userType}`)}>
+                             <Play className="h-4 w-4 text-primary" />
+                           </Button>
+                           <Button variant="ghost" size="icon" title={t("student.projects.viewResults")} onClick={() => navigate(`/analysis/workspace?project=${p.id}&level=${userType}`)}>
+                             <Eye className="h-4 w-4" />
+                           </Button>
+                           <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)}>
+                             <Trash2 className="h-4 w-4 text-destructive" />
+                           </Button>
+                         </div>
+                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

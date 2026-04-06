@@ -9,19 +9,19 @@ interface ProjectRestorerProps {
 }
 
 export function ProjectRestorer({ projectId, onRestored }: ProjectRestorerProps) {
-  const { restoreState, analysisResults, chatState, setChatState } = useDataset();
+  const { restoreState, restoreDatasetSummary, analysisResults, chatState, setChatState } = useDataset();
   const [restored, setRestored] = useState(false);
 
-  // Restore chat + analysis state on mount
+  // Restore chat + analysis + dataset state on mount
   useEffect(() => {
     if (!projectId || restored || analysisResults.length > 0) return;
     setRestored(true);
 
     (async () => {
       try {
-        // Fetch project chat_state
+        // Fetch project data including dataset_summary and chat_state
         const { data: projectData } = await (supabase.from("projects") as any)
-          .select("chat_state")
+          .select("chat_state, dataset_summary")
           .eq("id", projectId)
           .maybeSingle();
 
@@ -38,6 +38,19 @@ export function ProjectRestorer({ projectId, onRestored }: ProjectRestorerProps)
               selectedSoftware: saved.selectedSoftware || "",
               selectedAnalyses: saved.selectedAnalyses || [],
               file: saved.file || null,
+            });
+          }
+        }
+
+        // Restore dataset summary if available
+        if (projectData?.dataset_summary) {
+          const ds = typeof projectData.dataset_summary === "string"
+            ? JSON.parse(projectData.dataset_summary)
+            : projectData.dataset_summary;
+          if (ds.fileName && ds.variables) {
+            restoreDatasetSummary({
+              ...ds,
+              rawData: ds.rawData || [],
             });
           }
         }
@@ -67,7 +80,7 @@ export function ProjectRestorer({ projectId, onRestored }: ProjectRestorerProps)
         onRestored(false);
       }
     })();
-  }, [projectId, restored, restoreState, onRestored, analysisResults.length, setChatState]);
+  }, [projectId, restored, restoreState, restoreDatasetSummary, onRestored, analysisResults.length, setChatState]);
 
   // Auto-save chat state to DB with debounce
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -76,7 +89,6 @@ export function ProjectRestorer({ projectId, onRestored }: ProjectRestorerProps)
   useEffect(() => {
     if (!projectId || !chatState.greetingSent) return;
 
-    // Only save visible messages (skip streaming type markers for cleaner restore)
     const toSave: ChatState = {
       ...chatState,
       messages: chatState.messages.map(m => ({ role: m.role, content: m.content })),
@@ -94,7 +106,7 @@ export function ProjectRestorer({ projectId, onRestored }: ProjectRestorerProps)
       } catch (e) {
         console.error("Failed to save chat state:", e);
       }
-    }, 2000); // 2s debounce
+    }, 2000);
 
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
