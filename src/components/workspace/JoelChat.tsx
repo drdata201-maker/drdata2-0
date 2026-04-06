@@ -224,67 +224,34 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     level: getLevelLabel(),
   };
 
-  // Send AI-powered smart greeting on mount
   // Scroll to bottom on mount (when returning to tab)
   useEffect(() => {
     scrollToBottom();
   }, [scrollToBottom]);
 
-  // Send AI-powered smart greeting on first mount only
+  // Build structured static greeting on first mount only — no AI call, no duplicates
   useEffect(() => {
     if (greetingSent) return;
     setGreetingSent(true);
 
     const h = new Date().getHours();
-    const timeOfDay = h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
+    const greeting = h < 12 ? t("joel.greeting.morning") : h < 18 ? t("joel.greeting.afternoon") : t("joel.greeting.evening");
 
-    const greetingPrompt = `The student just opened the workspace. Time: ${timeOfDay}. 
-Greet briefly as Joël. Acknowledge: project "${projectTitle}", type "${projectType}", domain "${projectDomain}", level "${getLevelLabel()}"${projectObjective ? `, objective "${projectObjective}"` : ""}.
-Present a short project summary (bullet points). Ask if they want to continue or modify.
-Keep it under 100 words. No long paragraphs.`;
+    const parts: string[] = [];
+    if (projectTitle) parts.push(`📋 **${t("joel.summary.title")}:** ${projectTitle}`);
+    if (projectType) parts.push(`📁 **${t("joel.summary.type")}:** ${t(`student.type.${projectType}`)}`);
+    if (projectDomain) parts.push(`🔬 **${t("joel.summary.domain")}:** ${projectDomain}`);
+    if (projectObjective) parts.push(`🎯 **${t("joel.summary.objective")}:** ${projectObjective}`);
+    parts.push(`🎓 **${t("joel.summary.level")}:** ${getLevelLabel()}`);
 
-    setIsStreaming(true);
-    let assistantSoFar = "";
+    const content = `${greeting}\n\n${t("joel.intro")}\n\n**${t("joel.projectSummary")}:**\n\n${parts.join("\n\n")}\n\n${t("joel.confirmQuestion")}`;
 
-    streamChat({
-      messages: [{ role: "user", content: greetingPrompt }],
-      projectContext,
-      language: lang,
-      onDelta: (chunk) => {
-        assistantSoFar += chunk;
-        setMessages(prev => {
-          const last = prev[prev.length - 1];
-          if (last?.role === "assistant" && last.type === "ai-stream") {
-            return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantSoFar } : m);
-          }
-          return [...prev, { role: "assistant", content: assistantSoFar, type: "ai-stream" }];
-        });
-        scrollToBottom();
-      },
-      onDone: () => {
-        chatHistoryRef.current.push(
-          { role: "user", content: greetingPrompt },
-          { role: "assistant", content: assistantSoFar }
-        );
-        syncChatHistory();
-        setIsStreaming(false);
-      },
-      onError: (err) => {
-        // Fallback to static greeting if AI fails
-        const greeting = h < 12 ? t("joel.greeting.morning") : h < 18 ? t("joel.greeting.afternoon") : t("joel.greeting.evening");
-        const parts = [];
-        if (projectTitle) parts.push(`📋 **${t("joel.summary.title")}:** ${projectTitle}`);
-        if (projectType) parts.push(`📁 **${t("joel.summary.type")}:** ${t(`student.type.${projectType}`)}`);
-        if (projectDomain) parts.push(`🔬 **${t("joel.summary.domain")}:** ${projectDomain}`);
-        if (projectObjective) parts.push(`🎯 **${t("joel.summary.objective")}:** ${projectObjective}`);
-        parts.push(`🎓 **${t("joel.summary.level")}:** ${getLevelLabel()}`);
+    setMessages([{ role: "assistant", content, type: "greeting" }]);
 
-        setMessages([
-          { role: "assistant", content: `${greeting}\n\n${t("joel.intro")}\n\n**${t("joel.projectSummary")}:**\n\n${parts.join("\n\n")}\n\n${t("joel.confirmQuestion")}`, type: "greeting" },
-        ]);
-        setIsStreaming(false);
-      },
-    });
+    // Seed chat history for future AI context
+    chatHistoryRef.current = [{ role: "assistant", content }];
+    syncChatHistory();
+    scrollToBottom();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
