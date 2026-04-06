@@ -157,6 +157,8 @@ export function generateTableInterpretation(
   level: string,
 ): string {
   const interps: string[] = [];
+  const lvl = level.includes("doctor") || level.includes("doctorat") ? "doctorate"
+    : level.includes("master") ? "master" : "licence";
 
   if (result.descriptive) {
     for (const d of result.descriptive.slice(0, 3)) {
@@ -165,12 +167,12 @@ export function generateTableInterpretation(
   }
   if (result.correlations) {
     for (const c of result.correlations.slice(0, 3)) {
-      interps.push(interpCorrelation(c, lang));
+      interps.push(interpCorrelation(c, lang, lvl));
     }
   }
   if (result.regressions) {
     for (const r of result.regressions) {
-      interps.push(interpRegression(r, lang));
+      interps.push(interpRegression(r, lang, lvl));
     }
   }
   if (result.tTests) {
@@ -185,17 +187,17 @@ export function generateTableInterpretation(
   }
   if (result.chiSquares) {
     for (const c of result.chiSquares) {
-      interps.push(interpChi(c, lang));
+      interps.push(interpChi(c, lang, lvl));
     }
   }
   if (result.pca) {
-    interps.push(interpPCA(result.pca, lang));
+    interps.push(interpPCA(result.pca, lang, lvl));
   }
   if (result.factorAnalysis) {
     interps.push(interpFactor(result.factorAnalysis, lang));
   }
   if (result.clusterAnalysis) {
-    interps.push(interpCluster(result.clusterAnalysis, lang));
+    interps.push(interpCluster(result.clusterAnalysis, lang, lvl));
   }
 
   return interps.join(" ");
