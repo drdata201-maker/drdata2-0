@@ -1,9 +1,14 @@
+import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset } from "@/contexts/DatasetContext";
 import type { AnalysisResultItem } from "@/contexts/DatasetContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table2, TrendingUp, BarChart3, Upload, Layers, GitBranch, CircleDot } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Table2, TrendingUp, BarChart3, Upload, Layers, GitBranch, CircleDot, Pencil, Check, X } from "lucide-react";
+import { generateTableTitle, generateTableInterpretation, getTableLabel, getSource } from "@/lib/academicFormatter";
 
 function SignificanceBadge({ p }: { p: number }) {
   if (p < 0.001) return <Badge className="bg-green-600 text-white">p &lt; 0.001 ***</Badge>;
