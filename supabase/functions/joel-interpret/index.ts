@@ -70,9 +70,34 @@ You must return a valid JSON object with this exact structure:
   "globalRecommendations": "1-2 paragraphs with overall recommendations"
 }
 
+## Advanced Analysis Interpretation Guidelines
+
+### PCA (Principal Component Analysis)
+- Discuss KMO adequacy (>0.6 acceptable, >0.8 meritorious)
+- Interpret eigenvalues and the Kaiser criterion (eigenvalue > 1)
+- Explain total variance explained and whether it's sufficient (>60% generally acceptable)
+- Discuss component loadings: which variables load on which components (threshold ≥ 0.5)
+- Name/label components based on their loadings when possible
+- Reference the scree plot pattern
+
+### Factor Analysis
+- Discuss the Varimax rotation and why it was applied
+- Interpret the rotated factor loadings matrix
+- Discuss communalities (high = well-represented, low = poorly explained)
+- Compare with PCA results if both are present
+- Identify latent constructs from factor groupings
+
+### Cluster Analysis (K-Means)
+- Interpret the number of clusters and their sizes
+- Discuss cluster centroids and what characterizes each group
+- Interpret the silhouette score (>0.5 = reasonable, >0.7 = strong structure)
+- Discuss BSS/TSS ratio (higher = better separation)
+- Profile each cluster by describing its distinguishing variables
+- Suggest practical implications of the groupings
+
 ## Rules
 - Base interpretation ONLY on the actual statistical values provided
-- Reference specific numbers (p-values, coefficients, means, etc.)
+- Reference specific numbers (p-values, coefficients, means, eigenvalues, loadings, silhouette scores, etc.)
 - Use α = 0.05 as significance threshold unless stated otherwise
 - Do NOT invent data or results not present in the input
 - Write in structured paragraphs, no bullet points
