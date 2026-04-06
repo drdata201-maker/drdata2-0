@@ -328,14 +328,26 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
     }
   }
 
-  // Charts
+  // Charts with academic formatting
   if ((content === "full" || content === "results") && data.chartImages && data.chartImages.length > 0) {
+    const figLabel = getFigureLabel(data.lang);
+    const sourceText = getSource(data.lang);
     addHeading(t.charts, HeadingLevel.HEADING_2);
-    for (const chart of data.chartImages) {
+
+    for (let i = 0; i < data.chartImages.length; i++) {
+      const chart = data.chartImages[i];
+      const figNum = i + 1;
+
+      // Academic figure title
       sections.push(new Paragraph({
-        spacing: { before: 200, after: 100 },
-        children: [new TextRun({ text: chart.title, bold: true, size: 22 })],
+        spacing: { before: 200, after: 80 },
+        children: [
+          new TextRun({ text: `${figLabel} ${figNum}: `, bold: true, size: 22 }),
+          new TextRun({ text: chart.title, bold: true, size: 22 }),
+        ],
       }));
+
+      // Chart image
       try {
         const imgData = dataUrlToUint8Array(chart.dataUrl);
         sections.push(new Paragraph({
@@ -350,6 +362,27 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
       } catch {
         // Skip chart if image fails
       }
+
+      // Source
+      sections.push(new Paragraph({
+        spacing: { before: 60, after: 40 },
+        children: [new TextRun({ text: sourceText, italics: true, size: 18, color: "666666" })],
+      }));
+
+      // Figure interpretation
+      if (chart.chartType && chart.chartData) {
+        const figInterp = generateFigureInterpretation(chart.chartType, chart.title, chart.chartData, data.lang);
+        if (figInterp) {
+          sections.push(new Paragraph({
+            spacing: { before: 40, after: 120 },
+            children: [
+              new TextRun({ text: t.interpretation + ": ", bold: true, italics: true, size: 20 }),
+              new TextRun({ text: figInterp, italics: true, size: 20 }),
+            ],
+          }));
+        }
+      }
+
       sections.push(new Paragraph({ children: [] }));
     }
   }
