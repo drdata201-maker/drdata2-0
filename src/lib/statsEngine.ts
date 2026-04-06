@@ -67,6 +67,49 @@ export interface AnovaResult {
   dfWithin: number;
 }
 
+export interface PCAResult {
+  components: {
+    component: number;
+    eigenvalue: number;
+    varianceExplained: number;
+    cumulativeVariance: number;
+  }[];
+  loadings: {
+    variable: string;
+    components: number[];
+  }[];
+  kmo: number;
+  totalVarianceExplained: number;
+}
+
+export interface FactorAnalysisResult {
+  factors: {
+    factor: number;
+    eigenvalue: number;
+    varianceExplained: number;
+    cumulativeVariance: number;
+  }[];
+  rotatedLoadings: {
+    variable: string;
+    factors: number[];
+  }[];
+  communalities: { variable: string; initial: number; extraction: number }[];
+  rotation: string;
+}
+
+export interface ClusterAnalysisResult {
+  k: number;
+  clusters: {
+    cluster: number;
+    size: number;
+    centroid: { variable: string; value: number }[];
+  }[];
+  withinSS: number[];
+  totalSS: number;
+  betweenSS: number;
+  silhouetteScore: number;
+}
+
 export interface AnalysisResultItem {
   id: string;
   type: string;
@@ -79,6 +122,9 @@ export interface AnalysisResultItem {
   regressions?: RegressionResult[];
   chiSquares?: ChiSquareResult[];
   anovas?: AnovaResult[];
+  pca?: PCAResult;
+  factorAnalysis?: FactorAnalysisResult;
+  clusterAnalysis?: ClusterAnalysisResult;
 }
 
 // ─── Statistical distribution functions ───
