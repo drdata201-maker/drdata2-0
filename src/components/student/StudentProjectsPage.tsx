@@ -28,8 +28,8 @@ export function StudentProjectsPage({ baseRoute, userType }: { baseRoute: string
   const [loading, setLoading] = useState(true);
 
   const fetchProjects = async () => {
-    const { data } = await (supabase.from("projects") as any)
-      .select("id,title,description,domain,status,created_at")
+      const { data } = await (supabase.from("projects") as any)
+        .select("id,title,description,domain,status,created_at,updated_at")
       .eq("user_type", userType)
       .order("created_at", { ascending: false });
     if (data) setProjects(data as ProjectRow[]);
