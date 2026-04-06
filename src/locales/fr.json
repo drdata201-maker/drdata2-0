@@ -757,6 +757,7 @@
   "results.value": "Valeur",
   "results.count": "Effectif",
   "results.group": "Groupe",
+  "results.interpretation": "Interprétation",
   "results.pcaVariance": "ACP — Variance expliquée",
   "results.totalVariance": "Variance totale",
   "results.component": "Composante",

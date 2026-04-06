@@ -757,6 +757,7 @@
   "results.value": "Value",
   "results.count": "Count",
   "results.group": "Group",
+  "results.interpretation": "Interpretation",
   "results.pcaVariance": "PCA — Explained Variance",
   "results.totalVariance": "Total Variance",
   "results.component": "Component",
