@@ -183,6 +183,9 @@ export function StudentProjectsPage({ baseRoute, userType }: { baseRoute: string
                            <Button variant="ghost" size="icon" title={t("student.projects.viewResults")} onClick={() => navigate(`/analysis/workspace?project=${p.id}&level=${userType}`)}>
                              <Eye className="h-4 w-4" />
                            </Button>
+                           <Button variant="ghost" size="icon" title={t("student.projects.duplicate")} onClick={() => handleDuplicate(p)}>
+                             <Copy className="h-4 w-4 text-muted-foreground" />
+                           </Button>
                            <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)}>
                              <Trash2 className="h-4 w-4 text-destructive" />
                            </Button>
