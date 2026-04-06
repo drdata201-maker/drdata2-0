@@ -672,13 +672,13 @@ export function WorkspaceResults({ level = "student_license" }: { level?: string
             {result.descriptive && <DescriptiveTable data={result.descriptive} />}
             {result.frequencies && <FrequencyTable data={result.frequencies} />}
             {result.correlations && <CorrelationTable data={result.correlations} />}
-            {result.regressions && <RegressionTable data={result.regressions} />}
+            {result.regressions && <RegressionTable data={result.regressions} level={level} />}
             {result.tTests && <TTestTable data={result.tTests} />}
             {result.anovas && <AnovaTable data={result.anovas} />}
-            {result.chiSquares && <ChiSquareTable data={result.chiSquares} />}
-            {result.pca && <PCATable data={result.pca} />}
-            {result.factorAnalysis && <FactorAnalysisTable data={result.factorAnalysis} />}
-            {result.clusterAnalysis && <ClusterAnalysisTable data={result.clusterAnalysis} />}
+            {result.chiSquares && <ChiSquareTable data={result.chiSquares} level={level} />}
+            {result.pca && <PCATable data={result.pca} level={level} />}
+            {result.factorAnalysis && <FactorAnalysisTable data={result.factorAnalysis} level={level} />}
+            {result.clusterAnalysis && <ClusterAnalysisTable data={result.clusterAnalysis} level={level} />}
 
             {/* Source */}
             <div className="pl-1">
