@@ -665,7 +665,7 @@ export function WorkspaceResults() {
                 <CardContent className="py-3 px-4">
                   <div className="flex items-start gap-2">
                     <Badge variant="outline" className="text-[10px] shrink-0 mt-0.5">{t("results.interpretation") || "Interpretation"}</Badge>
-                    <EditableText value={interpretation} onChange={v => updateOverride(result.id, "interpretation", v)} />
+                    <span className="text-xs text-muted-foreground italic leading-relaxed font-academic" style={{ textAlign: "justify" }}>{interpretation}</span>
                   </div>
                 </CardContent>
               </Card>
