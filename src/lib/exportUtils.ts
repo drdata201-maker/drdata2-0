@@ -210,42 +210,122 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
     sections.push(new Paragraph({ children: [] }));
   }
 
-  // Stats
+  // Stats tables with academic formatting
   if (content === "full" || content === "results") {
+    const tableLabel = getTableLabel(data.lang);
+    const sourceText = getSource(data.lang);
+    let tableNum = 1;
+
     addHeading(t.statsResults);
-    addHeading(t.descriptiveStats, HeadingLevel.HEADING_2);
 
-    const cellBorder = { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" };
-    const borders = { top: cellBorder, bottom: cellBorder, left: cellBorder, right: cellBorder };
-    const headers = [t.variable, "N", t.mean, t.std, "Min", "Max"];
-    const headerRow = new TableRow({
-      children: headers.map(h => new TableCell({
-        borders,
-        shading: { fill: "2563EB", type: ShadingType.CLEAR },
-        width: { size: 1560, type: WidthType.DXA },
-        children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, color: "FFFFFF", size: 20 })] })],
-      })),
-    });
-    const dataRows = data.statsTable.map(row => new TableRow({
-      children: [row.variable, String(row.n), String(row.mean), String(row.std), String(row.min), String(row.max)].map(v =>
-        new TableCell({
+    // Descriptive stats table
+    if (data.statsTable.length > 0) {
+      // Academic table title
+      sections.push(new Paragraph({
+        spacing: { before: 200, after: 80 },
+        children: [
+          new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+          new TextRun({ text: t.descriptiveStats, bold: true, size: 22 }),
+        ],
+      }));
+
+      const cellBorder = { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" };
+      const borders = { top: cellBorder, bottom: cellBorder, left: cellBorder, right: cellBorder };
+      const headers = [t.variable, "N", t.mean, t.std, "Min", "Max"];
+      const headerRow = new TableRow({
+        children: headers.map(h => new TableCell({
           borders,
+          shading: { fill: "2563EB", type: ShadingType.CLEAR },
           width: { size: 1560, type: WidthType.DXA },
+          children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, color: "FFFFFF", size: 20 })] })],
+        })),
+      });
+      const dataRows = data.statsTable.map(row => new TableRow({
+        children: [row.variable, String(row.n), String(row.mean), String(row.std), String(row.min), String(row.max)].map(v =>
+          new TableCell({
+            borders,
+            width: { size: 1560, type: WidthType.DXA },
+            children: [new Paragraph({ children: [new TextRun({ text: v, size: 20 })] })],
+          })
+        ),
+      }));
+
+      sections.push(new Table({
+        width: { size: 9360, type: WidthType.DXA },
+        columnWidths: [1560, 1560, 1560, 1560, 1560, 1560],
+        rows: [headerRow, ...dataRows],
+      }));
+
+      // Source
+      sections.push(new Paragraph({
+        spacing: { before: 60, after: 40 },
+        children: [new TextRun({ text: sourceText, italics: true, size: 18, color: "666666" })],
+      }));
+
+      // Interpretation for descriptive stats
+      if (data.analysisResults) {
+        const descResult = data.analysisResults.find(r => r.descriptive && r.descriptive.length > 0);
+        if (descResult) {
+          const interp = generateTableInterpretation(descResult, data.lang, (k: string) => t[k.replace("student.analysis.", "")] || k);
+          if (interp) {
+            sections.push(new Paragraph({
+              spacing: { before: 40, after: 120 },
+              children: [
+                new TextRun({ text: t.interpretation + ": ", bold: true, italics: true, size: 20 }),
+                new TextRun({ text: interp, italics: true, size: 20 }),
+              ],
+            }));
+          }
+        }
+      }
+
+      tableNum++;
+      sections.push(new Paragraph({ children: [] }));
+    }
+
+    // Test results table with academic numbering
+    if (data.testResults.length > 0) {
+      sections.push(new Paragraph({
+        spacing: { before: 200, after: 80 },
+        children: [
+          new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+          new TextRun({ text: t.testResults, bold: true, size: 22 }),
+        ],
+      }));
+
+      const cellBorder = { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" };
+      const borders = { top: cellBorder, bottom: cellBorder, left: cellBorder, right: cellBorder };
+      const headerRow = new TableRow({
+        children: ["Test", t.variable.charAt(0).toUpperCase() + t.variable.slice(1)].map(h => new TableCell({
+          borders,
+          shading: { fill: "2563EB", type: ShadingType.CLEAR },
+          width: { size: 4680, type: WidthType.DXA },
+          children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, color: "FFFFFF", size: 20 })] })],
+        })),
+      });
+      const testRows = data.testResults.map(r => new TableRow({
+        children: [r.label, r.value].map(v => new TableCell({
+          borders,
+          width: { size: 4680, type: WidthType.DXA },
           children: [new Paragraph({ children: [new TextRun({ text: v, size: 20 })] })],
-        })
-      ),
-    }));
+        })),
+      }));
 
-    sections.push(new Table({
-      width: { size: 9360, type: WidthType.DXA },
-      columnWidths: [1560, 1560, 1560, 1560, 1560, 1560],
-      rows: [headerRow, ...dataRows],
-    }));
-    sections.push(new Paragraph({ children: [] }));
+      sections.push(new Table({
+        width: { size: 9360, type: WidthType.DXA },
+        columnWidths: [4680, 4680],
+        rows: [headerRow, ...testRows],
+      }));
 
-    addHeading(t.testResults, HeadingLevel.HEADING_2);
-    data.testResults.forEach(r => addField(r.label, r.value));
-    sections.push(new Paragraph({ children: [] }));
+      // Source
+      sections.push(new Paragraph({
+        spacing: { before: 60, after: 120 },
+        children: [new TextRun({ text: sourceText, italics: true, size: 18, color: "666666" })],
+      }));
+
+      tableNum++;
+      sections.push(new Paragraph({ children: [] }));
+    }
   }
 
   // Charts
