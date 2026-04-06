@@ -225,6 +225,12 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
   };
 
   // Send AI-powered smart greeting on mount
+  // Scroll to bottom on mount (when returning to tab)
+  useEffect(() => {
+    scrollToBottom();
+  }, [scrollToBottom]);
+
+  // Send AI-powered smart greeting on first mount only
   useEffect(() => {
     if (greetingSent) return;
     setGreetingSent(true);
