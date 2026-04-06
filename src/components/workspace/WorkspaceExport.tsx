@@ -166,9 +166,15 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
     setLoading(key);
     try {
       const data = { ...buildData! };
-      // Generate chart images for Word/PDF
+      data.analysisResults = analysisResults;
+      // Generate chart images for Word/PDF with chart metadata
       if (format !== "xlsx" && charts.length > 0) {
-        data.chartImages = renderChartsToImages(charts, chartSettings);
+        const rendered = renderChartsToImages(charts, chartSettings);
+        data.chartImages = rendered.map((img, i) => ({
+          ...img,
+          chartType: charts[i]?.type,
+          chartData: charts[i]?.data as { name?: string; value?: number; x?: number; y?: number }[],
+        }));
       }
       if (format === "docx") await exportDocx(data, content);
       else if (format === "pdf") exportPdf(data, content);
