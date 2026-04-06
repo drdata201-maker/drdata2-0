@@ -4,12 +4,16 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { dataUrlToUint8Array } from "./chartImageRenderer";
+import { getTableLabel, getFigureLabel, getSource, generateTableInterpretation, generateFigureInterpretation } from "./academicFormatter";
+import type { AnalysisResultItem } from "./statsEngine";
 
 export interface ChartImage {
   title: string;
   dataUrl: string;
   width: number;
   height: number;
+  chartType?: string;
+  chartData?: { name?: string; value?: number; x?: number; y?: number }[];
 }
 
 export interface ExportData {
@@ -25,6 +29,7 @@ export interface ExportData {
   conclusion: string;
   recommendations: string;
   chartImages?: ChartImage[];
+  analysisResults?: AnalysisResultItem[];
 }
 
 type ExportContent = "full" | "results" | "graphs" | "interpretation" | "conclusion";
@@ -205,52 +210,144 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
     sections.push(new Paragraph({ children: [] }));
   }
 
-  // Stats
+  // Stats tables with academic formatting
   if (content === "full" || content === "results") {
+    const tableLabel = getTableLabel(data.lang);
+    const sourceText = getSource(data.lang);
+    let tableNum = 1;
+
     addHeading(t.statsResults);
-    addHeading(t.descriptiveStats, HeadingLevel.HEADING_2);
 
-    const cellBorder = { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" };
-    const borders = { top: cellBorder, bottom: cellBorder, left: cellBorder, right: cellBorder };
-    const headers = [t.variable, "N", t.mean, t.std, "Min", "Max"];
-    const headerRow = new TableRow({
-      children: headers.map(h => new TableCell({
-        borders,
-        shading: { fill: "2563EB", type: ShadingType.CLEAR },
-        width: { size: 1560, type: WidthType.DXA },
-        children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, color: "FFFFFF", size: 20 })] })],
-      })),
-    });
-    const dataRows = data.statsTable.map(row => new TableRow({
-      children: [row.variable, String(row.n), String(row.mean), String(row.std), String(row.min), String(row.max)].map(v =>
-        new TableCell({
+    // Descriptive stats table
+    if (data.statsTable.length > 0) {
+      // Academic table title
+      sections.push(new Paragraph({
+        spacing: { before: 200, after: 80 },
+        children: [
+          new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+          new TextRun({ text: t.descriptiveStats, bold: true, size: 22 }),
+        ],
+      }));
+
+      const cellBorder = { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" };
+      const borders = { top: cellBorder, bottom: cellBorder, left: cellBorder, right: cellBorder };
+      const headers = [t.variable, "N", t.mean, t.std, "Min", "Max"];
+      const headerRow = new TableRow({
+        children: headers.map(h => new TableCell({
           borders,
+          shading: { fill: "2563EB", type: ShadingType.CLEAR },
           width: { size: 1560, type: WidthType.DXA },
+          children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, color: "FFFFFF", size: 20 })] })],
+        })),
+      });
+      const dataRows = data.statsTable.map(row => new TableRow({
+        children: [row.variable, String(row.n), String(row.mean), String(row.std), String(row.min), String(row.max)].map(v =>
+          new TableCell({
+            borders,
+            width: { size: 1560, type: WidthType.DXA },
+            children: [new Paragraph({ children: [new TextRun({ text: v, size: 20 })] })],
+          })
+        ),
+      }));
+
+      sections.push(new Table({
+        width: { size: 9360, type: WidthType.DXA },
+        columnWidths: [1560, 1560, 1560, 1560, 1560, 1560],
+        rows: [headerRow, ...dataRows],
+      }));
+
+      // Source
+      sections.push(new Paragraph({
+        spacing: { before: 60, after: 40 },
+        children: [new TextRun({ text: sourceText, italics: true, size: 18, color: "666666" })],
+      }));
+
+      // Interpretation for descriptive stats
+      if (data.analysisResults) {
+        const descResult = data.analysisResults.find(r => r.descriptive && r.descriptive.length > 0);
+        if (descResult) {
+          const interp = generateTableInterpretation(descResult, data.lang, data.level);
+          if (interp) {
+            sections.push(new Paragraph({
+              spacing: { before: 40, after: 120 },
+              children: [
+                new TextRun({ text: t.interpretation + ": ", bold: true, italics: true, size: 20 }),
+                new TextRun({ text: interp, italics: true, size: 20 }),
+              ],
+            }));
+          }
+        }
+      }
+
+      tableNum++;
+      sections.push(new Paragraph({ children: [] }));
+    }
+
+    // Test results table with academic numbering
+    if (data.testResults.length > 0) {
+      sections.push(new Paragraph({
+        spacing: { before: 200, after: 80 },
+        children: [
+          new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+          new TextRun({ text: t.testResults, bold: true, size: 22 }),
+        ],
+      }));
+
+      const cellBorder = { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" };
+      const borders = { top: cellBorder, bottom: cellBorder, left: cellBorder, right: cellBorder };
+      const headerRow = new TableRow({
+        children: ["Test", t.variable.charAt(0).toUpperCase() + t.variable.slice(1)].map(h => new TableCell({
+          borders,
+          shading: { fill: "2563EB", type: ShadingType.CLEAR },
+          width: { size: 4680, type: WidthType.DXA },
+          children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, color: "FFFFFF", size: 20 })] })],
+        })),
+      });
+      const testRows = data.testResults.map(r => new TableRow({
+        children: [r.label, r.value].map(v => new TableCell({
+          borders,
+          width: { size: 4680, type: WidthType.DXA },
           children: [new Paragraph({ children: [new TextRun({ text: v, size: 20 })] })],
-        })
-      ),
-    }));
+        })),
+      }));
 
-    sections.push(new Table({
-      width: { size: 9360, type: WidthType.DXA },
-      columnWidths: [1560, 1560, 1560, 1560, 1560, 1560],
-      rows: [headerRow, ...dataRows],
-    }));
-    sections.push(new Paragraph({ children: [] }));
+      sections.push(new Table({
+        width: { size: 9360, type: WidthType.DXA },
+        columnWidths: [4680, 4680],
+        rows: [headerRow, ...testRows],
+      }));
 
-    addHeading(t.testResults, HeadingLevel.HEADING_2);
-    data.testResults.forEach(r => addField(r.label, r.value));
-    sections.push(new Paragraph({ children: [] }));
+      // Source
+      sections.push(new Paragraph({
+        spacing: { before: 60, after: 120 },
+        children: [new TextRun({ text: sourceText, italics: true, size: 18, color: "666666" })],
+      }));
+
+      tableNum++;
+      sections.push(new Paragraph({ children: [] }));
+    }
   }
 
-  // Charts
+  // Charts with academic formatting
   if ((content === "full" || content === "results") && data.chartImages && data.chartImages.length > 0) {
+    const figLabel = getFigureLabel(data.lang);
+    const sourceText = getSource(data.lang);
     addHeading(t.charts, HeadingLevel.HEADING_2);
-    for (const chart of data.chartImages) {
+
+    for (let i = 0; i < data.chartImages.length; i++) {
+      const chart = data.chartImages[i];
+      const figNum = i + 1;
+
+      // Academic figure title
       sections.push(new Paragraph({
-        spacing: { before: 200, after: 100 },
-        children: [new TextRun({ text: chart.title, bold: true, size: 22 })],
+        spacing: { before: 200, after: 80 },
+        children: [
+          new TextRun({ text: `${figLabel} ${figNum}: `, bold: true, size: 22 }),
+          new TextRun({ text: chart.title, bold: true, size: 22 }),
+        ],
       }));
+
+      // Chart image
       try {
         const imgData = dataUrlToUint8Array(chart.dataUrl);
         sections.push(new Paragraph({
@@ -265,6 +362,27 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
       } catch {
         // Skip chart if image fails
       }
+
+      // Source
+      sections.push(new Paragraph({
+        spacing: { before: 60, after: 40 },
+        children: [new TextRun({ text: sourceText, italics: true, size: 18, color: "666666" })],
+      }));
+
+      // Figure interpretation
+      if (chart.chartType && chart.chartData) {
+        const figInterp = generateFigureInterpretation(chart.chartType, chart.title, chart.chartData, data.lang);
+        if (figInterp) {
+          sections.push(new Paragraph({
+            spacing: { before: 40, after: 120 },
+            children: [
+              new TextRun({ text: t.interpretation + ": ", bold: true, italics: true, size: 20 }),
+              new TextRun({ text: figInterp, italics: true, size: 20 }),
+            ],
+          }));
+        }
+      }
+
       sections.push(new Paragraph({ children: [] }));
     }
   }
@@ -362,6 +480,17 @@ export function exportPdf(data: ExportData, content: ExportContent) {
     y += 6;
 
     addH2(t.descriptiveStats);
+
+    const tableLabel = getTableLabel(data.lang);
+    const sourceText = getSource(data.lang);
+    let tableNum = 1;
+
+    // Academic table title
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text(`${tableLabel} ${tableNum}: ${t.descriptiveStats}`, 14, y);
+    y += 6;
+
     autoTable(doc, {
       startY: y,
       head: [[t.variable, "N", t.mean, t.std, "Min", "Max"]],
@@ -370,32 +499,115 @@ export function exportPdf(data: ExportData, content: ExportContent) {
       headStyles: { fillColor: [37, 99, 235] },
       margin: { left: 14 },
     });
-    y = (doc as any).lastAutoTable.finalY + 10;
+    y = (doc as any).lastAutoTable.finalY + 4;
+
+    // Source
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(100);
+    doc.text(sourceText, 14, y);
+    doc.setTextColor(0);
+    y += 5;
+
+    // Interpretation
+    if (data.analysisResults) {
+      const descResult = data.analysisResults.find(r => r.descriptive && r.descriptive.length > 0);
+      if (descResult) {
+        const interp = generateTableInterpretation(descResult, data.lang, data.level);
+        if (interp) {
+          if (y > 250) { doc.addPage(); y = 20; }
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "italic");
+          const interpLines = doc.splitTextToSize(interp, 180);
+          doc.text(interpLines, 14, y);
+          y += interpLines.length * 5 + 4;
+        }
+      }
+    }
+    doc.setFont("helvetica", "normal");
+    tableNum++;
+    y += 4;
 
     addH2(t.testResults);
-    data.testResults.forEach(r => addFieldPdf(r.label, r.value));
+
+    // Academic table title for test results
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text(`${tableLabel} ${tableNum}: ${t.testResults}`, 14, y);
     y += 6;
+
+    autoTable(doc, {
+      startY: y,
+      head: [["Test", t.variable]],
+      body: data.testResults.map(r => [r.label, r.value]),
+      theme: "grid",
+      headStyles: { fillColor: [37, 99, 235] },
+      margin: { left: 14 },
+    });
+    y = (doc as any).lastAutoTable.finalY + 4;
+
+    // Source
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(100);
+    doc.text(sourceText, 14, y);
+    doc.setTextColor(0);
+    y += 8;
+    doc.setFont("helvetica", "normal");
   }
 
-  // Charts in PDF
+  // Charts in PDF with academic formatting
   if ((content === "full" || content === "results") && data.chartImages && data.chartImages.length > 0) {
+    const figLabel = getFigureLabel(data.lang);
+    const sourceText = getSource(data.lang);
     addH2(t.charts);
-    for (const chart of data.chartImages) {
-      // Check if enough space for chart (approx 80mm height)
-      if (y > 180) { doc.addPage(); y = 20; }
+
+    for (let i = 0; i < data.chartImages.length; i++) {
+      const chart = data.chartImages[i];
+      const figNum = i + 1;
+
+      if (y > 160) { doc.addPage(); y = 20; }
+
+      // Academic figure title
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
-      const chartTitle = chart.title.length > 70 ? chart.title.slice(0, 67) + "…" : chart.title;
-      doc.text(chartTitle, 14, y);
-      y += 4;
+      const figTitle = `${figLabel} ${figNum}: ${chart.title}`;
+      const titleText = figTitle.length > 80 ? figTitle.slice(0, 77) + "…" : figTitle;
+      doc.text(titleText, 14, y);
+      y += 5;
+
+      // Chart image
       try {
         const imgW = 170;
         const imgH = (chart.height / chart.width) * imgW;
         doc.addImage(chart.dataUrl, "PNG", 14, y, imgW, imgH);
-        y += imgH + 8;
+        y += imgH + 4;
       } catch {
         y += 4;
       }
+
+      // Source
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "italic");
+      doc.setTextColor(100);
+      doc.text(sourceText, 14, y);
+      doc.setTextColor(0);
+      y += 5;
+
+      // Figure interpretation
+      if (chart.chartType && chart.chartData) {
+        const figInterp = generateFigureInterpretation(chart.chartType, chart.title, chart.chartData, data.lang);
+        if (figInterp) {
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "italic");
+          const interpLines = doc.splitTextToSize(figInterp, 180);
+          doc.text(interpLines, 14, y);
+          y += interpLines.length * 5 + 4;
+        }
+      }
+
+      doc.setFont("helvetica", "normal");
+      y += 4;
     }
   }
 
