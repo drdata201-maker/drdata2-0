@@ -230,6 +230,7 @@ Keep it under 100 words. No long paragraphs.`;
         if (projectTitle) parts.push(`📋 **${t("joel.summary.title")}:** ${projectTitle}`);
         if (projectType) parts.push(`📁 **${t("joel.summary.type")}:** ${t(`student.type.${projectType}`)}`);
         if (projectDomain) parts.push(`🔬 **${t("joel.summary.domain")}:** ${projectDomain}`);
+        if (projectObjective) parts.push(`🎯 **${t("joel.summary.objective")}:** ${projectObjective}`);
         parts.push(`🎓 **${t("joel.summary.level")}:** ${getLevelLabel()}`);
 
         setMessages([
