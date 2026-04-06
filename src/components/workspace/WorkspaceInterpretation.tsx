@@ -136,9 +136,9 @@ export function WorkspaceInterpretation({ level, projectTitle, projectType, proj
   };
 
   const copySectionToClipboard = (section: InterpretationSection) => {
-    const lines: string[] = [`--- ${section.analysisType} ---`, section.interpretation];
-    if (section.conclusion) { lines.push(""); lines.push(`${t("interpretation.conclusionTitle")}:`); lines.push(section.conclusion); }
-    if (section.recommendations) { lines.push(""); lines.push(`${t("interpretation.recommendationsTitle")}:`); lines.push(section.recommendations); }
+    const lines: string[] = [`--- ${section.analysisType} ---`, stripLatex(section.interpretation)];
+    if (section.conclusion) { lines.push(""); lines.push(`${t("interpretation.conclusionTitle")}:`); lines.push(stripLatex(section.conclusion)); }
+    if (section.recommendations) { lines.push(""); lines.push(`${t("interpretation.recommendationsTitle")}:`); lines.push(stripLatex(section.recommendations)); }
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
       toast.success(t("interpretation.copied") || "Copied to clipboard");
     });
