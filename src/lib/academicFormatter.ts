@@ -303,8 +303,41 @@ function interpAnova(a: { dependent: string; factor: string; fStat: number; pVal
   return templates[lang] || templates.en;
 }
 
-function interpChi(c: { var1: string; var2: string; chiSquare: number; df: number; pValue: number; cramersV: number }, lang: string) {
+function interpChi(c: { var1: string; var2: string; chiSquare: number; df: number; pValue: number; cramersV: number }, lang: string, lvl: string) {
   const sig = c.pValue < 0.05;
+
+  if (lvl === "licence") {
+    const templates: Record<string, string> = {
+      fr: `${sig ? "Il existe une association significative" : "Il n'existe pas d'association significative"} entre ${c.var1} et ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}).`,
+      en: `${sig ? "There is a significant association" : "There is no significant association"} between ${c.var1} and ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}).`,
+      es: `${sig ? "Existe una asociación significativa" : "No existe asociación significativa"} entre ${c.var1} y ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}).`,
+      de: `${sig ? "Es besteht ein signifikanter Zusammenhang" : "Es besteht kein signifikanter Zusammenhang"} zwischen ${c.var1} und ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}).`,
+      pt: `${sig ? "Existe uma associação significativa" : "Não existe associação significativa"} entre ${c.var1} e ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}).`,
+    };
+    return templates[lang] || templates.en;
+  }
+
+  if (lvl === "doctorate") {
+    const vStrength = c.cramersV < 0.1 ? "negligible" : c.cramersV < 0.3 ? "weak" : c.cramersV < 0.5 ? "moderate" : "strong";
+    const vMap: Record<string, Record<string, string>> = {
+      fr: { negligible: "négligeable", weak: "faible", moderate: "modérée", strong: "forte" },
+      en: { negligible: "negligible", weak: "weak", moderate: "moderate", strong: "strong" },
+      es: { negligible: "insignificante", weak: "débil", moderate: "moderada", strong: "fuerte" },
+      de: { negligible: "vernachlässigbar", weak: "schwach", moderate: "moderat", strong: "stark" },
+      pt: { negligible: "insignificante", weak: "fraca", moderate: "moderada", strong: "forte" },
+    };
+    const vLabel = (vMap[lang] || vMap.en)[vStrength];
+    const templates: Record<string, string> = {
+      fr: `Le test du Chi-carré ${sig ? "montre une association significative" : "ne montre pas d'association significative"} entre ${c.var1} et ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}). La force de l'association, mesurée par le V de Cramér (V = ${c.cramersV}), est ${vLabel}.`,
+      en: `The Chi-square test ${sig ? "shows a significant association" : "shows no significant association"} between ${c.var1} and ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}). The association strength, measured by Cramér's V (V = ${c.cramersV}), is ${vLabel}.`,
+      es: `La prueba Chi-cuadrado ${sig ? "muestra una asociación significativa" : "no muestra asociación significativa"} entre ${c.var1} y ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}). La fuerza de la asociación, medida por la V de Cramér (V = ${c.cramersV}), es ${vLabel}.`,
+      de: `Der Chi-Quadrat-Test ${sig ? "zeigt einen signifikanten Zusammenhang" : "zeigt keinen signifikanten Zusammenhang"} zwischen ${c.var1} und ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}). Die Stärke des Zusammenhangs, gemessen durch Cramér's V (V = ${c.cramersV}), ist ${vLabel}.`,
+      pt: `O teste Qui-quadrado ${sig ? "mostra uma associação significativa" : "não mostra associação significativa"} entre ${c.var1} e ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}). A força da associação, medida pelo V de Cramér (V = ${c.cramersV}), é ${vLabel}.`,
+    };
+    return templates[lang] || templates.en;
+  }
+
+  // Master level
   const templates: Record<string, string> = {
     fr: `Le test du Chi-carré ${sig ? "montre une association significative" : "ne montre pas d'association significative"} entre ${c.var1} et ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}, V de Cramér = ${c.cramersV}).`,
     en: `The Chi-square test ${sig ? "shows a significant association" : "shows no significant association"} between ${c.var1} and ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}, Cramér's V = ${c.cramersV}).`,
