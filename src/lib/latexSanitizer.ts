@@ -41,7 +41,7 @@ export function stripLatex(text: string): string {
 
   // Replace LaTeX commands outside of $...$ too
   for (const [latex, unicode] of Object.entries(latexSymbols)) {
-    result = result.replaceAll(latex, unicode);
+    result = result.split(latex).join(unicode);
   }
 
   // Handle superscripts: ^2, ^{2}, ^{n}
