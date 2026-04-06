@@ -608,7 +608,7 @@ function EditableText({ value, onChange, variant = "text" }: { value: string; on
   );
 }
 
-export function WorkspaceResults() {
+export function WorkspaceResults({ level = "student_license" }: { level?: string }) {
   const { t, lang } = useLanguage();
   const { analysisResults, dataset } = useDataset();
 
