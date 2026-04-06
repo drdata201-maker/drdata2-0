@@ -666,7 +666,7 @@ export function exportXlsx(data: ExportData, content: ExportContent) {
   }
 
   if (content === "full" || content === "interpretation") {
-    const intSheet = XLSX.utils.aoa_to_sheet([[t.interpretation], [data.interpretation || t.noData]]);
+    const intSheet = XLSX.utils.aoa_to_sheet([[t.interpretation], [stripLatex(data.interpretation || t.noData)]]);
     intSheet["!cols"] = [{ wch: 80 }];
     XLSX.utils.book_append_sheet(wb, intSheet, t.interpretation.substring(0, 31));
   }
