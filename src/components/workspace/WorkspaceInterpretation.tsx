@@ -259,20 +259,31 @@ export function WorkspaceInterpretation({ level, projectTitle, projectType, proj
                 <BookOpen className="h-4 w-4 text-primary" />
                 {t("interpretation.title")} — {section.analysisType}
               </CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs"
-                disabled={regeneratingSection !== null || loading}
-                onClick={() => regenerateSection(i)}
-              >
-                {regeneratingSection === i ? (
-                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                ) : (
-                  <RefreshCw className="mr-1 h-3 w-3" />
-                )}
-                {t("interpretation.regenerateSection") || "Regenerate"}
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => copySectionToClipboard(section)}
+                >
+                  <Copy className="mr-1 h-3 w-3" />
+                  {t("interpretation.copy") || "Copy"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  disabled={regeneratingSection !== null || loading}
+                  onClick={() => regenerateSection(i)}
+                >
+                  {regeneratingSection === i ? (
+                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-1 h-3 w-3" />
+                  )}
+                  {t("interpretation.regenerateSection") || "Regenerate"}
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
