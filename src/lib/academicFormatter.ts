@@ -214,7 +214,7 @@ function interpDescriptive(d: { variable: string; mean: number; std: number; n: 
   return t[lang] || t.en;
 }
 
-function interpCorrelation(c: { var1: string; var2: string; r: number; pValue: number }, lang: string) {
+function interpCorrelation(c: { var1: string; var2: string; r: number; pValue: number }, lang: string, lvl: string) {
   const strength = Math.abs(c.r) >= 0.7 ? "strong" : Math.abs(c.r) >= 0.4 ? "moderate" : "weak";
   const dir = c.r >= 0 ? "positive" : "negative";
   const sig = c.pValue < 0.05;
@@ -234,6 +234,18 @@ function interpCorrelation(c: { var1: string; var2: string; r: number; pValue: n
   };
   const s = (strengthMap[lang] || strengthMap.en)[strength];
   const d = (dirMap[lang] || dirMap.en)[dir];
+
+  if (lvl === "licence") {
+    const templates: Record<string, string> = {
+      fr: `La corrélation entre ${c.var1} et ${c.var2} est ${s} et ${d} (r = ${c.r})${sig ? ", statistiquement significative" : ""}.`,
+      en: `The correlation between ${c.var1} and ${c.var2} is ${s} and ${d} (r = ${c.r})${sig ? ", statistically significant" : ""}.`,
+      es: `La correlación entre ${c.var1} y ${c.var2} es ${s} y ${d} (r = ${c.r})${sig ? ", estadísticamente significativa" : ""}.`,
+      de: `Die Korrelation zwischen ${c.var1} und ${c.var2} ist ${s} und ${d} (r = ${c.r})${sig ? ", statistisch signifikant" : ""}.`,
+      pt: `A correlação entre ${c.var1} e ${c.var2} é ${s} e ${d} (r = ${c.r})${sig ? ", estatisticamente significativa" : ""}.`,
+    };
+    return templates[lang] || templates.en;
+  }
+
   const templates: Record<string, string> = {
     fr: `La corrélation entre ${c.var1} et ${c.var2} est ${s} et ${d} (r = ${c.r}, p = ${c.pValue})${sig ? ", statistiquement significative" : ""}.`,
     en: `The correlation between ${c.var1} and ${c.var2} is ${s} and ${d} (r = ${c.r}, p = ${c.pValue})${sig ? ", statistically significant" : ""}.`,
