@@ -317,7 +317,7 @@ Keep it under 100 words. No long paragraphs.`;
         setIsStreaming(false);
       },
     });
-  }, [lang, projectContext, scrollToBottom, t]);
+  }, [lang, projectContext, scrollToBottom, t, syncChatHistory, setMessages]);
 
   const handleConfirm = () => {
     setMessages(prev => [...prev, { role: "user", content: t("joel.confirmContinue") }]);
