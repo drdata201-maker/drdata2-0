@@ -200,6 +200,7 @@ export type Database = {
         Row: {
           chat_state: Json | null
           created_at: string
+          dataset_summary: Json | null
           description: string | null
           domain: string | null
           id: string
@@ -212,6 +213,7 @@ export type Database = {
         Insert: {
           chat_state?: Json | null
           created_at?: string
+          dataset_summary?: Json | null
           description?: string | null
           domain?: string | null
           id?: string
@@ -224,6 +226,7 @@ export type Database = {
         Update: {
           chat_state?: Json | null
           created_at?: string
+          dataset_summary?: Json | null
           description?: string | null
           domain?: string | null
           id?: string
