@@ -46,6 +46,39 @@ export function StudentProjectsPage({ baseRoute, userType }: { baseRoute: string
     }
   };
 
+  const handleDuplicate = async (project: ProjectRow) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch full project data including dataset_summary
+      const { data: original } = await (supabase.from("projects") as any)
+        .select("title,description,domain,user_type,dataset_summary")
+        .eq("id", project.id)
+        .maybeSingle();
+      if (!original) throw new Error("Project not found");
+
+      const { data: newProject, error } = await (supabase.from("projects") as any)
+        .insert({
+          user_id: user.id,
+          title: `${original.title} (${t("student.projects.copy")})`,
+          description: original.description,
+          domain: original.domain,
+          user_type: original.user_type,
+          dataset_summary: original.dataset_summary,
+          status: original.dataset_summary ? "data_uploaded" : "draft",
+        })
+        .select("id,title,description,domain,status,created_at,updated_at")
+        .single();
+      if (error) throw error;
+
+      setProjects(prev => [newProject as ProjectRow, ...prev]);
+      toast.success(t("student.projects.duplicated"));
+    } catch (e: any) {
+      toast.error(e?.message || "Error");
+    }
+  };
+
   const statusVariant = (s: string) => {
     switch (s) {
       case "draft": return "outline";
