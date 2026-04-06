@@ -396,6 +396,11 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     setInterpretationData(interpretation);
   }, []);
 
+  const restoreDatasetSummary = useCallback((summary: DatasetSummary) => {
+    setDataset(summary);
+    setPrepStatus("ready");
+  }, []);
+
   return (
     <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, interpretationData, setInterpretationData, processFile, runCleaning, runAnalyses, reset, restoreState, chatState, setChatState }}>
       {children}
