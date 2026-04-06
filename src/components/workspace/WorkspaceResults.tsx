@@ -99,20 +99,20 @@ function CorrelationTable({ data }: { data: NonNullable<AnalysisResultItem["corr
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm">
+        <CardTitle className="flex items-center gap-2 text-sm font-academic">
           <TrendingUp className="h-4 w-4 text-primary" />
           {t("results.correlations")}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <table className="w-full text-sm">
+        <table className="w-full text-sm font-academic">
           <thead>
             <tr className="border-b border-border">
               <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">Var 1</th>
               <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">Var 2</th>
-              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">r</th>
-              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">p-value</th>
-              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">N</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">r</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">p</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">N</th>
               <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">Sig.</th>
             </tr>
           </thead>
