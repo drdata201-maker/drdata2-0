@@ -123,6 +123,43 @@ export function buildChartData(
         });
       }
     }
+
+    // Scree plot for PCA
+    if (result.pca) {
+      items.push({
+        key: `scree-pca`,
+        title: `Scree Plot — ${tFn("charts.varianceExplained") || "Variance expliquée"}`,
+        type: "scree",
+        data: result.pca.components.map(c => ({
+          name: `PC${c.component}`,
+          value: c.eigenvalue,
+          cumulative: c.cumulativeVariance,
+        })),
+      });
+    }
+
+    // Cluster scatter plot
+    if (result.clusterAnalysis && result.clusterAnalysis.assignments) {
+      const ca = result.clusterAnalysis;
+      const vars = ca.clusters[0]?.centroid.map(c => c.variable) || [];
+      if (vars.length >= 2) {
+        const xVar = vars[0];
+        const yVar = vars[1];
+        const validRows = rows
+          .map((r, i) => ({ x: Number(r[xVar]), y: Number(r[yVar]), idx: i }))
+          .filter(r => !isNaN(r.x) && !isNaN(r.y));
+        items.push({
+          key: `cluster-scatter`,
+          title: `${tFn("charts.clusterScatter") || "Clusters"}: ${xVar} × ${yVar}`,
+          type: "cluster-scatter",
+          data: validRows.slice(0, 300).map(r => ({
+            x: r.x,
+            y: r.y,
+            cluster: (ca.assignments![r.idx] ?? 0) + 1,
+          })),
+        });
+      }
+    }
   }
 
   // Fallback overview
