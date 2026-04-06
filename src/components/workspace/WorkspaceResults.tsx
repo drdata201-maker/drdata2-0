@@ -235,8 +235,38 @@ function AnovaTable({ data }: { data: NonNullable<AnalysisResultItem["anovas"]> 
 }
 
 function ChiSquareTable({ data, level }: { data: NonNullable<AnalysisResultItem["chiSquares"]>; level: StudyLevel }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const cfg = getLevelConfig(level);
+
+  // Translated category label mapping for display
+  const categoryLabels: Record<string, Record<string, string>> = {
+    fr: { Low: "Faible", Medium: "Moyen", High: "Élevé" },
+    es: { Low: "Bajo", Medium: "Medio", High: "Alto" },
+    de: { Low: "Niedrig", Medium: "Mittel", High: "Hoch" },
+    pt: { Low: "Baixo", Medium: "Médio", High: "Alto" },
+  };
+  const labelMap = categoryLabels[lang] || {};
+  const translateLabel = (label: string) => labelMap[label] || label;
+
+  // Translated auto-categorized explanation
+  const autoCatText: Record<string, string> = {
+    fr: "Les variables numériques ont été regroupées en catégories (Faible, Moyen, Élevé).",
+    en: "Numeric variables were grouped into categories (Low, Medium, High).",
+    es: "Las variables numéricas fueron agrupadas en categorías (Bajo, Medio, Alto).",
+    de: "Numerische Variablen wurden in Kategorien gruppiert (Niedrig, Mittel, Hoch).",
+    pt: "As variáveis numéricas foram agrupadas em categorias (Baixo, Médio, Alto).",
+  };
+
+  // Relation title template
+  const relationTitle: Record<string, string> = {
+    fr: "Relation entre",
+    en: "Relationship between",
+    es: "Relación entre",
+    de: "Beziehung zwischen",
+    pt: "Relação entre",
+  };
+  const andWord: Record<string, string> = { fr: "et", en: "and", es: "y", de: "und", pt: "e" };
+
   return (
     <>
       {data.map((c, i) => (
@@ -244,23 +274,37 @@ function ChiSquareTable({ data, level }: { data: NonNullable<AnalysisResultItem[
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-academic">
-                <span className="stat-notation">χ²</span> : {c.var1} × {c.var2}
+                {t("results.chiSquareTest") || "Test du Chi-carré"} : {c.var1} × {c.var2}
               </CardTitle>
               {c.categorized && (c.categorized.var1Auto || c.categorized.var2Auto) && (
                 <p className="text-xs text-muted-foreground italic mt-1">
-                  {t("results.autoCategorized") || "Variables numériques auto-catégorisées (Low/Medium/High)"}
+                  {autoCatText[lang] || autoCatText.en}
                 </p>
               )}
             </CardHeader>
-            <CardContent className="space-y-2 text-sm font-academic">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground stat-notation">χ²({c.df})</span>
-                <span className="font-mono text-foreground">= {c.chiSquare}</span>
+            <CardContent className="space-y-3 text-sm font-academic">
+              <div className="space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t("results.chiSquareTest") || "Test du Chi-carré"} :</span>
+                </div>
+                <div className="flex justify-between pl-4">
+                  <span className="text-muted-foreground stat-notation">χ² ({c.df})</span>
+                  <span className="font-mono text-foreground">= {c.chiSquare}</span>
+                </div>
+                <div className="flex justify-between pl-4">
+                  <span className="text-muted-foreground stat-notation">p</span>
+                  <span className="font-mono text-foreground">= {c.pValue}</span>
+                </div>
               </div>
-              <div className="flex justify-between"><span className="text-muted-foreground stat-notation">p</span><span className="font-mono text-foreground">= {c.pValue}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Sig.</span><SignificanceBadge p={c.pValue} /></div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Sig.</span>
+                <SignificanceBadge p={c.pValue} />
+              </div>
               {cfg.showCramersV && (
-                <div className="flex justify-between"><span className="text-muted-foreground stat-notation">V</span><span className="font-mono text-foreground">= {c.cramersV}</span></div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground stat-notation">V de Cramér</span>
+                  <span className="font-mono text-foreground">= {c.cramersV}</span>
+                </div>
               )}
               {cfg.showEffectSize && (
                 <div className="flex justify-between">
@@ -276,52 +320,54 @@ function ChiSquareTable({ data, level }: { data: NonNullable<AnalysisResultItem[
             </CardContent>
           </Card>
 
-          {/* Contingency table */}
+          {/* Contingency table with academic title */}
           {c.contingencyTable && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">{t("results.contingencyTable") || "Tableau de contingence"}</CardTitle>
+                <CardTitle className="text-sm font-academic">
+                  {(relationTitle[lang] || relationTitle.en)} {c.var1} {(andWord[lang] || andWord.en)} {c.var2}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full text-sm font-academic">
                     <thead>
-                      <tr className="border-b border-border">
-                        <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">{c.var1} \ {c.var2}</th>
+                      <tr className="border-b-2 border-border">
+                        <th className="px-3 py-2 text-left font-medium text-muted-foreground text-xs">{c.var1} \ {c.var2}</th>
                         {c.contingencyTable.colLabels.map(cl => (
-                          <th key={cl} className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{cl}</th>
+                          <th key={cl} className="px-3 py-2 text-center font-medium text-muted-foreground text-xs">{translateLabel(cl)}</th>
                         ))}
-                        <th className="px-2 py-1.5 text-right font-medium text-primary text-xs">Total</th>
+                        <th className="px-3 py-2 text-center font-medium text-primary text-xs">Total</th>
                       </tr>
                     </thead>
                     <tbody>
                       {c.contingencyTable.rowLabels.map((rl, ri) => (
                         <tr key={rl} className="border-b border-border/50">
-                          <td className="px-2 py-1.5 font-medium text-foreground">{rl}</td>
+                          <td className="px-3 py-2 font-medium text-foreground">{translateLabel(rl)}</td>
                           {c.contingencyTable!.observed[ri].map((obs, ci) => (
-                            <td key={ci} className="px-2 py-1.5 text-right font-mono text-foreground">
+                            <td key={ci} className="px-3 py-2 text-center font-mono text-foreground">
                               {obs}
                               {cfg.detailLevel !== "licence" && (
                                 <span className="text-muted-foreground text-[10px] block">({c.contingencyTable!.expected[ri][ci]})</span>
                               )}
                             </td>
                           ))}
-                          <td className="px-2 py-1.5 text-right font-mono font-bold text-primary">{c.contingencyTable!.rowTotals[ri]}</td>
+                          <td className="px-3 py-2 text-center font-mono font-bold text-primary">{c.contingencyTable!.rowTotals[ri]}</td>
                         </tr>
                       ))}
                       <tr className="border-t-2 border-primary/20">
-                        <td className="px-2 py-1.5 font-bold text-primary">Total</td>
+                        <td className="px-3 py-2 font-bold text-primary">Total</td>
                         {c.contingencyTable.colTotals.map((ct, ci) => (
-                          <td key={ci} className="px-2 py-1.5 text-right font-mono font-bold text-primary">{ct}</td>
+                          <td key={ci} className="px-3 py-2 text-center font-mono font-bold text-primary">{ct}</td>
                         ))}
-                        <td className="px-2 py-1.5 text-right font-mono font-bold text-primary">{c.contingencyTable.grandTotal}</td>
+                        <td className="px-3 py-2 text-center font-mono font-bold text-primary">{c.contingencyTable.grandTotal}</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
                 {cfg.detailLevel !== "licence" && (
                   <p className="text-[10px] text-muted-foreground mt-2 italic">
-                    {t("results.expectedInParens") || "Les valeurs attendues sont indiquées entre parenthèses"}
+                    {t("results.expectedInParens")}
                   </p>
                 )}
               </CardContent>
