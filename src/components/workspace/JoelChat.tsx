@@ -60,6 +60,7 @@ interface JoelChatProps {
   projectType: string;
   projectDomain: string;
   projectDescription?: string;
+  projectObjective?: string;
   level: string;
 }
 
@@ -144,7 +145,7 @@ async function streamChat({
   }
 }
 
-export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, level }: JoelChatProps) {
+export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, projectObjective, level }: JoelChatProps) {
   const { t, lang } = useLanguage();
   const { processFile, dataset, runAnalyses } = useDataset();
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -180,6 +181,7 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     type: projectType,
     domain: projectDomain,
     description: projectDescription || "",
+    objective: projectObjective || "",
     level: getLevelLabel(),
   };
 
@@ -192,7 +194,7 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     const timeOfDay = h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
 
     const greetingPrompt = `The student just opened the workspace. Time: ${timeOfDay}. 
-Greet briefly as Joël. Acknowledge: project "${projectTitle}", type "${projectType}", domain "${projectDomain}", level "${getLevelLabel()}".
+Greet briefly as Joël. Acknowledge: project "${projectTitle}", type "${projectType}", domain "${projectDomain}", level "${getLevelLabel()}"${projectObjective ? `, objective "${projectObjective}"` : ""}.
 Present a short project summary (bullet points). Ask if they want to continue or modify.
 Keep it under 100 words. No long paragraphs.`;
 
@@ -228,6 +230,7 @@ Keep it under 100 words. No long paragraphs.`;
         if (projectTitle) parts.push(`📋 **${t("joel.summary.title")}:** ${projectTitle}`);
         if (projectType) parts.push(`📁 **${t("joel.summary.type")}:** ${t(`student.type.${projectType}`)}`);
         if (projectDomain) parts.push(`🔬 **${t("joel.summary.domain")}:** ${projectDomain}`);
+        if (projectObjective) parts.push(`🎯 **${t("joel.summary.objective")}:** ${projectObjective}`);
         parts.push(`🎓 **${t("joel.summary.level")}:** ${getLevelLabel()}`);
 
         setMessages([

@@ -75,6 +75,7 @@ export default function AnalysisWorkspace() {
   const level = searchParams.get("level") || "student_license";
   const projectType = searchParams.get("type") || "";
   const projectDomain = decodeURIComponent(searchParams.get("domain") || "");
+  const projectObjective = decodeURIComponent(searchParams.get("objective") || "");
   const isQuickMode = searchParams.get("mode") === "quick";
 
   const [projectTitle, setProjectTitle] = useState("");
@@ -302,6 +303,7 @@ export default function AnalysisWorkspace() {
                     projectType={projectType}
                     projectDomain={projectDomain}
                     projectDescription={projectDescription}
+                    projectObjective={projectObjective}
                     level={level}
                   />
                 </PanelBoundary>
