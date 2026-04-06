@@ -348,8 +348,18 @@ function interpChi(c: { var1: string; var2: string; chiSquare: number; df: numbe
   return templates[lang] || templates.en;
 }
 
-function interpPCA(pca: NonNullable<AnalysisResultItem["pca"]>, lang: string) {
+function interpPCA(pca: NonNullable<AnalysisResultItem["pca"]>, lang: string, lvl: string) {
   const retained = pca.components.filter(c => c.eigenvalue >= 1).length;
+  if (lvl === "licence") {
+    const templates: Record<string, string> = {
+      fr: `L'ACP identifie ${retained} composante(s) principale(s) expliquant ${pca.totalVarianceExplained}% de la variance totale.`,
+      en: `PCA identifies ${retained} principal component(s) explaining ${pca.totalVarianceExplained}% of total variance.`,
+      es: `El ACP identifica ${retained} componente(s) principal(es) que explican ${pca.totalVarianceExplained}% de la varianza total.`,
+      de: `Die PCA identifiziert ${retained} Hauptkomponente(n), die ${pca.totalVarianceExplained}% der Gesamtvarianz erklären.`,
+      pt: `A ACP identifica ${retained} componente(s) principal(is) que explicam ${pca.totalVarianceExplained}% da variância total.`,
+    };
+    return templates[lang] || templates.en;
+  }
   const templates: Record<string, string> = {
     fr: `L'ACP révèle ${retained} composante(s) avec une valeur propre > 1, expliquant ${pca.totalVarianceExplained}% de la variance totale (KMO = ${pca.kmo}).`,
     en: `PCA reveals ${retained} component(s) with eigenvalue > 1, explaining ${pca.totalVarianceExplained}% of total variance (KMO = ${pca.kmo}).`,
