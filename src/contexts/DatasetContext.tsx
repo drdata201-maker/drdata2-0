@@ -321,7 +321,16 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
         const ind = key === "simple_regression" ? regInd.slice(0, 1) : regInd;
         if (ind.length > 0) result.regressions = [computeRegression(rows, effectiveDepVar, ind)];
       }
-      if (key === "pca" || key === "factor_analysis" || key === "cronbach_alpha") {
+      if (key === "pca") {
+        if (numVars.length >= 2) result.pca = computePCA(rows, numVars);
+      }
+      if (key === "factor_analysis") {
+        if (numVars.length >= 2) result.factorAnalysis = computeFactorAnalysis(rows, numVars);
+      }
+      if (key === "cluster_analysis") {
+        if (numVars.length >= 2) result.clusterAnalysis = computeClusterAnalysis(rows, numVars);
+      }
+      if (key === "cronbach_alpha") {
         if (numVars.length) result.descriptive = computeDescriptive(rows, numVars);
         if (numVars.length >= 2) result.correlations = computeCorrelations(rows, numVars);
       }
