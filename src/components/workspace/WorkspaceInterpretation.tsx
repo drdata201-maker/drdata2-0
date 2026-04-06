@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { stripLatex } from "@/lib/latexSanitizer";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset } from "@/contexts/DatasetContext";
 import type { InterpretationData, InterpretationSection } from "@/contexts/DatasetContext";
@@ -122,22 +123,22 @@ export function WorkspaceInterpretation({ level, projectTitle, projectType, proj
     const lines: string[] = [];
     data.sections.forEach((s) => {
       lines.push(`--- ${s.analysisType} ---`);
-      lines.push(s.interpretation);
-      if (s.conclusion) { lines.push(""); lines.push(`${t("interpretation.conclusionTitle")}:`); lines.push(s.conclusion); }
-      if (s.recommendations) { lines.push(""); lines.push(`${t("interpretation.recommendationsTitle")}:`); lines.push(s.recommendations); }
+      lines.push(stripLatex(s.interpretation));
+      if (s.conclusion) { lines.push(""); lines.push(`${t("interpretation.conclusionTitle")}:`); lines.push(stripLatex(s.conclusion)); }
+      if (s.recommendations) { lines.push(""); lines.push(`${t("interpretation.recommendationsTitle")}:`); lines.push(stripLatex(s.recommendations)); }
       lines.push("");
     });
-    if (data.globalConclusion) { lines.push(`${t("interpretation.globalConclusion")}:`); lines.push(data.globalConclusion); lines.push(""); }
-    if (data.globalRecommendations) { lines.push(`${t("interpretation.globalRecommendations")}:`); lines.push(data.globalRecommendations); }
+    if (data.globalConclusion) { lines.push(`${t("interpretation.globalConclusion")}:`); lines.push(stripLatex(data.globalConclusion)); lines.push(""); }
+    if (data.globalRecommendations) { lines.push(`${t("interpretation.globalRecommendations")}:`); lines.push(stripLatex(data.globalRecommendations)); }
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
       toast.success(t("interpretation.copied") || "Copied to clipboard");
     });
   };
 
   const copySectionToClipboard = (section: InterpretationSection) => {
-    const lines: string[] = [`--- ${section.analysisType} ---`, section.interpretation];
-    if (section.conclusion) { lines.push(""); lines.push(`${t("interpretation.conclusionTitle")}:`); lines.push(section.conclusion); }
-    if (section.recommendations) { lines.push(""); lines.push(`${t("interpretation.recommendationsTitle")}:`); lines.push(section.recommendations); }
+    const lines: string[] = [`--- ${section.analysisType} ---`, stripLatex(section.interpretation)];
+    if (section.conclusion) { lines.push(""); lines.push(`${t("interpretation.conclusionTitle")}:`); lines.push(stripLatex(section.conclusion)); }
+    if (section.recommendations) { lines.push(""); lines.push(`${t("interpretation.recommendationsTitle")}:`); lines.push(stripLatex(section.recommendations)); }
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
       toast.success(t("interpretation.copied") || "Copied to clipboard");
     });
@@ -178,7 +179,7 @@ export function WorkspaceInterpretation({ level, projectTitle, projectType, proj
 
     return (
       <div className="group relative">
-        <p className={`text-sm leading-relaxed text-foreground whitespace-pre-line font-academic ${className}`}>{value}</p>
+        <p className={`text-sm leading-relaxed text-foreground whitespace-pre-line font-academic ${className}`}>{stripLatex(value)}</p>
         <Button
           variant="ghost"
           size="icon"

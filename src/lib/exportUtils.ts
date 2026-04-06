@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import { dataUrlToUint8Array } from "./chartImageRenderer";
 import { getTableLabel, getFigureLabel, getSource, generateTableInterpretation, generateFigureInterpretation } from "./academicFormatter";
 import type { AnalysisResultItem } from "./statsEngine";
+import { stripLatex } from "./latexSanitizer";
 
 export interface ChartImage {
   title: string;
@@ -393,7 +394,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
   // Interpretation
   if (content === "full" || content === "interpretation") {
     addHeading(t.interpretation);
-    addText(data.interpretation || t.noData);
+    addText(stripLatex(data.interpretation || t.noData));
     sections.push(new Paragraph({ children: [] }));
   }
 
@@ -616,7 +617,7 @@ export function exportPdf(data: ExportData, content: ExportContent) {
 
   if (content === "full" || content === "interpretation") {
     addH2(t.interpretation);
-    addBody(data.interpretation || t.noData);
+    addBody(stripLatex(data.interpretation || t.noData));
   }
 
   if (content === "full" || content === "conclusion") {
@@ -665,7 +666,7 @@ export function exportXlsx(data: ExportData, content: ExportContent) {
   }
 
   if (content === "full" || content === "interpretation") {
-    const intSheet = XLSX.utils.aoa_to_sheet([[t.interpretation], [data.interpretation || t.noData]]);
+    const intSheet = XLSX.utils.aoa_to_sheet([[t.interpretation], [stripLatex(data.interpretation || t.noData)]]);
     intSheet["!cols"] = [{ wch: 80 }];
     XLSX.utils.book_append_sheet(wb, intSheet, t.interpretation.substring(0, 31));
   }
