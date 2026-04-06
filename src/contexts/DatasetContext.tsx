@@ -54,6 +54,19 @@ export interface InterpretationData {
   globalRecommendations: string;
 }
 
+export type ChatMessage = { role: "assistant" | "user"; content: string; type?: string };
+export type ChatPhase = "confirm" | "upload" | "software" | "analysis" | "variables" | "ready";
+
+export interface ChatState {
+  messages: ChatMessage[];
+  phase: ChatPhase;
+  chatHistory: { role: string; content: string }[];
+  greetingSent: boolean;
+  selectedSoftware: string;
+  selectedAnalyses: string[];
+  file: { name: string; size: number } | null;
+}
+
 interface DatasetContextType {
   dataset: DatasetSummary | null;
   prepStatus: PrepStatus;
@@ -67,6 +80,8 @@ interface DatasetContextType {
   runAnalyses: (analysisKeys: string[], software: string, depVar?: string, indVars?: string[]) => void;
   reset: () => void;
   restoreState: (results: AnalysisResultItem[], interpretation: InterpretationData | null) => void;
+  chatState: ChatState;
+  setChatState: React.Dispatch<React.SetStateAction<ChatState>>;
 }
 
 const DatasetContext = createContext<DatasetContextType | null>(null);
@@ -194,6 +209,16 @@ async function parseFile(file: File): Promise<Record<string, unknown>[]> {
   return XLSX.utils.sheet_to_json(sheet, { defval: null });
 }
 
+const DEFAULT_CHAT_STATE: ChatState = {
+  messages: [],
+  phase: "confirm",
+  chatHistory: [],
+  greetingSent: false,
+  selectedSoftware: "",
+  selectedAnalyses: [],
+  file: null,
+};
+
 export function DatasetProvider({ children }: { children: ReactNode }) {
   const [dataset, setDataset] = useState<DatasetSummary | null>(null);
   const [prepStatus, setPrepStatus] = useState<PrepStatus>("idle");
@@ -201,6 +226,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   const [cleanedData, setCleanedData] = useState<Record<string, unknown>[] | null>(null);
   const [analysisResults, setAnalysisResults] = useState<AnalysisResultItem[]>([]);
   const [interpretationData, setInterpretationData] = useState<InterpretationData | null>(null);
+  const [chatState, setChatState] = useState<ChatState>(DEFAULT_CHAT_STATE);
 
   const processFile = useCallback(async (file: File): Promise<DatasetSummary> => {
     setPrepStatus("uploading");
@@ -371,7 +397,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, interpretationData, setInterpretationData, processFile, runCleaning, runAnalyses, reset, restoreState }}>
+    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, interpretationData, setInterpretationData, processFile, runCleaning, runAnalyses, reset, restoreState, chatState, setChatState }}>
       {children}
     </DatasetContext.Provider>
   );

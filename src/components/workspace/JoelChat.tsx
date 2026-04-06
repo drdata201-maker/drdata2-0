@@ -150,22 +150,58 @@ async function streamChat({
 
 export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, projectObjective, level }: JoelChatProps) {
   const { t, lang } = useLanguage();
-  const { processFile, dataset, runAnalyses } = useDataset();
-  const [messages, setMessages] = useState<Msg[]>([]);
+  const { processFile, dataset, runAnalyses, chatState, setChatState } = useDataset();
+
+  // Destructure persisted state
+  const messages = chatState.messages;
+  const phase = chatState.phase;
+  const greetingSent = chatState.greetingSent;
+
+  // Local-only UI state (doesn't need persistence)
   const [input, setInput] = useState("");
-  const [phase, setPhase] = useState<"confirm" | "upload" | "software" | "analysis" | "variables" | "ready">("confirm");
   const [file, setFile] = useState<File | null>(null);
-  const [selectedSoftware, setSelectedSoftware] = useState<string>("");
   const [customSoftware, setCustomSoftware] = useState("");
   const [customAnalysis, setCustomAnalysis] = useState("");
-  const [selectedAnalyses, setSelectedAnalyses] = useState<string[]>([]);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [greetingSent, setGreetingSent] = useState(false);
   const [selectedDepVar, setSelectedDepVar] = useState("");
   const [selectedIndVars, setSelectedIndVars] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const chatHistoryRef = useRef<{ role: string; content: string }[]>([]);
+  const chatHistoryRef = useRef<{ role: string; content: string }[]>(chatState.chatHistory);
+
+  // Helpers to update persisted state
+  const setMessages = useCallback((updater: Msg[] | ((prev: Msg[]) => Msg[])) => {
+    setChatState(prev => ({
+      ...prev,
+      messages: typeof updater === "function" ? updater(prev.messages) : updater,
+    }));
+  }, [setChatState]);
+
+  const setPhase = useCallback((p: typeof phase) => {
+    setChatState(prev => ({ ...prev, phase: p }));
+  }, [setChatState]);
+
+  const setGreetingSent = useCallback((v: boolean) => {
+    setChatState(prev => ({ ...prev, greetingSent: v }));
+  }, [setChatState]);
+
+  const selectedAnalyses = chatState.selectedAnalyses;
+  const setSelectedAnalyses = useCallback((updater: string[] | ((prev: string[]) => string[])) => {
+    setChatState(prev => ({
+      ...prev,
+      selectedAnalyses: typeof updater === "function" ? updater(prev.selectedAnalyses) : updater,
+    }));
+  }, [setChatState]);
+
+  const selectedSoftware = chatState.selectedSoftware;
+  const setSelectedSoftware = useCallback((v: string) => {
+    setChatState(prev => ({ ...prev, selectedSoftware: v }));
+  }, [setChatState]);
+
+  // Sync chatHistoryRef back to context on every AI message
+  const syncChatHistory = useCallback(() => {
+    setChatState(prev => ({ ...prev, chatHistory: [...chatHistoryRef.current] }));
+  }, [setChatState]);
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
@@ -189,6 +225,12 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
   };
 
   // Send AI-powered smart greeting on mount
+  // Scroll to bottom on mount (when returning to tab)
+  useEffect(() => {
+    scrollToBottom();
+  }, [scrollToBottom]);
+
+  // Send AI-powered smart greeting on first mount only
   useEffect(() => {
     if (greetingSent) return;
     setGreetingSent(true);
@@ -224,6 +266,7 @@ Keep it under 100 words. No long paragraphs.`;
           { role: "user", content: greetingPrompt },
           { role: "assistant", content: assistantSoFar }
         );
+        syncChatHistory();
         setIsStreaming(false);
       },
       onError: (err) => {
@@ -269,6 +312,7 @@ Keep it under 100 words. No long paragraphs.`;
       onDelta: upsertAssistant,
       onDone: () => {
         chatHistoryRef.current.push({ role: "assistant", content: assistantSoFar });
+        syncChatHistory();
         setIsStreaming(false);
       },
       onError: (err) => {
@@ -279,7 +323,7 @@ Keep it under 100 words. No long paragraphs.`;
         setIsStreaming(false);
       },
     });
-  }, [lang, projectContext, scrollToBottom, t]);
+  }, [lang, projectContext, scrollToBottom, t, syncChatHistory, setMessages]);
 
   const handleConfirm = () => {
     setMessages(prev => [...prev, { role: "user", content: t("joel.confirmContinue") }]);
