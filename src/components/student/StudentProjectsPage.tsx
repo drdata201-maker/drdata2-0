@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
-import { Plus, FolderOpen, Trash2, Play, Eye } from "lucide-react";
+import { Plus, FolderOpen, Trash2, Play, Eye, Download } from "lucide-react";
 import { toast } from "sonner";
 
 interface ProjectRow {
@@ -16,6 +16,7 @@ interface ProjectRow {
   domain: string | null;
   status: string;
   created_at: string;
+  updated_at: string;
 }
 
 const STATUS_ORDER = ["draft", "active", "completed", "archived"];
