@@ -279,14 +279,14 @@ function interpAnova(a: { dependent: string; factor: string; fStat: number; pVal
   return templates[lang] || templates.en;
 }
 
-function interpChi(c: { var1: string; var2: string; chiSquare: number; pValue: number; cramersV: number }, lang: string) {
+function interpChi(c: { var1: string; var2: string; chiSquare: number; df: number; pValue: number; cramersV: number }, lang: string) {
   const sig = c.pValue < 0.05;
   const templates: Record<string, string> = {
-    fr: `Le test du Chi-carré ${sig ? "montre une association significative" : "ne montre pas d'association significative"} entre ${c.var1} et ${c.var2} (χ² = ${c.chiSquare}, p = ${c.pValue}, V de Cramér = ${c.cramersV}).`,
-    en: `The Chi-square test ${sig ? "shows a significant association" : "shows no significant association"} between ${c.var1} and ${c.var2} (χ² = ${c.chiSquare}, p = ${c.pValue}, Cramér's V = ${c.cramersV}).`,
-    es: `La prueba Chi-cuadrado ${sig ? "muestra una asociación significativa" : "no muestra asociación significativa"} entre ${c.var1} y ${c.var2} (χ² = ${c.chiSquare}, p = ${c.pValue}, V de Cramér = ${c.cramersV}).`,
-    de: `Der Chi-Quadrat-Test ${sig ? "zeigt einen signifikanten Zusammenhang" : "zeigt keinen signifikanten Zusammenhang"} zwischen ${c.var1} und ${c.var2} (χ² = ${c.chiSquare}, p = ${c.pValue}, Cramér's V = ${c.cramersV}).`,
-    pt: `O teste Qui-quadrado ${sig ? "mostra uma associação significativa" : "não mostra associação significativa"} entre ${c.var1} e ${c.var2} (χ² = ${c.chiSquare}, p = ${c.pValue}, V de Cramér = ${c.cramersV}).`,
+    fr: `Le test du Chi-carré ${sig ? "montre une association significative" : "ne montre pas d'association significative"} entre ${c.var1} et ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}, V de Cramér = ${c.cramersV}).`,
+    en: `The Chi-square test ${sig ? "shows a significant association" : "shows no significant association"} between ${c.var1} and ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}, Cramér's V = ${c.cramersV}).`,
+    es: `La prueba Chi-cuadrado ${sig ? "muestra una asociación significativa" : "no muestra asociación significativa"} entre ${c.var1} y ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}, V de Cramér = ${c.cramersV}).`,
+    de: `Der Chi-Quadrat-Test ${sig ? "zeigt einen signifikanten Zusammenhang" : "zeigt keinen signifikanten Zusammenhang"} zwischen ${c.var1} und ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}, Cramér's V = ${c.cramersV}).`,
+    pt: `O teste Qui-quadrado ${sig ? "mostra uma associação significativa" : "não mostra associação significativa"} entre ${c.var1} e ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}, V de Cramér = ${c.cramersV}).`,
   };
   return templates[lang] || templates.en;
 }
