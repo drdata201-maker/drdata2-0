@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { BookOpen, GraduationCap, Target, Lightbulb, Loader2, RefreshCw, AlertCircle, Pencil, Check, X } from "lucide-react";
+import { BookOpen, GraduationCap, Target, Lightbulb, Loader2, RefreshCw, AlertCircle, Pencil, Check, X, Copy } from "lucide-react";
+import { toast } from "sonner";
 
 interface WorkspaceInterpretationProps {
   level: string;
