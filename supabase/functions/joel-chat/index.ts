@@ -77,7 +77,14 @@ Recommended analyses: ${analyses}
 - Adapt complexity to level
 - Be encouraging but brief
 - Use proper statistical terminology
-- Reference α = 0.05, α = 0.01 thresholds`;
+- Reference α = 0.05, α = 0.01 thresholds
+
+## CRITICAL: NO LATEX FORMATTING
+- NEVER use LaTeX syntax like $\\alpha$, $\\chi^2$, $p$, $\\beta$
+- Write symbols directly as Unicode: α, β, χ², p, r, R², F, t
+- Write "α = 0,05" NOT "$\\alpha = 0,05$"
+- Write "p = 0.032" NOT "$p = 0.032$"
+- Use plain text with Unicode symbols only`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

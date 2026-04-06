@@ -102,7 +102,15 @@ You must return a valid JSON object with this exact structure:
 - Do NOT invent data or results not present in the input
 - Write in structured paragraphs, no bullet points
 - Academic style suitable for a thesis/dissertation
-- RETURN ONLY THE JSON, no markdown fences`;
+- RETURN ONLY THE JSON, no markdown fences
+
+## CRITICAL: NO LATEX FORMATTING
+- NEVER use LaTeX syntax like $\\alpha$, $\\chi^2$, $p$, $\\beta$, etc.
+- Write symbols directly as Unicode characters: α, β, χ², p, r, R², F, t, M, SD
+- Write "α = 0,05" NOT "$\\alpha = 0,05$"
+- Write "χ²(4) = 2.643" NOT "$\\chi^2(4) = 2.643$"
+- Write "p = 0.032" NOT "$p = 0.032$"
+- Use plain text with Unicode symbols only`;
 
     const userContent = `Here are the statistical analysis results to interpret:\n\n${JSON.stringify(analysisResults, null, 2)}`;
 
