@@ -317,13 +317,15 @@ function TTestTable({ data }: { data: NonNullable<AnalysisResultItem["tTests"]> 
       {data.map((tt, i) => (
         <Card key={i}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">T-Test: {tt.variable} × {tt.groupVar}</CardTitle>
+            <CardTitle className="text-sm font-academic">
+              <span className="stat-notation">t</span>-Test : {tt.variable} × {tt.groupVar}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">{tt.groups[0]} ({t("workspace.mean")})</span><span className="font-mono text-foreground">{tt.means[0]}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">{tt.groups[1]} ({t("workspace.mean")})</span><span className="font-mono text-foreground">{tt.means[1]}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">t({tt.df})</span><span className="font-mono text-foreground">{tt.tStat}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">p-value</span><SignificanceBadge p={tt.pValue} /></div>
+          <CardContent className="space-y-2 text-sm font-academic">
+            <div className="flex justify-between"><span className="text-muted-foreground">{tt.groups[0]} (<span className="stat-notation">M</span>)</span><span className="font-mono text-foreground">= {tt.means[0]}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{tt.groups[1]} (<span className="stat-notation">M</span>)</span><span className="font-mono text-foreground">= {tt.means[1]}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground stat-notation">t({tt.df})</span><span className="font-mono text-foreground">= {tt.tStat}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground stat-notation">p</span><SignificanceBadge p={tt.pValue} /></div>
           </CardContent>
         </Card>
       ))}
