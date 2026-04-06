@@ -195,6 +195,7 @@ export default function AnalysisWorkspace() {
     <DatasetProvider>
     {isQuickMode && <QuickFileLoader onLoaded={handleQuickFileLoaded} />}
     {projectId && !isQuickMode && <ProjectRestorer projectId={projectId} onRestored={handleProjectRestored} />}
+    {projectId && <AutoSaver projectId={projectId} />}
     <div className={cn(
       "flex min-h-screen flex-col bg-background transition-all duration-300",
       isFullscreen && "fixed inset-0 z-50"
