@@ -22,18 +22,18 @@ function DescriptiveTable({ data }: { data: NonNullable<AnalysisResultItem["desc
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm">
+        <CardTitle className="flex items-center gap-2 text-sm font-academic">
           <Table2 className="h-4 w-4 text-primary" />
           {t("results.descriptiveStats")}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm font-academic">
             <thead>
               <tr className="border-b border-border">
-                {["Variable", "N", t("workspace.mean"), t("workspace.std"), "Min", "Q1", "Median", "Q3", "Max"].map(h => (
-                  <th key={h} className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">{h}</th>
+                {["Variable", "N", "M", "SD", "Min", "Q1", "Mdn", "Q3", "Max"].map(h => (
+                  <th key={h} className={`px-2 py-1.5 text-left font-medium text-muted-foreground text-xs ${["M", "SD", "N", "Mdn"].includes(h) ? "stat-notation" : ""}`}>{h}</th>
                 ))}
               </tr>
             </thead>
