@@ -74,9 +74,9 @@ export default function AnalysisWorkspace() {
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get("project");
   const level = searchParams.get("level") || "student_license";
-  const projectType = searchParams.get("type") || "";
-  const projectDomain = decodeURIComponent(searchParams.get("domain") || "");
-  const projectObjective = decodeURIComponent(searchParams.get("objective") || "");
+  const [currentType, setCurrentType] = useState(searchParams.get("type") || "");
+  const [currentDomain, setCurrentDomain] = useState(decodeURIComponent(searchParams.get("domain") || ""));
+  const [currentObjective, setCurrentObjective] = useState(decodeURIComponent(searchParams.get("objective") || ""));
   const isQuickMode = searchParams.get("mode") === "quick";
 
   const [projectTitle, setProjectTitle] = useState("");
