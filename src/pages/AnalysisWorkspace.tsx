@@ -334,7 +334,7 @@ export default function AnalysisWorkspace() {
 
             <TabsContent value="results" className="mt-0 animate-fade-in">
               <PanelBoundary fallback={<PanelLoading />}>
-                <WorkspaceResults />
+                <WorkspaceResults level={level} />
               </PanelBoundary>
             </TabsContent>
 
