@@ -17,6 +17,19 @@ function SignificanceBadge({ p }: { p: number }) {
   return <Badge variant="outline">p = {p}</Badge>;
 }
 
+type StudyLevel = "student_license" | "student_master" | "student_doctorate" | string;
+
+/** Determine what statistical detail to show based on academic level */
+function getLevelConfig(level: StudyLevel) {
+  if (level.includes("doctor") || level.includes("doctorat")) {
+    return { showCramersV: true, showEffectSize: true, showAdvancedMetrics: true, showAdjR2: true, showKMO: true, showCommunalities: true, showSilhouette: true, detailLevel: "doctorate" as const };
+  }
+  if (level.includes("master")) {
+    return { showCramersV: true, showEffectSize: true, showAdvancedMetrics: false, showAdjR2: true, showKMO: true, showCommunalities: false, showSilhouette: true, detailLevel: "master" as const };
+  }
+  return { showCramersV: false, showEffectSize: false, showAdvancedMetrics: false, showAdjR2: false, showKMO: false, showCommunalities: false, showSilhouette: false, detailLevel: "licence" as const };
+}
+
 function DescriptiveTable({ data }: { data: NonNullable<AnalysisResultItem["descriptive"]> }) {
   const { t } = useLanguage();
   return (
