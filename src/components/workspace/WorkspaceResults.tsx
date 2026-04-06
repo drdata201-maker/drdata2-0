@@ -3,7 +3,7 @@ import { useDataset } from "@/contexts/DatasetContext";
 import type { AnalysisResultItem } from "@/contexts/DatasetContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table2, TrendingUp, BarChart3, Upload, Layers, GitBranch, Scatter } from "lucide-react";
+import { Table2, TrendingUp, BarChart3, Upload, Layers, GitBranch, CircleDot } from "lucide-react";
 
 function SignificanceBadge({ p }: { p: number }) {
   if (p < 0.001) return <Badge className="bg-green-600 text-white">p &lt; 0.001 ***</Badge>;
