@@ -301,10 +301,10 @@ export default function AnalysisWorkspace() {
                   <JoelChat
                     projectId={projectId}
                     projectTitle={projectTitle}
-                    projectType={projectType}
-                    projectDomain={projectDomain}
+                    projectType={currentType}
+                    projectDomain={currentDomain}
                     projectDescription={projectDescription}
-                    projectObjective={projectObjective}
+                    projectObjective={currentObjective}
                     level={level}
                   />
                 </PanelBoundary>
