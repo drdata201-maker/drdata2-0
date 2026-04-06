@@ -147,8 +147,9 @@ function CorrelationTable({ data }: { data: NonNullable<AnalysisResultItem["corr
   );
 }
 
-function RegressionTable({ data }: { data: NonNullable<AnalysisResultItem["regressions"]> }) {
+function RegressionTable({ data, level }: { data: NonNullable<AnalysisResultItem["regressions"]>; level: StudyLevel }) {
   const { t } = useLanguage();
+  const cfg = getLevelConfig(level);
   return (
     <>
       {data.map((reg, i) => (
@@ -157,7 +158,7 @@ function RegressionTable({ data }: { data: NonNullable<AnalysisResultItem["regre
             <CardTitle className="text-sm font-academic">{t("results.regression")}: {reg.dependent}</CardTitle>
             <div className="flex flex-wrap gap-2 mt-1">
               <Badge variant="outline"><span className="stat-notation">R²</span> = {reg.rSquared}</Badge>
-              <Badge variant="outline">Adj. <span className="stat-notation">R²</span> = {reg.adjustedR2}</Badge>
+              {cfg.showAdjR2 && <Badge variant="outline">Adj. <span className="stat-notation">R²</span> = {reg.adjustedR2}</Badge>}
               <Badge variant="outline"><span className="stat-notation">F</span> = {reg.fStat}</Badge>
               <Badge variant="outline"><span className="stat-notation">N</span> = {reg.n}</Badge>
             </div>
