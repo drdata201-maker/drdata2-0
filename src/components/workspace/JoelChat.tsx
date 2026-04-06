@@ -553,7 +553,7 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
             }`}>
               {msg.role === "assistant" ? (
                 <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:mb-1 [&>ul]:mb-1 [&>ol]:mb-1 [&>table]:text-xs [&>table]:w-full [&>h1]:text-base [&>h2]:text-sm [&>h3]:text-sm">
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  <ReactMarkdown>{stripLatex(msg.content)}</ReactMarkdown>
                 </div>
               ) : (
                 <span className="whitespace-pre-line">{msg.content}</span>
