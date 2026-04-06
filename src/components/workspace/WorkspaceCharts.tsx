@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  BarChart, Bar, ScatterChart, Scatter,
+  BarChart, Bar, ScatterChart, Scatter, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell,
+  PieChart, Pie, Cell, Legend, ComposedChart,
 } from "recharts";
 import { BarChart3, Upload, Pencil, Check, X } from "lucide-react";
 import { buildChartData } from "@/lib/chartDataBuilder";
