@@ -837,5 +837,7 @@
   "domain.biology": "Biología",
   "domain.chemistry": "Química",
   "domain.physics": "Física",
-  "joel.summary.objective": "Objetivo"
+  "joel.summary.objective": "Objetivo",
+  "workspace.editProject": "Editar proyecto",
+  "workspace.saveChanges": "Guardar cambios"
 }
