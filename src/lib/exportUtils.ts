@@ -394,7 +394,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
   // Interpretation
   if (content === "full" || content === "interpretation") {
     addHeading(t.interpretation);
-    addText(data.interpretation || t.noData);
+    addText(stripLatex(data.interpretation || t.noData));
     sections.push(new Paragraph({ children: [] }));
   }
 
