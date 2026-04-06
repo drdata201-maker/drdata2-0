@@ -203,11 +203,11 @@ export function generateTableInterpretation(
 
 function interpDescriptive(d: { variable: string; mean: number; std: number; n: number }, lang: string) {
   const t: Record<string, string> = {
-    fr: `La variable ${d.variable} présente une moyenne de ${d.mean} (ET = ${d.std}) sur ${d.n} observations.`,
-    en: `The variable ${d.variable} has a mean of ${d.mean} (SD = ${d.std}) across ${d.n} observations.`,
-    es: `La variable ${d.variable} presenta una media de ${d.mean} (DE = ${d.std}) en ${d.n} observaciones.`,
-    de: `Die Variable ${d.variable} hat einen Mittelwert von ${d.mean} (SD = ${d.std}) bei ${d.n} Beobachtungen.`,
-    pt: `A variável ${d.variable} apresenta uma média de ${d.mean} (DP = ${d.std}) em ${d.n} observações.`,
+    fr: `La variable ${d.variable} présente une moyenne de ${d.mean} (ET = ${d.std}, N = ${d.n}).`,
+    en: `The variable ${d.variable} has a mean of ${d.mean} (SD = ${d.std}, N = ${d.n}).`,
+    es: `La variable ${d.variable} presenta una media de ${d.mean} (DE = ${d.std}, N = ${d.n}).`,
+    de: `Die Variable ${d.variable} hat einen Mittelwert von ${d.mean} (SD = ${d.std}, N = ${d.n}).`,
+    pt: `A variável ${d.variable} apresenta uma média de ${d.mean} (DP = ${d.std}, N = ${d.n}).`,
   };
   return t[lang] || t.en;
 }
