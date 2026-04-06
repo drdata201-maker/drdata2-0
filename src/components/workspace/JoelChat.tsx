@@ -260,6 +260,7 @@ Keep it under 100 words. No long paragraphs.`;
           { role: "user", content: greetingPrompt },
           { role: "assistant", content: assistantSoFar }
         );
+        syncChatHistory();
         setIsStreaming(false);
       },
       onError: (err) => {
