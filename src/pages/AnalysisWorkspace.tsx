@@ -148,11 +148,12 @@ export default function AnalysisWorkspace() {
 
   const handleProjectRestored = useCallback((hasResults: boolean) => {
     if (hasResults) {
-      // Mark earlier steps as completed and jump to results
       setCompletedSteps(new Set(["assistant", "dataprep"]));
       setVisitedSteps(new Set(["assistant", "dataprep", "results"]));
       setActiveTab("results");
     }
+    // If no results but dataset was restored, the user will land on assistant
+    // and can navigate to dataprep where the dataset will be visible
   }, []);
 
   useEffect(() => {
