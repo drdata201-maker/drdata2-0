@@ -211,6 +211,21 @@ export default function AnalysisWorkspace() {
            {isQuickMode && <Badge variant="outline" className="hidden sm:inline-flex border-primary/50 text-primary">⚡ {t("dashboard.quickAnalysis")}</Badge>}
           {projectTitle && !isQuickMode && <Badge variant="secondary" className="hidden sm:inline-flex">{projectTitle}</Badge>}
           <div className="ml-auto flex items-center gap-2">
+            {!isQuickMode && (
+              <EditProjectDialog
+                projectId={projectId}
+                title={projectTitle}
+                domain={currentDomain}
+                objective={currentObjective}
+                description={projectDescription}
+                onSaved={(updates) => {
+                  setProjectTitle(updates.title);
+                  setCurrentDomain(updates.domain);
+                  setCurrentObjective(updates.objective);
+                  setProjectDescription(updates.description);
+                }}
+              />
+            )}
             {isQuickMode && <SaveAsProjectDialog currentTitle={projectTitle} level={level} />}
             <span className="text-xs text-muted-foreground hidden sm:inline">{progressPct}%</span>
             <Button variant="ghost" size="icon" onClick={() => setIsFullscreen(f => !f)} title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}>
