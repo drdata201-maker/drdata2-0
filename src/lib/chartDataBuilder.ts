@@ -4,8 +4,8 @@ import type { VariableInfo } from "@/contexts/DatasetContext";
 export interface ChartItem {
   key: string;
   title: string;
-  type: "histogram" | "bar" | "scatter" | "pie";
-  data: { name?: string; value?: number; x?: number; y?: number }[];
+  type: "histogram" | "bar" | "scatter" | "pie" | "scree" | "cluster-scatter";
+  data: { name?: string; value?: number; x?: number; y?: number; cluster?: number; cumulative?: number }[];
 }
 
 function getNumericValues(rows: Record<string, unknown>[], col: string): number[] {
