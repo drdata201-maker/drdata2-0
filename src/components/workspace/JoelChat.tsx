@@ -194,7 +194,7 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     const timeOfDay = h < 12 ? "morning" : h < 18 ? "afternoon" : "evening";
 
     const greetingPrompt = `The student just opened the workspace. Time: ${timeOfDay}. 
-Greet briefly as Joël. Acknowledge: project "${projectTitle}", type "${projectType}", domain "${projectDomain}", level "${getLevelLabel()}".
+Greet briefly as Joël. Acknowledge: project "${projectTitle}", type "${projectType}", domain "${projectDomain}", level "${getLevelLabel()}"${projectObjective ? `, objective "${projectObjective}"` : ""}.
 Present a short project summary (bullet points). Ask if they want to continue or modify.
 Keep it under 100 words. No long paragraphs.`;
 
