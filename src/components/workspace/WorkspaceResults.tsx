@@ -186,20 +186,20 @@ function AnovaTable({ data }: { data: NonNullable<AnalysisResultItem["anovas"]> 
       {data.map((a, i) => (
         <Card key={i}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">ANOVA: {a.dependent} × {a.factor}</CardTitle>
+            <CardTitle className="text-sm font-academic">ANOVA : {a.dependent} × {a.factor}</CardTitle>
             <div className="flex gap-2 mt-1">
-              <Badge variant="outline">F({a.dfBetween},{a.dfWithin}) = {a.fStat}</Badge>
+              <Badge variant="outline"><span className="stat-notation">F</span>({a.dfBetween},{a.dfWithin}) = {a.fStat}</Badge>
               <SignificanceBadge p={a.pValue} />
             </div>
           </CardHeader>
           <CardContent>
-            <table className="w-full text-sm">
+            <table className="w-full text-sm font-academic">
               <thead>
                 <tr className="border-b border-border">
                   <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">{t("results.group")}</th>
-                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">N</th>
-                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("workspace.mean")}</th>
-                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("workspace.std")}</th>
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">N</th>
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">M</th>
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">SD</th>
                 </tr>
               </thead>
               <tbody>
