@@ -223,10 +223,26 @@ export function WorkspaceInterpretation({ level, projectTitle, projectType, proj
       {data.sections.map((section, i) => (
         <Card key={i}>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <BookOpen className="h-4 w-4 text-primary" />
-              {t("interpretation.title")} — {section.analysisType}
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <BookOpen className="h-4 w-4 text-primary" />
+                {t("interpretation.title")} — {section.analysisType}
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs"
+                disabled={regeneratingSection !== null || loading}
+                onClick={() => regenerateSection(i)}
+              >
+                {regeneratingSection === i ? (
+                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-1 h-3 w-3" />
+                )}
+                {t("interpretation.regenerateSection") || "Regenerate"}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <EditableBlock value={section.interpretation} field={{ section: i, field: "interpretation" }} />
