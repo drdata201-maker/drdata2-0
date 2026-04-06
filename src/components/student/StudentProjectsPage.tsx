@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
-import { Plus, FolderOpen, Trash2, Play, Eye, Download } from "lucide-react";
+import { Plus, FolderOpen, Trash2, Play, Eye, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 interface ProjectRow {
