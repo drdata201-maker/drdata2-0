@@ -450,6 +450,15 @@ export function computeTTest(
  * Automatically categorize a numeric variable into groups using equal-frequency (tertiles).
  * Returns a new array of category labels for each row.
  */
+/** Category labels per language for auto-categorization */
+export const CATEGORY_LABELS: Record<string, string[]> = {
+  fr: ["Faible", "Moyen", "Élevé"],
+  en: ["Low", "Medium", "High"],
+  es: ["Bajo", "Medio", "Alto"],
+  de: ["Niedrig", "Mittel", "Hoch"],
+  pt: ["Baixo", "Médio", "Alto"],
+};
+
 export function categorizeNumericVariable(
   rows: Record<string, unknown>[],
   varName: string,
