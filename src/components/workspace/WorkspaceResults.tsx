@@ -499,20 +499,21 @@ function FactorAnalysisTable({ data, level }: { data: NonNullable<AnalysisResult
   );
 }
 
-function ClusterAnalysisTable({ data }: { data: NonNullable<AnalysisResultItem["clusterAnalysis"]> }) {
+function ClusterAnalysisTable({ data, level }: { data: NonNullable<AnalysisResultItem["clusterAnalysis"]>; level: StudyLevel }) {
   const { t } = useLanguage();
+  const cfg = getLevelConfig(level);
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-sm">
+          <CardTitle className="flex items-center gap-2 text-sm font-academic">
             <CircleDot className="h-4 w-4 text-primary" />
             {t("results.clusterAnalysisTitle")}
           </CardTitle>
           <div className="flex flex-wrap gap-2 mt-1">
             <Badge variant="outline">K = {data.k}</Badge>
-            <Badge variant="outline">{t("results.silhouette")}: {data.silhouetteScore}</Badge>
-            <Badge variant="outline">BSS/TSS = {data.totalSS > 0 ? ((data.betweenSS / data.totalSS) * 100).toFixed(1) : 0}%</Badge>
+            {cfg.showSilhouette && <Badge variant="outline">{t("results.silhouette")}: {data.silhouetteScore}</Badge>}
+            {cfg.showAdvancedMetrics && <Badge variant="outline">BSS/TSS = {data.totalSS > 0 ? ((data.betweenSS / data.totalSS) * 100).toFixed(1) : 0}%</Badge>}
           </div>
         </CardHeader>
         <CardContent>
