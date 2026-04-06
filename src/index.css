@@ -99,3 +99,24 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 }
+
+/* Academic typography for statistical results, tables, and interpretations */
+.academic-text {
+  font-family: "Times New Roman", Georgia, Garamond, serif;
+  line-height: 1.8;
+  text-align: justify;
+}
+
+.academic-text p {
+  margin-bottom: 0.75em;
+  text-indent: 1.5em;
+}
+
+.academic-text p:first-child {
+  text-indent: 0;
+}
+
+.stat-notation {
+  font-family: "Times New Roman", Georgia, Garamond, serif;
+  font-style: italic;
+}

@@ -15,6 +15,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
+        academic: ['"Times New Roman"', "Georgia", "Garamond", "serif"],
       },
       colors: {
         border: "hsl(var(--border))",
