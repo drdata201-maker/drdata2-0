@@ -883,5 +883,5 @@ export function computeClusterAnalysis(rows: Record<string, unknown>[], numericV
     silhouette /= Math.min(n, 200);
   }
 
-  return { k, clusters, withinSS, totalSS, betweenSS, silhouetteScore: round(silhouette, 4) };
+  return { k, clusters, withinSS, totalSS, betweenSS, silhouetteScore: round(silhouette, 4), assignments };
 }
