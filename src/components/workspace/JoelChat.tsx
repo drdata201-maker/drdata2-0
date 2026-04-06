@@ -237,14 +237,24 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     const h = new Date().getHours();
     const greeting = h < 12 ? t("joel.greeting.morning") : h < 18 ? t("joel.greeting.afternoon") : t("joel.greeting.evening");
 
-    const parts: string[] = [];
-    if (projectTitle) parts.push(`📋 **${t("joel.summary.title")}:** ${projectTitle}`);
-    if (projectType) parts.push(`📁 **${t("joel.summary.type")}:** ${t(`student.type.${projectType}`)}`);
-    if (projectDomain) parts.push(`🔬 **${t("joel.summary.domain")}:** ${projectDomain}`);
-    if (projectObjective) parts.push(`🎯 **${t("joel.summary.objective")}:** ${projectObjective}`);
-    parts.push(`🎓 **${t("joel.summary.level")}:** ${getLevelLabel()}`);
+    // Translate domain key if it matches a known domain translation
+    const domainLabel = t(`domain.${projectDomain}`) !== `domain.${projectDomain}`
+      ? t(`domain.${projectDomain}`)
+      : projectDomain;
 
-    const content = `${greeting}\n\n${t("joel.intro")}\n\n**${t("joel.projectSummary")}:**\n\n${parts.join("\n\n")}\n\n${t("joel.confirmQuestion")}`;
+    // Auto-correct common grammar issues
+    const cleanObjective = (projectObjective || "")
+      .replace(/habitudes de vies/gi, "habitudes de vie")
+      .replace(/etudes/gi, "études");
+
+    const parts: string[] = [];
+    if (projectTitle) parts.push(`**${t("joel.summary.title")}** : ${projectTitle}`);
+    if (projectType) parts.push(`**${t("joel.summary.type")}** : ${t(`student.type.${projectType}`)}`);
+    if (domainLabel) parts.push(`**${t("joel.summary.domain")}** : ${domainLabel}`);
+    if (cleanObjective) parts.push(`**${t("joel.summary.objective")}** : ${cleanObjective}`);
+    parts.push(`**${t("joel.summary.level")}** : ${getLevelLabel()}`);
+
+    const content = `${greeting}\n\n**${t("joel.projectSummary")} :**\n\n${parts.join("\n\n")}\n\n${t("joel.confirmQuestion")}`;
 
     setMessages([{ role: "assistant", content, type: "greeting" }]);
 
