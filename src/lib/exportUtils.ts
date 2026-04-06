@@ -23,6 +23,9 @@ export interface ExportData {
   projectDescription: string;
   level: string;
   lang: string;
+  university?: string;
+  department?: string;
+  author?: string;
   statsTable: { variable: string; n: number; mean: number; std: number; min: number; max: number }[];
   testResults: { label: string; value: string }[];
   interpretation: string;
