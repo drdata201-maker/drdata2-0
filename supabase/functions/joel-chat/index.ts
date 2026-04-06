@@ -59,6 +59,7 @@ ${langInstructions[language] || langInstructions.fr}
 - Type: ${projectContext?.type || "N/A"}
 - Domain: ${projectContext?.domain || "N/A"}
 - Level: ${levelKey}
+- Objective: ${projectContext?.objective || "N/A"}
 - Description: ${projectContext?.description || "N/A"}
 
 ## Capabilities (Level: ${levelKey})
