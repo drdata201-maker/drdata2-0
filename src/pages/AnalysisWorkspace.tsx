@@ -303,6 +303,7 @@ export default function AnalysisWorkspace() {
                     projectType={projectType}
                     projectDomain={projectDomain}
                     projectDescription={projectDescription}
+                    projectObjective={projectObjective}
                     level={level}
                   />
                 </PanelBoundary>
