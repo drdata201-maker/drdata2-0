@@ -1,0 +1,1 @@
+ALTER TABLE public.projects ADD COLUMN chat_state jsonb DEFAULT NULL;

@@ -198,6 +198,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          chat_state: Json | null
           created_at: string
           description: string | null
           domain: string | null
@@ -209,6 +210,7 @@ export type Database = {
           user_type: string
         }
         Insert: {
+          chat_state?: Json | null
           created_at?: string
           description?: string | null
           domain?: string | null
@@ -220,6 +222,7 @@ export type Database = {
           user_type: string
         }
         Update: {
+          chat_state?: Json | null
           created_at?: string
           description?: string | null
           domain?: string | null
