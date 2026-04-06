@@ -266,7 +266,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
       if (data.analysisResults) {
         const descResult = data.analysisResults.find(r => r.descriptive && r.descriptive.length > 0);
         if (descResult) {
-          const interp = generateTableInterpretation(descResult, data.lang, (k: string) => t[k.replace("student.analysis.", "")] || k);
+          const interp = generateTableInterpretation(descResult, data.lang, data.level);
           if (interp) {
             sections.push(new Paragraph({
               spacing: { before: 40, after: 120 },
