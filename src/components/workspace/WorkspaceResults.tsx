@@ -17,6 +17,19 @@ function SignificanceBadge({ p }: { p: number }) {
   return <Badge variant="outline">p = {p}</Badge>;
 }
 
+type StudyLevel = "student_license" | "student_master" | "student_doctorate" | string;
+
+/** Determine what statistical detail to show based on academic level */
+function getLevelConfig(level: StudyLevel) {
+  if (level.includes("doctor") || level.includes("doctorat")) {
+    return { showCramersV: true, showEffectSize: true, showAdvancedMetrics: true, showAdjR2: true, showKMO: true, showCommunalities: true, showSilhouette: true, detailLevel: "doctorate" as const };
+  }
+  if (level.includes("master")) {
+    return { showCramersV: true, showEffectSize: true, showAdvancedMetrics: false, showAdjR2: true, showKMO: true, showCommunalities: false, showSilhouette: true, detailLevel: "master" as const };
+  }
+  return { showCramersV: false, showEffectSize: false, showAdvancedMetrics: false, showAdjR2: false, showKMO: false, showCommunalities: false, showSilhouette: false, detailLevel: "licence" as const };
+}
+
 function DescriptiveTable({ data }: { data: NonNullable<AnalysisResultItem["descriptive"]> }) {
   const { t } = useLanguage();
   return (
@@ -134,8 +147,9 @@ function CorrelationTable({ data }: { data: NonNullable<AnalysisResultItem["corr
   );
 }
 
-function RegressionTable({ data }: { data: NonNullable<AnalysisResultItem["regressions"]> }) {
+function RegressionTable({ data, level }: { data: NonNullable<AnalysisResultItem["regressions"]>; level: StudyLevel }) {
   const { t } = useLanguage();
+  const cfg = getLevelConfig(level);
   return (
     <>
       {data.map((reg, i) => (
@@ -144,7 +158,7 @@ function RegressionTable({ data }: { data: NonNullable<AnalysisResultItem["regre
             <CardTitle className="text-sm font-academic">{t("results.regression")}: {reg.dependent}</CardTitle>
             <div className="flex flex-wrap gap-2 mt-1">
               <Badge variant="outline"><span className="stat-notation">R²</span> = {reg.rSquared}</Badge>
-              <Badge variant="outline">Adj. <span className="stat-notation">R²</span> = {reg.adjustedR2}</Badge>
+              {cfg.showAdjR2 && <Badge variant="outline">Adj. <span className="stat-notation">R²</span> = {reg.adjustedR2}</Badge>}
               <Badge variant="outline"><span className="stat-notation">F</span> = {reg.fStat}</Badge>
               <Badge variant="outline"><span className="stat-notation">N</span> = {reg.n}</Badge>
             </div>
@@ -220,8 +234,9 @@ function AnovaTable({ data }: { data: NonNullable<AnalysisResultItem["anovas"]> 
   );
 }
 
-function ChiSquareTable({ data }: { data: NonNullable<AnalysisResultItem["chiSquares"]> }) {
+function ChiSquareTable({ data, level }: { data: NonNullable<AnalysisResultItem["chiSquares"]>; level: StudyLevel }) {
   const { t } = useLanguage();
+  const cfg = getLevelConfig(level);
   return (
     <>
       {data.map((c, i) => (
@@ -244,16 +259,20 @@ function ChiSquareTable({ data }: { data: NonNullable<AnalysisResultItem["chiSqu
               </div>
               <div className="flex justify-between"><span className="text-muted-foreground stat-notation">p</span><span className="font-mono text-foreground">= {c.pValue}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Sig.</span><SignificanceBadge p={c.pValue} /></div>
-              <div className="flex justify-between"><span className="text-muted-foreground stat-notation">V</span><span className="font-mono text-foreground">= {c.cramersV}</span></div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">{t("results.effectSize") || "Taille d'effet"}</span>
-                <Badge variant="outline" className="text-xs">
-                  {c.cramersV < 0.1 ? (t("results.negligible") || "Négligeable") :
-                   c.cramersV < 0.3 ? (t("results.weak") || "Faible") :
-                   c.cramersV < 0.5 ? (t("results.moderate") || "Modéré") :
-                   (t("results.strong") || "Fort")}
-                </Badge>
-              </div>
+              {cfg.showCramersV && (
+                <div className="flex justify-between"><span className="text-muted-foreground stat-notation">V</span><span className="font-mono text-foreground">= {c.cramersV}</span></div>
+              )}
+              {cfg.showEffectSize && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t("results.effectSize") || "Taille d'effet"}</span>
+                  <Badge variant="outline" className="text-xs">
+                    {c.cramersV < 0.1 ? (t("results.negligible") || "Négligeable") :
+                     c.cramersV < 0.3 ? (t("results.weak") || "Faible") :
+                     c.cramersV < 0.5 ? (t("results.moderate") || "Modéré") :
+                     (t("results.strong") || "Fort")}
+                  </Badge>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -282,7 +301,9 @@ function ChiSquareTable({ data }: { data: NonNullable<AnalysisResultItem["chiSqu
                           {c.contingencyTable!.observed[ri].map((obs, ci) => (
                             <td key={ci} className="px-2 py-1.5 text-right font-mono text-foreground">
                               {obs}
-                              <span className="text-muted-foreground text-[10px] block">({c.contingencyTable!.expected[ri][ci]})</span>
+                              {cfg.detailLevel !== "licence" && (
+                                <span className="text-muted-foreground text-[10px] block">({c.contingencyTable!.expected[ri][ci]})</span>
+                              )}
                             </td>
                           ))}
                           <td className="px-2 py-1.5 text-right font-mono font-bold text-primary">{c.contingencyTable!.rowTotals[ri]}</td>
@@ -298,9 +319,11 @@ function ChiSquareTable({ data }: { data: NonNullable<AnalysisResultItem["chiSqu
                     </tbody>
                   </table>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-2 italic">
-                  {t("results.expectedInParens") || "Les valeurs attendues sont indiquées entre parenthèses"}
-                </p>
+                {cfg.detailLevel !== "licence" && (
+                  <p className="text-[10px] text-muted-foreground mt-2 italic">
+                    {t("results.expectedInParens") || "Les valeurs attendues sont indiquées entre parenthèses"}
+                  </p>
+                )}
               </CardContent>
             </Card>
           )}
@@ -333,18 +356,19 @@ function TTestTable({ data }: { data: NonNullable<AnalysisResultItem["tTests"]> 
   );
 }
 
-function PCATable({ data }: { data: NonNullable<AnalysisResultItem["pca"]> }) {
+function PCATable({ data, level }: { data: NonNullable<AnalysisResultItem["pca"]>; level: StudyLevel }) {
   const { t } = useLanguage();
+  const cfg = getLevelConfig(level);
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-sm">
+          <CardTitle className="flex items-center gap-2 text-sm font-academic">
             <Layers className="h-4 w-4 text-primary" />
             {t("results.pcaVariance")}
           </CardTitle>
           <div className="flex gap-2 mt-1">
-            <Badge variant="outline">KMO = {data.kmo}</Badge>
+            {cfg.showKMO && <Badge variant="outline">KMO = {data.kmo}</Badge>}
             <Badge variant="outline">{t("results.totalVariance")}: {data.totalVarianceExplained}%</Badge>
           </div>
         </CardHeader>
@@ -404,13 +428,14 @@ function PCATable({ data }: { data: NonNullable<AnalysisResultItem["pca"]> }) {
   );
 }
 
-function FactorAnalysisTable({ data }: { data: NonNullable<AnalysisResultItem["factorAnalysis"]> }) {
+function FactorAnalysisTable({ data, level }: { data: NonNullable<AnalysisResultItem["factorAnalysis"]>; level: StudyLevel }) {
   const { t } = useLanguage();
+  const cfg = getLevelConfig(level);
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-sm">
+          <CardTitle className="flex items-center gap-2 text-sm font-academic">
             <GitBranch className="h-4 w-4 text-primary" />
             {t("results.factorAnalysisTitle")}
           </CardTitle>
@@ -449,10 +474,10 @@ function FactorAnalysisTable({ data }: { data: NonNullable<AnalysisResultItem["f
               <thead>
                 <tr className="border-b border-border">
                   <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">Variable</th>
-                  {data.factors.map(f => (
+                   {data.factors.map(f => (
                     <th key={f.factor} className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">F{f.factor}</th>
                   ))}
-                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("results.communality")}</th>
+                  {cfg.showCommunalities && <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("results.communality")}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -462,7 +487,7 @@ function FactorAnalysisTable({ data }: { data: NonNullable<AnalysisResultItem["f
                     {l.factors.map((v, i) => (
                       <td key={i} className={`px-2 py-1.5 text-right font-mono ${Math.abs(v) >= 0.5 ? "text-primary font-bold" : "text-foreground"}`}>{v}</td>
                     ))}
-                    <td className="px-2 py-1.5 text-right font-mono text-foreground">{data.communalities[li]?.extraction}</td>
+                    {cfg.showCommunalities && <td className="px-2 py-1.5 text-right font-mono text-foreground">{data.communalities[li]?.extraction}</td>}
                   </tr>
                 ))}
               </tbody>
@@ -474,20 +499,21 @@ function FactorAnalysisTable({ data }: { data: NonNullable<AnalysisResultItem["f
   );
 }
 
-function ClusterAnalysisTable({ data }: { data: NonNullable<AnalysisResultItem["clusterAnalysis"]> }) {
+function ClusterAnalysisTable({ data, level }: { data: NonNullable<AnalysisResultItem["clusterAnalysis"]>; level: StudyLevel }) {
   const { t } = useLanguage();
+  const cfg = getLevelConfig(level);
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-sm">
+          <CardTitle className="flex items-center gap-2 text-sm font-academic">
             <CircleDot className="h-4 w-4 text-primary" />
             {t("results.clusterAnalysisTitle")}
           </CardTitle>
           <div className="flex flex-wrap gap-2 mt-1">
             <Badge variant="outline">K = {data.k}</Badge>
-            <Badge variant="outline">{t("results.silhouette")}: {data.silhouetteScore}</Badge>
-            <Badge variant="outline">BSS/TSS = {data.totalSS > 0 ? ((data.betweenSS / data.totalSS) * 100).toFixed(1) : 0}%</Badge>
+            {cfg.showSilhouette && <Badge variant="outline">{t("results.silhouette")}: {data.silhouetteScore}</Badge>}
+            {cfg.showAdvancedMetrics && <Badge variant="outline">BSS/TSS = {data.totalSS > 0 ? ((data.betweenSS / data.totalSS) * 100).toFixed(1) : 0}%</Badge>}
           </div>
         </CardHeader>
         <CardContent>
@@ -582,7 +608,7 @@ function EditableText({ value, onChange, variant = "text" }: { value: string; on
   );
 }
 
-export function WorkspaceResults() {
+export function WorkspaceResults({ level = "student_license" }: { level?: string }) {
   const { t, lang } = useLanguage();
   const { analysisResults, dataset } = useDataset();
 
@@ -624,7 +650,7 @@ export function WorkspaceResults() {
       {analysisResults.map((result, idx) => {
         const tableNum = idx + 1;
         const autoTitle = generateTableTitle(result, lang, t);
-        const autoInterp = generateTableInterpretation(result, lang, "");
+        const autoInterp = generateTableInterpretation(result, lang, level);
         const ov = overrides[result.id] || {};
         const title = ov.title || autoTitle;
         const interpretation = ov.interpretation || autoInterp;
@@ -646,13 +672,13 @@ export function WorkspaceResults() {
             {result.descriptive && <DescriptiveTable data={result.descriptive} />}
             {result.frequencies && <FrequencyTable data={result.frequencies} />}
             {result.correlations && <CorrelationTable data={result.correlations} />}
-            {result.regressions && <RegressionTable data={result.regressions} />}
+            {result.regressions && <RegressionTable data={result.regressions} level={level} />}
             {result.tTests && <TTestTable data={result.tTests} />}
             {result.anovas && <AnovaTable data={result.anovas} />}
-            {result.chiSquares && <ChiSquareTable data={result.chiSquares} />}
-            {result.pca && <PCATable data={result.pca} />}
-            {result.factorAnalysis && <FactorAnalysisTable data={result.factorAnalysis} />}
-            {result.clusterAnalysis && <ClusterAnalysisTable data={result.clusterAnalysis} />}
+            {result.chiSquares && <ChiSquareTable data={result.chiSquares} level={level} />}
+            {result.pca && <PCATable data={result.pca} level={level} />}
+            {result.factorAnalysis && <FactorAnalysisTable data={result.factorAnalysis} level={level} />}
+            {result.clusterAnalysis && <ClusterAnalysisTable data={result.clusterAnalysis} level={level} />}
 
             {/* Source */}
             <div className="pl-1">

@@ -157,6 +157,8 @@ export function generateTableInterpretation(
   level: string,
 ): string {
   const interps: string[] = [];
+  const lvl = level.includes("doctor") || level.includes("doctorat") ? "doctorate"
+    : level.includes("master") ? "master" : "licence";
 
   if (result.descriptive) {
     for (const d of result.descriptive.slice(0, 3)) {
@@ -165,12 +167,12 @@ export function generateTableInterpretation(
   }
   if (result.correlations) {
     for (const c of result.correlations.slice(0, 3)) {
-      interps.push(interpCorrelation(c, lang));
+      interps.push(interpCorrelation(c, lang, lvl));
     }
   }
   if (result.regressions) {
     for (const r of result.regressions) {
-      interps.push(interpRegression(r, lang));
+      interps.push(interpRegression(r, lang, lvl));
     }
   }
   if (result.tTests) {
@@ -185,17 +187,17 @@ export function generateTableInterpretation(
   }
   if (result.chiSquares) {
     for (const c of result.chiSquares) {
-      interps.push(interpChi(c, lang));
+      interps.push(interpChi(c, lang, lvl));
     }
   }
   if (result.pca) {
-    interps.push(interpPCA(result.pca, lang));
+    interps.push(interpPCA(result.pca, lang, lvl));
   }
   if (result.factorAnalysis) {
     interps.push(interpFactor(result.factorAnalysis, lang));
   }
   if (result.clusterAnalysis) {
-    interps.push(interpCluster(result.clusterAnalysis, lang));
+    interps.push(interpCluster(result.clusterAnalysis, lang, lvl));
   }
 
   return interps.join(" ");
@@ -212,7 +214,7 @@ function interpDescriptive(d: { variable: string; mean: number; std: number; n: 
   return t[lang] || t.en;
 }
 
-function interpCorrelation(c: { var1: string; var2: string; r: number; pValue: number }, lang: string) {
+function interpCorrelation(c: { var1: string; var2: string; r: number; pValue: number }, lang: string, lvl: string) {
   const strength = Math.abs(c.r) >= 0.7 ? "strong" : Math.abs(c.r) >= 0.4 ? "moderate" : "weak";
   const dir = c.r >= 0 ? "positive" : "negative";
   const sig = c.pValue < 0.05;
@@ -232,6 +234,18 @@ function interpCorrelation(c: { var1: string; var2: string; r: number; pValue: n
   };
   const s = (strengthMap[lang] || strengthMap.en)[strength];
   const d = (dirMap[lang] || dirMap.en)[dir];
+
+  if (lvl === "licence") {
+    const templates: Record<string, string> = {
+      fr: `La corrélation entre ${c.var1} et ${c.var2} est ${s} et ${d} (r = ${c.r})${sig ? ", statistiquement significative" : ""}.`,
+      en: `The correlation between ${c.var1} and ${c.var2} is ${s} and ${d} (r = ${c.r})${sig ? ", statistically significant" : ""}.`,
+      es: `La correlación entre ${c.var1} y ${c.var2} es ${s} y ${d} (r = ${c.r})${sig ? ", estadísticamente significativa" : ""}.`,
+      de: `Die Korrelation zwischen ${c.var1} und ${c.var2} ist ${s} und ${d} (r = ${c.r})${sig ? ", statistisch signifikant" : ""}.`,
+      pt: `A correlação entre ${c.var1} e ${c.var2} é ${s} e ${d} (r = ${c.r})${sig ? ", estatisticamente significativa" : ""}.`,
+    };
+    return templates[lang] || templates.en;
+  }
+
   const templates: Record<string, string> = {
     fr: `La corrélation entre ${c.var1} et ${c.var2} est ${s} et ${d} (r = ${c.r}, p = ${c.pValue})${sig ? ", statistiquement significative" : ""}.`,
     en: `The correlation between ${c.var1} and ${c.var2} is ${s} and ${d} (r = ${c.r}, p = ${c.pValue})${sig ? ", statistically significant" : ""}.`,
@@ -242,9 +256,19 @@ function interpCorrelation(c: { var1: string; var2: string; r: number; pValue: n
   return templates[lang] || templates.en;
 }
 
-function interpRegression(r: { dependent: string; rSquared: number; fStat: number; fPValue: number }, lang: string) {
+function interpRegression(r: { dependent: string; rSquared: number; fStat: number; fPValue: number }, lang: string, lvl: string) {
   const pct = (r.rSquared * 100).toFixed(1);
   const sig = r.fPValue < 0.05;
+  if (lvl === "licence") {
+    const templates: Record<string, string> = {
+      fr: `Le modèle explique ${pct}% de la variance de ${r.dependent} (R² = ${r.rSquared})${sig ? ". Le modèle est statistiquement significatif" : ""}.`,
+      en: `The model explains ${pct}% of the variance in ${r.dependent} (R² = ${r.rSquared})${sig ? ". The model is statistically significant" : ""}.`,
+      es: `El modelo explica ${pct}% de la varianza de ${r.dependent} (R² = ${r.rSquared})${sig ? ". El modelo es estadísticamente significativo" : ""}.`,
+      de: `Das Modell erklärt ${pct}% der Varianz von ${r.dependent} (R² = ${r.rSquared})${sig ? ". Das Modell ist statistisch signifikant" : ""}.`,
+      pt: `O modelo explica ${pct}% da variância de ${r.dependent} (R² = ${r.rSquared})${sig ? ". O modelo é estatisticamente significativo" : ""}.`,
+    };
+    return templates[lang] || templates.en;
+  }
   const templates: Record<string, string> = {
     fr: `Le modèle de régression explique ${pct}% de la variance de ${r.dependent} (R² = ${r.rSquared}, F = ${r.fStat}, p = ${r.fPValue})${sig ? ". Le modèle est statistiquement significatif" : ""}.`,
     en: `The regression model explains ${pct}% of the variance in ${r.dependent} (R² = ${r.rSquared}, F = ${r.fStat}, p = ${r.fPValue})${sig ? ". The model is statistically significant" : ""}.`,
@@ -279,8 +303,41 @@ function interpAnova(a: { dependent: string; factor: string; fStat: number; pVal
   return templates[lang] || templates.en;
 }
 
-function interpChi(c: { var1: string; var2: string; chiSquare: number; df: number; pValue: number; cramersV: number }, lang: string) {
+function interpChi(c: { var1: string; var2: string; chiSquare: number; df: number; pValue: number; cramersV: number }, lang: string, lvl: string) {
   const sig = c.pValue < 0.05;
+
+  if (lvl === "licence") {
+    const templates: Record<string, string> = {
+      fr: `${sig ? "Il existe une association significative" : "Il n'existe pas d'association significative"} entre ${c.var1} et ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}).`,
+      en: `${sig ? "There is a significant association" : "There is no significant association"} between ${c.var1} and ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}).`,
+      es: `${sig ? "Existe una asociación significativa" : "No existe asociación significativa"} entre ${c.var1} y ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}).`,
+      de: `${sig ? "Es besteht ein signifikanter Zusammenhang" : "Es besteht kein signifikanter Zusammenhang"} zwischen ${c.var1} und ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}).`,
+      pt: `${sig ? "Existe uma associação significativa" : "Não existe associação significativa"} entre ${c.var1} e ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}).`,
+    };
+    return templates[lang] || templates.en;
+  }
+
+  if (lvl === "doctorate") {
+    const vStrength = c.cramersV < 0.1 ? "negligible" : c.cramersV < 0.3 ? "weak" : c.cramersV < 0.5 ? "moderate" : "strong";
+    const vMap: Record<string, Record<string, string>> = {
+      fr: { negligible: "négligeable", weak: "faible", moderate: "modérée", strong: "forte" },
+      en: { negligible: "negligible", weak: "weak", moderate: "moderate", strong: "strong" },
+      es: { negligible: "insignificante", weak: "débil", moderate: "moderada", strong: "fuerte" },
+      de: { negligible: "vernachlässigbar", weak: "schwach", moderate: "moderat", strong: "stark" },
+      pt: { negligible: "insignificante", weak: "fraca", moderate: "moderada", strong: "forte" },
+    };
+    const vLabel = (vMap[lang] || vMap.en)[vStrength];
+    const templates: Record<string, string> = {
+      fr: `Le test du Chi-carré ${sig ? "montre une association significative" : "ne montre pas d'association significative"} entre ${c.var1} et ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}). La force de l'association, mesurée par le V de Cramér (V = ${c.cramersV}), est ${vLabel}.`,
+      en: `The Chi-square test ${sig ? "shows a significant association" : "shows no significant association"} between ${c.var1} and ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}). The association strength, measured by Cramér's V (V = ${c.cramersV}), is ${vLabel}.`,
+      es: `La prueba Chi-cuadrado ${sig ? "muestra una asociación significativa" : "no muestra asociación significativa"} entre ${c.var1} y ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}). La fuerza de la asociación, medida por la V de Cramér (V = ${c.cramersV}), es ${vLabel}.`,
+      de: `Der Chi-Quadrat-Test ${sig ? "zeigt einen signifikanten Zusammenhang" : "zeigt keinen signifikanten Zusammenhang"} zwischen ${c.var1} und ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}). Die Stärke des Zusammenhangs, gemessen durch Cramér's V (V = ${c.cramersV}), ist ${vLabel}.`,
+      pt: `O teste Qui-quadrado ${sig ? "mostra uma associação significativa" : "não mostra associação significativa"} entre ${c.var1} e ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}). A força da associação, medida pelo V de Cramér (V = ${c.cramersV}), é ${vLabel}.`,
+    };
+    return templates[lang] || templates.en;
+  }
+
+  // Master level
   const templates: Record<string, string> = {
     fr: `Le test du Chi-carré ${sig ? "montre une association significative" : "ne montre pas d'association significative"} entre ${c.var1} et ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}, V de Cramér = ${c.cramersV}).`,
     en: `The Chi-square test ${sig ? "shows a significant association" : "shows no significant association"} between ${c.var1} and ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}, Cramér's V = ${c.cramersV}).`,
@@ -291,8 +348,18 @@ function interpChi(c: { var1: string; var2: string; chiSquare: number; df: numbe
   return templates[lang] || templates.en;
 }
 
-function interpPCA(pca: NonNullable<AnalysisResultItem["pca"]>, lang: string) {
+function interpPCA(pca: NonNullable<AnalysisResultItem["pca"]>, lang: string, lvl: string) {
   const retained = pca.components.filter(c => c.eigenvalue >= 1).length;
+  if (lvl === "licence") {
+    const templates: Record<string, string> = {
+      fr: `L'ACP identifie ${retained} composante(s) principale(s) expliquant ${pca.totalVarianceExplained}% de la variance totale.`,
+      en: `PCA identifies ${retained} principal component(s) explaining ${pca.totalVarianceExplained}% of total variance.`,
+      es: `El ACP identifica ${retained} componente(s) principal(es) que explican ${pca.totalVarianceExplained}% de la varianza total.`,
+      de: `Die PCA identifiziert ${retained} Hauptkomponente(n), die ${pca.totalVarianceExplained}% der Gesamtvarianz erklären.`,
+      pt: `A ACP identifica ${retained} componente(s) principal(is) que explicam ${pca.totalVarianceExplained}% da variância total.`,
+    };
+    return templates[lang] || templates.en;
+  }
   const templates: Record<string, string> = {
     fr: `L'ACP révèle ${retained} composante(s) avec une valeur propre > 1, expliquant ${pca.totalVarianceExplained}% de la variance totale (KMO = ${pca.kmo}).`,
     en: `PCA reveals ${retained} component(s) with eigenvalue > 1, explaining ${pca.totalVarianceExplained}% of total variance (KMO = ${pca.kmo}).`,
@@ -316,8 +383,18 @@ function interpFactor(fa: NonNullable<AnalysisResultItem["factorAnalysis"]>, lan
   return templates[lang] || templates.en;
 }
 
-function interpCluster(cl: NonNullable<AnalysisResultItem["clusterAnalysis"]>, lang: string) {
+function interpCluster(cl: NonNullable<AnalysisResultItem["clusterAnalysis"]>, lang: string, lvl: string) {
   const bssRatio = cl.totalSS > 0 ? ((cl.betweenSS / cl.totalSS) * 100).toFixed(1) : "0";
+  if (lvl === "licence") {
+    const templates: Record<string, string> = {
+      fr: `L'analyse de clusters identifie ${cl.k} groupes distincts dans les données.`,
+      en: `Cluster analysis identifies ${cl.k} distinct groups in the data.`,
+      es: `El análisis de clusters identifica ${cl.k} grupos distintos en los datos.`,
+      de: `Die Clusteranalyse identifiziert ${cl.k} verschiedene Gruppen in den Daten.`,
+      pt: `A análise de clusters identifica ${cl.k} grupos distintos nos dados.`,
+    };
+    return templates[lang] || templates.en;
+  }
   const templates: Record<string, string> = {
     fr: `L'analyse de clusters identifie ${cl.k} groupes distincts (silhouette = ${cl.silhouetteScore}, BSS/TSS = ${bssRatio}%).`,
     en: `Cluster analysis identifies ${cl.k} distinct groups (silhouette = ${cl.silhouetteScore}, BSS/TSS = ${bssRatio}%).`,
