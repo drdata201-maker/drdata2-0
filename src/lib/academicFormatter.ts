@@ -256,9 +256,19 @@ function interpCorrelation(c: { var1: string; var2: string; r: number; pValue: n
   return templates[lang] || templates.en;
 }
 
-function interpRegression(r: { dependent: string; rSquared: number; fStat: number; fPValue: number }, lang: string) {
+function interpRegression(r: { dependent: string; rSquared: number; fStat: number; fPValue: number }, lang: string, lvl: string) {
   const pct = (r.rSquared * 100).toFixed(1);
   const sig = r.fPValue < 0.05;
+  if (lvl === "licence") {
+    const templates: Record<string, string> = {
+      fr: `Le modèle explique ${pct}% de la variance de ${r.dependent} (R² = ${r.rSquared})${sig ? ". Le modèle est statistiquement significatif" : ""}.`,
+      en: `The model explains ${pct}% of the variance in ${r.dependent} (R² = ${r.rSquared})${sig ? ". The model is statistically significant" : ""}.`,
+      es: `El modelo explica ${pct}% de la varianza de ${r.dependent} (R² = ${r.rSquared})${sig ? ". El modelo es estadísticamente significativo" : ""}.`,
+      de: `Das Modell erklärt ${pct}% der Varianz von ${r.dependent} (R² = ${r.rSquared})${sig ? ". Das Modell ist statistisch signifikant" : ""}.`,
+      pt: `O modelo explica ${pct}% da variância de ${r.dependent} (R² = ${r.rSquared})${sig ? ". O modelo é estatisticamente significativo" : ""}.`,
+    };
+    return templates[lang] || templates.en;
+  }
   const templates: Record<string, string> = {
     fr: `Le modèle de régression explique ${pct}% de la variance de ${r.dependent} (R² = ${r.rSquared}, F = ${r.fStat}, p = ${r.fPValue})${sig ? ". Le modèle est statistiquement significatif" : ""}.`,
     en: `The regression model explains ${pct}% of the variance in ${r.dependent} (R² = ${r.rSquared}, F = ${r.fStat}, p = ${r.fPValue})${sig ? ". The model is statistically significant" : ""}.`,
