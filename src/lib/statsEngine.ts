@@ -108,6 +108,7 @@ export interface ClusterAnalysisResult {
   totalSS: number;
   betweenSS: number;
   silhouetteScore: number;
+  assignments?: number[];
 }
 
 export interface AnalysisResultItem {
