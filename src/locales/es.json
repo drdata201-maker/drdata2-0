@@ -785,6 +785,8 @@
   "charts.scatter": "Diagrama de dispersión",
   "charts.boxPlot": "Diagrama de caja",
   "charts.regression": "Regresión",
+  "charts.varianceExplained": "Varianza explicada",
+  "charts.clusterScatter": "Dispersión por clusters",
   "notifications.title": "Notificaciones",
   "notifications.empty": "Sin notificaciones",
   "notifications.loading": "Cargando...",

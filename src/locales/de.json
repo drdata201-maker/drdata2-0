@@ -785,6 +785,8 @@
   "charts.scatter": "Streudiagramm",
   "charts.boxPlot": "Boxplot",
   "charts.regression": "Regression",
+  "charts.varianceExplained": "Erklärte Varianz",
+  "charts.clusterScatter": "Cluster-Streudiagramm",
   "notifications.title": "Benachrichtigungen",
   "notifications.empty": "Keine Benachrichtigungen",
   "notifications.loading": "Laden...",
