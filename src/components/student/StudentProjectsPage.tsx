@@ -108,12 +108,13 @@ export function StudentProjectsPage({ baseRoute, userType }: { baseRoute: string
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{t("pme.recentProjects.name")}</TableHead>
-                    <TableHead className="hidden md:table-cell">{t("student.wizard.domain")}</TableHead>
-                    <TableHead>{t("pme.recentProjects.status")}</TableHead>
-                    <TableHead className="hidden sm:table-cell">{t("student.projects.progress")}</TableHead>
-                    <TableHead>{t("pme.recentProjects.date")}</TableHead>
-                    <TableHead className="text-right">{t("pme.projects.actions")}</TableHead>
+                     <TableHead>{t("pme.recentProjects.name")}</TableHead>
+                     <TableHead className="hidden md:table-cell">{t("student.wizard.domain")}</TableHead>
+                     <TableHead>{t("pme.recentProjects.status")}</TableHead>
+                     <TableHead className="hidden sm:table-cell">{t("student.projects.progress")}</TableHead>
+                     <TableHead className="hidden lg:table-cell">{t("pme.recentProjects.date")}</TableHead>
+                     <TableHead className="hidden lg:table-cell">{t("student.projects.lastModified")}</TableHead>
+                     <TableHead className="text-right">{t("pme.projects.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
