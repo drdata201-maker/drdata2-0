@@ -239,6 +239,10 @@ export function WorkspaceInterpretation({ level, projectTitle, projectType, proj
             <Pencil className="mr-1 h-3 w-3" />
             {t("interpretation.editable") || "Editable"}
           </Badge>
+          <Button variant="ghost" size="sm" onClick={copyAllToClipboard}>
+            <Copy className="mr-2 h-4 w-4" />
+            {t("interpretation.copyAll") || "Copy all"}
+          </Button>
           <Button variant="ghost" size="sm" onClick={generateInterpretation} disabled={loading}>
             <RefreshCw className="mr-2 h-4 w-4" />
             {t("interpretation.regenerate") || "Regenerate"}
