@@ -181,6 +181,7 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     type: projectType,
     domain: projectDomain,
     description: projectDescription || "",
+    objective: projectObjective || "",
     level: getLevelLabel(),
   };
 
