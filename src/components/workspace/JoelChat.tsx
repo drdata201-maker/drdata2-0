@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Send, Upload, Sparkles, Bot, Loader2, CheckCircle, Edit3, RotateCcw, CheckCheck, Variable } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { stripLatex } from "@/lib/latexSanitizer";
 import { toast } from "sonner";
 
 const ACCEPTED_FORMATS = ".xlsx,.xls,.csv,.sav,.dta";
