@@ -48,6 +48,11 @@ export interface RegressionResult {
   n: number;
 }
 
+export interface ContingencyCell {
+  observed: number;
+  expected: number;
+}
+
 export interface ChiSquareResult {
   var1: string;
   var2: string;
@@ -55,6 +60,16 @@ export interface ChiSquareResult {
   df: number;
   pValue: number;
   cramersV: number;
+  contingencyTable?: {
+    rowLabels: string[];
+    colLabels: string[];
+    observed: number[][];
+    expected: number[][];
+    rowTotals: number[];
+    colTotals: number[];
+    grandTotal: number;
+  };
+  categorized?: { var1Auto: boolean; var2Auto: boolean };
 }
 
 export interface AnovaResult {
