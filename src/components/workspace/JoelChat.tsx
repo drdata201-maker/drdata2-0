@@ -60,6 +60,7 @@ interface JoelChatProps {
   projectType: string;
   projectDomain: string;
   projectDescription?: string;
+  projectObjective?: string;
   level: string;
 }
 
