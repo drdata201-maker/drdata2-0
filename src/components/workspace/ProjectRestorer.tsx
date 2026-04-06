@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useDataset } from "@/contexts/DatasetContext";
 import { supabase } from "@/integrations/supabase/client";
-import type { AnalysisResultItem, InterpretationData } from "@/contexts/DatasetContext";
+import type { AnalysisResultItem, InterpretationData, ChatState } from "@/contexts/DatasetContext";
 
 interface ProjectRestorerProps {
   projectId: string | null;
@@ -9,15 +9,40 @@ interface ProjectRestorerProps {
 }
 
 export function ProjectRestorer({ projectId, onRestored }: ProjectRestorerProps) {
-  const { restoreState, analysisResults } = useDataset();
+  const { restoreState, analysisResults, chatState, setChatState } = useDataset();
   const [restored, setRestored] = useState(false);
 
+  // Restore chat + analysis state on mount
   useEffect(() => {
     if (!projectId || restored || analysisResults.length > 0) return;
     setRestored(true);
 
     (async () => {
       try {
+        // Fetch project chat_state
+        const { data: projectData } = await (supabase.from("projects") as any)
+          .select("chat_state")
+          .eq("id", projectId)
+          .maybeSingle();
+
+        if (projectData?.chat_state) {
+          const saved = typeof projectData.chat_state === "string"
+            ? JSON.parse(projectData.chat_state)
+            : projectData.chat_state;
+          if (saved.messages && saved.messages.length > 0) {
+            setChatState({
+              messages: saved.messages || [],
+              phase: saved.phase || "confirm",
+              chatHistory: saved.chatHistory || [],
+              greetingSent: saved.greetingSent ?? true,
+              selectedSoftware: saved.selectedSoftware || "",
+              selectedAnalyses: saved.selectedAnalyses || [],
+              file: saved.file || null,
+            });
+          }
+        }
+
+        // Fetch analysis results
         const { data } = await (supabase.from("analyses") as any)
           .select("results")
           .eq("project_id", projectId)
@@ -42,7 +67,39 @@ export function ProjectRestorer({ projectId, onRestored }: ProjectRestorerProps)
         onRestored(false);
       }
     })();
-  }, [projectId, restored, restoreState, onRestored, analysisResults.length]);
+  }, [projectId, restored, restoreState, onRestored, analysisResults.length, setChatState]);
+
+  // Auto-save chat state to DB with debounce
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSavedRef = useRef<string>("");
+
+  useEffect(() => {
+    if (!projectId || !chatState.greetingSent) return;
+
+    // Only save visible messages (skip streaming type markers for cleaner restore)
+    const toSave: ChatState = {
+      ...chatState,
+      messages: chatState.messages.map(m => ({ role: m.role, content: m.content })),
+    };
+    const serialized = JSON.stringify(toSave);
+    if (serialized === lastSavedRef.current) return;
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(async () => {
+      try {
+        await (supabase.from("projects") as any)
+          .update({ chat_state: toSave })
+          .eq("id", projectId);
+        lastSavedRef.current = serialized;
+      } catch (e) {
+        console.error("Failed to save chat state:", e);
+      }
+    }, 2000); // 2s debounce
+
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [projectId, chatState]);
 
   return null;
 }
