@@ -6,6 +6,7 @@ import {
   computeChiSquare,
   computeAnova,
   computeRegression,
+  categorizeNumericVariable,
 } from "@/lib/statsEngine";
 
 // Helper dataset
