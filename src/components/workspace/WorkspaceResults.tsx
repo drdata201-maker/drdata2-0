@@ -1,9 +1,14 @@
+import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset } from "@/contexts/DatasetContext";
 import type { AnalysisResultItem } from "@/contexts/DatasetContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table2, TrendingUp, BarChart3, Upload, Layers, GitBranch, CircleDot } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Table2, TrendingUp, BarChart3, Upload, Layers, GitBranch, CircleDot, Pencil, Check, X } from "lucide-react";
+import { generateTableTitle, generateTableInterpretation, getTableLabel, getSource } from "@/lib/academicFormatter";
 
 function SignificanceBadge({ p }: { p: number }) {
   if (p < 0.001) return <Badge className="bg-green-600 text-white">p &lt; 0.001 ***</Badge>;
@@ -467,9 +472,54 @@ function ClusterAnalysisTable({ data }: { data: NonNullable<AnalysisResultItem["
   );
 }
 
+// Editable text block for titles, interpretations, and source
+function EditableText({ value, onChange, variant = "text" }: { value: string; onChange: (v: string) => void; variant?: "title" | "text" }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  if (editing) {
+    return (
+      <div className="flex items-start gap-2">
+        {variant === "title" ? (
+          <Input value={draft} onChange={e => setDraft(e.target.value)} className="text-sm font-semibold" autoFocus />
+        ) : (
+          <Textarea value={draft} onChange={e => setDraft(e.target.value)} className="text-xs min-h-[60px] resize-y" autoFocus />
+        )}
+        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => { onChange(draft); setEditing(false); }}>
+          <Check className="h-3.5 w-3.5 text-primary" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => { setDraft(value); setEditing(false); }}>
+          <X className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="group relative inline-flex items-start gap-1">
+      {variant === "title" ? (
+        <span className="font-semibold text-sm text-foreground">{value}</span>
+      ) : (
+        <span className="text-xs text-muted-foreground italic leading-relaxed">{value}</span>
+      )}
+      <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+        onClick={() => { setDraft(value); setEditing(true); }}>
+        <Pencil className="h-3 w-3" />
+      </Button>
+    </div>
+  );
+}
+
 export function WorkspaceResults() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { analysisResults, dataset } = useDataset();
+
+  // Track editable overrides for titles, interpretations, sources
+  const [overrides, setOverrides] = useState<Record<string, { title?: string; interpretation?: string; source?: string }>>({});
+
+  const updateOverride = (id: string, field: "title" | "interpretation" | "source", value: string) => {
+    setOverrides(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+  };
 
   if (!dataset) {
     return (
@@ -494,29 +544,63 @@ export function WorkspaceResults() {
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {analysisResults.map(result => (
-        <div key={result.id} className="space-y-3">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-foreground">{t(`student.analysis.${result.type}`) || result.title}</h3>
-            <Badge variant="secondary" className="text-xs">
-              {new Date(result.timestamp).toLocaleTimeString()}
-            </Badge>
-          </div>
+  const tableLabel = getTableLabel(lang);
+  const defaultSource = getSource(lang);
 
-          {result.descriptive && <DescriptiveTable data={result.descriptive} />}
-          {result.frequencies && <FrequencyTable data={result.frequencies} />}
-          {result.correlations && <CorrelationTable data={result.correlations} />}
-          {result.regressions && <RegressionTable data={result.regressions} />}
-          {result.tTests && <TTestTable data={result.tTests} />}
-          {result.anovas && <AnovaTable data={result.anovas} />}
-          {result.chiSquares && <ChiSquareTable data={result.chiSquares} />}
-          {result.pca && <PCATable data={result.pca} />}
-          {result.factorAnalysis && <FactorAnalysisTable data={result.factorAnalysis} />}
-          {result.clusterAnalysis && <ClusterAnalysisTable data={result.clusterAnalysis} />}
-        </div>
-      ))}
+  return (
+    <div className="space-y-8">
+      {analysisResults.map((result, idx) => {
+        const tableNum = idx + 1;
+        const autoTitle = generateTableTitle(result, lang, t);
+        const autoInterp = generateTableInterpretation(result, lang, "");
+        const ov = overrides[result.id] || {};
+        const title = ov.title || autoTitle;
+        const interpretation = ov.interpretation || autoInterp;
+        const source = ov.source || defaultSource;
+
+        return (
+          <div key={result.id} className="space-y-3">
+            {/* Academic header: Table N: Title */}
+            <div className="border-b-2 border-primary/20 pb-2">
+              <div className="flex items-baseline gap-2">
+                <Badge variant="secondary" className="text-xs font-bold shrink-0">
+                  {tableLabel} {tableNum}
+                </Badge>
+                <EditableText value={title} onChange={v => updateOverride(result.id, "title", v)} variant="title" />
+              </div>
+            </div>
+
+            {/* Table content */}
+            {result.descriptive && <DescriptiveTable data={result.descriptive} />}
+            {result.frequencies && <FrequencyTable data={result.frequencies} />}
+            {result.correlations && <CorrelationTable data={result.correlations} />}
+            {result.regressions && <RegressionTable data={result.regressions} />}
+            {result.tTests && <TTestTable data={result.tTests} />}
+            {result.anovas && <AnovaTable data={result.anovas} />}
+            {result.chiSquares && <ChiSquareTable data={result.chiSquares} />}
+            {result.pca && <PCATable data={result.pca} />}
+            {result.factorAnalysis && <FactorAnalysisTable data={result.factorAnalysis} />}
+            {result.clusterAnalysis && <ClusterAnalysisTable data={result.clusterAnalysis} />}
+
+            {/* Source */}
+            <div className="pl-1">
+              <EditableText value={source} onChange={v => updateOverride(result.id, "source", v)} />
+            </div>
+
+            {/* Inline interpretation */}
+            {interpretation && (
+              <Card className="bg-muted/30 border-dashed">
+                <CardContent className="py-3 px-4">
+                  <div className="flex items-start gap-2">
+                    <Badge variant="outline" className="text-[10px] shrink-0 mt-0.5">{t("results.interpretation") || "Interpretation"}</Badge>
+                    <EditableText value={interpretation} onChange={v => updateOverride(result.id, "interpretation", v)} />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

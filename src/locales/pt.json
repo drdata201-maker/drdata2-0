@@ -757,6 +757,7 @@
   "results.value": "Valor",
   "results.count": "Contagem",
   "results.group": "Grupo",
+  "results.interpretation": "Interpretação",
   "results.pcaVariance": "ACP — Variância explicada",
   "results.totalVariance": "Variância total",
   "results.component": "Componente",

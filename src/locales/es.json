@@ -757,6 +757,7 @@
   "results.value": "Valor",
   "results.count": "Frecuencia",
   "results.group": "Grupo",
+  "results.interpretation": "Interpretación",
   "results.pcaVariance": "ACP — Varianza explicada",
   "results.totalVariance": "Varianza total",
   "results.component": "Componente",
