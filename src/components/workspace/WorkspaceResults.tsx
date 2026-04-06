@@ -404,7 +404,7 @@ function ClusterAnalysisTable({ data }: { data: NonNullable<AnalysisResultItem["
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">
-            <Scatter className="h-4 w-4 text-primary" />
+            <CircleDot className="h-4 w-4 text-primary" />
             {t("results.clusterAnalysisTitle")}
           </CardTitle>
           <div className="flex flex-wrap gap-2 mt-1">
