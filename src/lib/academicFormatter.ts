@@ -203,11 +203,11 @@ export function generateTableInterpretation(
 
 function interpDescriptive(d: { variable: string; mean: number; std: number; n: number }, lang: string) {
   const t: Record<string, string> = {
-    fr: `La variable ${d.variable} présente une moyenne de ${d.mean} (ET = ${d.std}) sur ${d.n} observations.`,
-    en: `The variable ${d.variable} has a mean of ${d.mean} (SD = ${d.std}) across ${d.n} observations.`,
-    es: `La variable ${d.variable} presenta una media de ${d.mean} (DE = ${d.std}) en ${d.n} observaciones.`,
-    de: `Die Variable ${d.variable} hat einen Mittelwert von ${d.mean} (SD = ${d.std}) bei ${d.n} Beobachtungen.`,
-    pt: `A variável ${d.variable} apresenta uma média de ${d.mean} (DP = ${d.std}) em ${d.n} observações.`,
+    fr: `La variable ${d.variable} présente une moyenne de ${d.mean} (ET = ${d.std}, N = ${d.n}).`,
+    en: `The variable ${d.variable} has a mean of ${d.mean} (SD = ${d.std}, N = ${d.n}).`,
+    es: `La variable ${d.variable} presenta una media de ${d.mean} (DE = ${d.std}, N = ${d.n}).`,
+    de: `Die Variable ${d.variable} hat einen Mittelwert von ${d.mean} (SD = ${d.std}, N = ${d.n}).`,
+    pt: `A variável ${d.variable} apresenta uma média de ${d.mean} (DP = ${d.std}, N = ${d.n}).`,
   };
   return t[lang] || t.en;
 }
@@ -279,14 +279,14 @@ function interpAnova(a: { dependent: string; factor: string; fStat: number; pVal
   return templates[lang] || templates.en;
 }
 
-function interpChi(c: { var1: string; var2: string; chiSquare: number; pValue: number; cramersV: number }, lang: string) {
+function interpChi(c: { var1: string; var2: string; chiSquare: number; df: number; pValue: number; cramersV: number }, lang: string) {
   const sig = c.pValue < 0.05;
   const templates: Record<string, string> = {
-    fr: `Le test du Chi-carré ${sig ? "montre une association significative" : "ne montre pas d'association significative"} entre ${c.var1} et ${c.var2} (χ² = ${c.chiSquare}, p = ${c.pValue}, V de Cramér = ${c.cramersV}).`,
-    en: `The Chi-square test ${sig ? "shows a significant association" : "shows no significant association"} between ${c.var1} and ${c.var2} (χ² = ${c.chiSquare}, p = ${c.pValue}, Cramér's V = ${c.cramersV}).`,
-    es: `La prueba Chi-cuadrado ${sig ? "muestra una asociación significativa" : "no muestra asociación significativa"} entre ${c.var1} y ${c.var2} (χ² = ${c.chiSquare}, p = ${c.pValue}, V de Cramér = ${c.cramersV}).`,
-    de: `Der Chi-Quadrat-Test ${sig ? "zeigt einen signifikanten Zusammenhang" : "zeigt keinen signifikanten Zusammenhang"} zwischen ${c.var1} und ${c.var2} (χ² = ${c.chiSquare}, p = ${c.pValue}, Cramér's V = ${c.cramersV}).`,
-    pt: `O teste Qui-quadrado ${sig ? "mostra uma associação significativa" : "não mostra associação significativa"} entre ${c.var1} e ${c.var2} (χ² = ${c.chiSquare}, p = ${c.pValue}, V de Cramér = ${c.cramersV}).`,
+    fr: `Le test du Chi-carré ${sig ? "montre une association significative" : "ne montre pas d'association significative"} entre ${c.var1} et ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}, V de Cramér = ${c.cramersV}).`,
+    en: `The Chi-square test ${sig ? "shows a significant association" : "shows no significant association"} between ${c.var1} and ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}, Cramér's V = ${c.cramersV}).`,
+    es: `La prueba Chi-cuadrado ${sig ? "muestra una asociación significativa" : "no muestra asociación significativa"} entre ${c.var1} y ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}, V de Cramér = ${c.cramersV}).`,
+    de: `Der Chi-Quadrat-Test ${sig ? "zeigt einen signifikanten Zusammenhang" : "zeigt keinen signifikanten Zusammenhang"} zwischen ${c.var1} und ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}, Cramér's V = ${c.cramersV}).`,
+    pt: `O teste Qui-quadrado ${sig ? "mostra uma associação significativa" : "não mostra associação significativa"} entre ${c.var1} e ${c.var2} (χ²(${c.df}) = ${c.chiSquare}, p = ${c.pValue}, V de Cramér = ${c.cramersV}).`,
   };
   return templates[lang] || templates.en;
 }

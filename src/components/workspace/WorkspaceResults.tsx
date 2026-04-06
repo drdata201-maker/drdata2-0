@@ -22,18 +22,18 @@ function DescriptiveTable({ data }: { data: NonNullable<AnalysisResultItem["desc
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm">
+        <CardTitle className="flex items-center gap-2 text-sm font-academic">
           <Table2 className="h-4 w-4 text-primary" />
           {t("results.descriptiveStats")}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm font-academic">
             <thead>
               <tr className="border-b border-border">
-                {["Variable", "N", t("workspace.mean"), t("workspace.std"), "Min", "Q1", "Median", "Q3", "Max"].map(h => (
-                  <th key={h} className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">{h}</th>
+                {["Variable", "N", "M", "SD", "Min", "Q1", "Mdn", "Q3", "Max"].map(h => (
+                  <th key={h} className={`px-2 py-1.5 text-left font-medium text-muted-foreground text-xs ${["M", "SD", "N", "Mdn"].includes(h) ? "stat-notation" : ""}`}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -99,20 +99,20 @@ function CorrelationTable({ data }: { data: NonNullable<AnalysisResultItem["corr
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm">
+        <CardTitle className="flex items-center gap-2 text-sm font-academic">
           <TrendingUp className="h-4 w-4 text-primary" />
           {t("results.correlations")}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <table className="w-full text-sm">
+        <table className="w-full text-sm font-academic">
           <thead>
             <tr className="border-b border-border">
               <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">Var 1</th>
               <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">Var 2</th>
-              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">r</th>
-              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">p-value</th>
-              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">N</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">r</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">p</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">N</th>
               <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">Sig.</th>
             </tr>
           </thead>
@@ -141,22 +141,22 @@ function RegressionTable({ data }: { data: NonNullable<AnalysisResultItem["regre
       {data.map((reg, i) => (
         <Card key={i}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">{t("results.regression")}: {reg.dependent}</CardTitle>
+            <CardTitle className="text-sm font-academic">{t("results.regression")}: {reg.dependent}</CardTitle>
             <div className="flex flex-wrap gap-2 mt-1">
-              <Badge variant="outline">R² = {reg.rSquared}</Badge>
-              <Badge variant="outline">Adj. R² = {reg.adjustedR2}</Badge>
-              <Badge variant="outline">F = {reg.fStat}</Badge>
-              <Badge variant="outline">N = {reg.n}</Badge>
+              <Badge variant="outline"><span className="stat-notation">R²</span> = {reg.rSquared}</Badge>
+              <Badge variant="outline">Adj. <span className="stat-notation">R²</span> = {reg.adjustedR2}</Badge>
+              <Badge variant="outline"><span className="stat-notation">F</span> = {reg.fStat}</Badge>
+              <Badge variant="outline"><span className="stat-notation">N</span> = {reg.n}</Badge>
             </div>
           </CardHeader>
           <CardContent>
-            <table className="w-full text-sm">
+            <table className="w-full text-sm font-academic">
               <thead>
                 <tr className="border-b border-border">
                   <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">Variable</th>
-                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">B</th>
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">B</th>
                   <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">SE</th>
-                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">t</th>
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">t</th>
                   <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">Sig.</th>
                 </tr>
               </thead>
@@ -186,20 +186,20 @@ function AnovaTable({ data }: { data: NonNullable<AnalysisResultItem["anovas"]> 
       {data.map((a, i) => (
         <Card key={i}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">ANOVA: {a.dependent} × {a.factor}</CardTitle>
+            <CardTitle className="text-sm font-academic">ANOVA : {a.dependent} × {a.factor}</CardTitle>
             <div className="flex gap-2 mt-1">
-              <Badge variant="outline">F({a.dfBetween},{a.dfWithin}) = {a.fStat}</Badge>
+              <Badge variant="outline"><span className="stat-notation">F</span>({a.dfBetween},{a.dfWithin}) = {a.fStat}</Badge>
               <SignificanceBadge p={a.pValue} />
             </div>
           </CardHeader>
           <CardContent>
-            <table className="w-full text-sm">
+            <table className="w-full text-sm font-academic">
               <thead>
                 <tr className="border-b border-border">
                   <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">{t("results.group")}</th>
-                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">N</th>
-                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("workspace.mean")}</th>
-                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("workspace.std")}</th>
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">N</th>
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">M</th>
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">SD</th>
                 </tr>
               </thead>
               <tbody>
@@ -228,18 +228,23 @@ function ChiSquareTable({ data }: { data: NonNullable<AnalysisResultItem["chiSqu
         <div key={i} className="space-y-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Chi-Square: {c.var1} × {c.var2}</CardTitle>
+              <CardTitle className="text-sm font-academic">
+                <span className="stat-notation">χ²</span> : {c.var1} × {c.var2}
+              </CardTitle>
               {c.categorized && (c.categorized.var1Auto || c.categorized.var2Auto) && (
                 <p className="text-xs text-muted-foreground italic mt-1">
                   {t("results.autoCategorized") || "Variables numériques auto-catégorisées (Low/Medium/High)"}
                 </p>
               )}
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">χ²</span><span className="font-mono text-foreground">{c.chiSquare}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">df</span><span className="font-mono text-foreground">{c.df}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">p-value</span><SignificanceBadge p={c.pValue} /></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Cramér's V</span><span className="font-mono text-foreground">{c.cramersV}</span></div>
+            <CardContent className="space-y-2 text-sm font-academic">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground stat-notation">χ²({c.df})</span>
+                <span className="font-mono text-foreground">= {c.chiSquare}</span>
+              </div>
+              <div className="flex justify-between"><span className="text-muted-foreground stat-notation">p</span><span className="font-mono text-foreground">= {c.pValue}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Sig.</span><SignificanceBadge p={c.pValue} /></div>
+              <div className="flex justify-between"><span className="text-muted-foreground stat-notation">V</span><span className="font-mono text-foreground">= {c.cramersV}</span></div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t("results.effectSize") || "Taille d'effet"}</span>
                 <Badge variant="outline" className="text-xs">
@@ -312,13 +317,15 @@ function TTestTable({ data }: { data: NonNullable<AnalysisResultItem["tTests"]> 
       {data.map((tt, i) => (
         <Card key={i}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">T-Test: {tt.variable} × {tt.groupVar}</CardTitle>
+            <CardTitle className="text-sm font-academic">
+              <span className="stat-notation">t</span>-Test : {tt.variable} × {tt.groupVar}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">{tt.groups[0]} ({t("workspace.mean")})</span><span className="font-mono text-foreground">{tt.means[0]}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">{tt.groups[1]} ({t("workspace.mean")})</span><span className="font-mono text-foreground">{tt.means[1]}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">t({tt.df})</span><span className="font-mono text-foreground">{tt.tStat}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">p-value</span><SignificanceBadge p={tt.pValue} /></div>
+          <CardContent className="space-y-2 text-sm font-academic">
+            <div className="flex justify-between"><span className="text-muted-foreground">{tt.groups[0]} (<span className="stat-notation">M</span>)</span><span className="font-mono text-foreground">= {tt.means[0]}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{tt.groups[1]} (<span className="stat-notation">M</span>)</span><span className="font-mono text-foreground">= {tt.means[1]}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground stat-notation">t({tt.df})</span><span className="font-mono text-foreground">= {tt.tStat}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground stat-notation">p</span><SignificanceBadge p={tt.pValue} /></div>
           </CardContent>
         </Card>
       ))}
@@ -658,7 +665,7 @@ export function WorkspaceResults() {
                 <CardContent className="py-3 px-4">
                   <div className="flex items-start gap-2">
                     <Badge variant="outline" className="text-[10px] shrink-0 mt-0.5">{t("results.interpretation") || "Interpretation"}</Badge>
-                    <EditableText value={interpretation} onChange={v => updateOverride(result.id, "interpretation", v)} />
+                    <span className="text-xs text-muted-foreground italic leading-relaxed font-academic" style={{ textAlign: "justify" }}>{interpretation}</span>
                   </div>
                 </CardContent>
               </Card>
