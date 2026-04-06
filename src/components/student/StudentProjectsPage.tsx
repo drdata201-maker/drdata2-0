@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
-import { Plus, FolderOpen, Trash2, Play, Eye, Download } from "lucide-react";
+import { Plus, FolderOpen, Trash2, Play, Eye, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 interface ProjectRow {
@@ -43,6 +43,39 @@ export function StudentProjectsPage({ baseRoute, userType }: { baseRoute: string
     if (!error) {
       setProjects((prev) => prev.filter((p) => p.id !== id));
       toast.success(t("pme.projects.deleted"));
+    }
+  };
+
+  const handleDuplicate = async (project: ProjectRow) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch full project data including dataset_summary
+      const { data: original } = await (supabase.from("projects") as any)
+        .select("title,description,domain,user_type,dataset_summary")
+        .eq("id", project.id)
+        .maybeSingle();
+      if (!original) throw new Error("Project not found");
+
+      const { data: newProject, error } = await (supabase.from("projects") as any)
+        .insert({
+          user_id: user.id,
+          title: `${original.title} (${t("student.projects.copy")})`,
+          description: original.description,
+          domain: original.domain,
+          user_type: original.user_type,
+          dataset_summary: original.dataset_summary,
+          status: original.dataset_summary ? "data_uploaded" : "draft",
+        })
+        .select("id,title,description,domain,status,created_at,updated_at")
+        .single();
+      if (error) throw error;
+
+      setProjects(prev => [newProject as ProjectRow, ...prev]);
+      toast.success(t("student.projects.duplicated"));
+    } catch (e: any) {
+      toast.error(e?.message || "Error");
     }
   };
 
@@ -149,6 +182,9 @@ export function StudentProjectsPage({ baseRoute, userType }: { baseRoute: string
                            </Button>
                            <Button variant="ghost" size="icon" title={t("student.projects.viewResults")} onClick={() => navigate(`/analysis/workspace?project=${p.id}&level=${userType}`)}>
                              <Eye className="h-4 w-4" />
+                           </Button>
+                           <Button variant="ghost" size="icon" title={t("student.projects.duplicate")} onClick={() => handleDuplicate(p)}>
+                             <Copy className="h-4 w-4 text-muted-foreground" />
                            </Button>
                            <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)}>
                              <Trash2 className="h-4 w-4 text-destructive" />
