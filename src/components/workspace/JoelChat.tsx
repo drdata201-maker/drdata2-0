@@ -145,7 +145,7 @@ async function streamChat({
   }
 }
 
-export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, level }: JoelChatProps) {
+export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, projectObjective, level }: JoelChatProps) {
   const { t, lang } = useLanguage();
   const { processFile, dataset, runAnalyses } = useDataset();
   const [messages, setMessages] = useState<Msg[]>([]);
