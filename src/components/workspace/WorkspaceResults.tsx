@@ -233,8 +233,9 @@ function AnovaTable({ data }: { data: NonNullable<AnalysisResultItem["anovas"]> 
   );
 }
 
-function ChiSquareTable({ data }: { data: NonNullable<AnalysisResultItem["chiSquares"]> }) {
+function ChiSquareTable({ data, level }: { data: NonNullable<AnalysisResultItem["chiSquares"]>; level: StudyLevel }) {
   const { t } = useLanguage();
+  const cfg = getLevelConfig(level);
   return (
     <>
       {data.map((c, i) => (
@@ -257,16 +258,20 @@ function ChiSquareTable({ data }: { data: NonNullable<AnalysisResultItem["chiSqu
               </div>
               <div className="flex justify-between"><span className="text-muted-foreground stat-notation">p</span><span className="font-mono text-foreground">= {c.pValue}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Sig.</span><SignificanceBadge p={c.pValue} /></div>
-              <div className="flex justify-between"><span className="text-muted-foreground stat-notation">V</span><span className="font-mono text-foreground">= {c.cramersV}</span></div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">{t("results.effectSize") || "Taille d'effet"}</span>
-                <Badge variant="outline" className="text-xs">
-                  {c.cramersV < 0.1 ? (t("results.negligible") || "Négligeable") :
-                   c.cramersV < 0.3 ? (t("results.weak") || "Faible") :
-                   c.cramersV < 0.5 ? (t("results.moderate") || "Modéré") :
-                   (t("results.strong") || "Fort")}
-                </Badge>
-              </div>
+              {cfg.showCramersV && (
+                <div className="flex justify-between"><span className="text-muted-foreground stat-notation">V</span><span className="font-mono text-foreground">= {c.cramersV}</span></div>
+              )}
+              {cfg.showEffectSize && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t("results.effectSize") || "Taille d'effet"}</span>
+                  <Badge variant="outline" className="text-xs">
+                    {c.cramersV < 0.1 ? (t("results.negligible") || "Négligeable") :
+                     c.cramersV < 0.3 ? (t("results.weak") || "Faible") :
+                     c.cramersV < 0.5 ? (t("results.moderate") || "Modéré") :
+                     (t("results.strong") || "Fort")}
+                  </Badge>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -295,7 +300,9 @@ function ChiSquareTable({ data }: { data: NonNullable<AnalysisResultItem["chiSqu
                           {c.contingencyTable!.observed[ri].map((obs, ci) => (
                             <td key={ci} className="px-2 py-1.5 text-right font-mono text-foreground">
                               {obs}
-                              <span className="text-muted-foreground text-[10px] block">({c.contingencyTable!.expected[ri][ci]})</span>
+                              {cfg.detailLevel !== "licence" && (
+                                <span className="text-muted-foreground text-[10px] block">({c.contingencyTable!.expected[ri][ci]})</span>
+                              )}
                             </td>
                           ))}
                           <td className="px-2 py-1.5 text-right font-mono font-bold text-primary">{c.contingencyTable!.rowTotals[ri]}</td>
@@ -311,9 +318,11 @@ function ChiSquareTable({ data }: { data: NonNullable<AnalysisResultItem["chiSqu
                     </tbody>
                   </table>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-2 italic">
-                  {t("results.expectedInParens") || "Les valeurs attendues sont indiquées entre parenthèses"}
-                </p>
+                {cfg.detailLevel !== "licence" && (
+                  <p className="text-[10px] text-muted-foreground mt-2 italic">
+                    {t("results.expectedInParens") || "Les valeurs attendues sont indiquées entre parenthèses"}
+                  </p>
+                )}
               </CardContent>
             </Card>
           )}
