@@ -428,13 +428,14 @@ function PCATable({ data, level }: { data: NonNullable<AnalysisResultItem["pca"]
   );
 }
 
-function FactorAnalysisTable({ data }: { data: NonNullable<AnalysisResultItem["factorAnalysis"]> }) {
+function FactorAnalysisTable({ data, level }: { data: NonNullable<AnalysisResultItem["factorAnalysis"]>; level: StudyLevel }) {
   const { t } = useLanguage();
+  const cfg = getLevelConfig(level);
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-sm">
+          <CardTitle className="flex items-center gap-2 text-sm font-academic">
             <GitBranch className="h-4 w-4 text-primary" />
             {t("results.factorAnalysisTitle")}
           </CardTitle>
