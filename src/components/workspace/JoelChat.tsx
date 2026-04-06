@@ -50,6 +50,9 @@ const VARIABLE_REQUIRING: Record<string, { dependent?: boolean; independent?: bo
   anova_basic: { dependent: true, independent: true },
   chi_square: { variables: 2 },
   crosstab: { variables: 2 },
+  pca: { variables: 2 },
+  factor_analysis: { variables: 2 },
+  cluster_analysis: { variables: 2 },
 };
 
 type Msg = { role: "assistant" | "user"; content: string; type?: string };
