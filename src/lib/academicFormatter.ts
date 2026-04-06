@@ -388,6 +388,34 @@ export function generateFigureInterpretation(
     return templates[lang] || templates.en;
   }
 
+  if (chartType === "scree") {
+    const components = data.filter(d => d.value != null);
+    const retained = components.filter(d => (d.value || 0) >= 1).length;
+    const lastCum = components[components.length - 1] as { cumulative?: number } | undefined;
+    const totalVar = (lastCum as any)?.cumulative || 0;
+    const templates: Record<string, string> = {
+      fr: `Le scree plot révèle ${retained} composante(s) avec une valeur propre ≥ 1, expliquant ${totalVar.toFixed(1)}% de la variance totale.`,
+      en: `The scree plot reveals ${retained} component(s) with eigenvalue ≥ 1, explaining ${totalVar.toFixed(1)}% of total variance.`,
+      es: `El gráfico de sedimentación revela ${retained} componente(s) con autovalor ≥ 1, explicando ${totalVar.toFixed(1)}% de la varianza total.`,
+      de: `Das Scree-Plot zeigt ${retained} Komponente(n) mit Eigenwert ≥ 1, die ${totalVar.toFixed(1)}% der Gesamtvarianz erklären.`,
+      pt: `O scree plot revela ${retained} componente(s) com autovalor ≥ 1, explicando ${totalVar.toFixed(1)}% da variância total.`,
+    };
+    return templates[lang] || templates.en;
+  }
+
+  if (chartType === "cluster-scatter") {
+    const clusters = new Set(data.map(d => (d as any).cluster));
+    const n = data.length;
+    const templates: Record<string, string> = {
+      fr: `Le diagramme de dispersion montre ${clusters.size} clusters distincts sur ${n} observations.`,
+      en: `The scatter plot shows ${clusters.size} distinct clusters across ${n} observations.`,
+      es: `El diagrama de dispersión muestra ${clusters.size} clusters distintos en ${n} observaciones.`,
+      de: `Das Streudiagramm zeigt ${clusters.size} verschiedene Cluster über ${n} Beobachtungen.`,
+      pt: `O diagrama de dispersão mostra ${clusters.size} clusters distintos em ${n} observações.`,
+    };
+    return templates[lang] || templates.en;
+  }
+
   return "";
 }
 
