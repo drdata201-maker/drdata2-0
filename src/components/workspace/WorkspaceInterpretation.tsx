@@ -179,7 +179,7 @@ export function WorkspaceInterpretation({ level, projectTitle, projectType, proj
 
     return (
       <div className="group relative">
-        <p className={`text-sm leading-relaxed text-foreground whitespace-pre-line font-academic ${className}`}>{value}</p>
+        <p className={`text-sm leading-relaxed text-foreground whitespace-pre-line font-academic ${className}`}>{stripLatex(value)}</p>
         <Button
           variant="ghost"
           size="icon"
