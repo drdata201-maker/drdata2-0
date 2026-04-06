@@ -785,6 +785,8 @@
   "charts.scatter": "Nuage de points",
   "charts.boxPlot": "Boîte à moustaches",
   "charts.regression": "Régression",
+  "charts.varianceExplained": "Variance expliquée",
+  "charts.clusterScatter": "Dispersion par clusters",
   "notifications.title": "Notifications",
   "notifications.empty": "Aucune notification",
   "notifications.loading": "Chargement...",
