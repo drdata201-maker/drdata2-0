@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Loader2, Table2, BarChart3, FileText, Bot, ClipboardList, BookOpen, Maximize2, Minimize2, Check } from "lucide-react";
+import { EditProjectDialog } from "@/components/workspace/EditProjectDialog";
 import { SaveAsProjectDialog } from "@/components/workspace/SaveAsProjectDialog";
 import { ProjectRestorer } from "@/components/workspace/ProjectRestorer";
 import { JoelChat } from "@/components/workspace/JoelChat";
@@ -73,9 +74,9 @@ export default function AnalysisWorkspace() {
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get("project");
   const level = searchParams.get("level") || "student_license";
-  const projectType = searchParams.get("type") || "";
-  const projectDomain = decodeURIComponent(searchParams.get("domain") || "");
-  const projectObjective = decodeURIComponent(searchParams.get("objective") || "");
+  const [currentType, setCurrentType] = useState(searchParams.get("type") || "");
+  const [currentDomain, setCurrentDomain] = useState(decodeURIComponent(searchParams.get("domain") || ""));
+  const [currentObjective, setCurrentObjective] = useState(decodeURIComponent(searchParams.get("objective") || ""));
   const isQuickMode = searchParams.get("mode") === "quick";
 
   const [projectTitle, setProjectTitle] = useState("");
@@ -210,6 +211,21 @@ export default function AnalysisWorkspace() {
            {isQuickMode && <Badge variant="outline" className="hidden sm:inline-flex border-primary/50 text-primary">⚡ {t("dashboard.quickAnalysis")}</Badge>}
           {projectTitle && !isQuickMode && <Badge variant="secondary" className="hidden sm:inline-flex">{projectTitle}</Badge>}
           <div className="ml-auto flex items-center gap-2">
+            {!isQuickMode && (
+              <EditProjectDialog
+                projectId={projectId}
+                title={projectTitle}
+                domain={currentDomain}
+                objective={currentObjective}
+                description={projectDescription}
+                onSaved={(updates) => {
+                  setProjectTitle(updates.title);
+                  setCurrentDomain(updates.domain);
+                  setCurrentObjective(updates.objective);
+                  setProjectDescription(updates.description);
+                }}
+              />
+            )}
             {isQuickMode && <SaveAsProjectDialog currentTitle={projectTitle} level={level} />}
             <span className="text-xs text-muted-foreground hidden sm:inline">{progressPct}%</span>
             <Button variant="ghost" size="icon" onClick={() => setIsFullscreen(f => !f)} title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}>
@@ -300,10 +316,10 @@ export default function AnalysisWorkspace() {
                   <JoelChat
                     projectId={projectId}
                     projectTitle={projectTitle}
-                    projectType={projectType}
-                    projectDomain={projectDomain}
+                    projectType={currentType}
+                    projectDomain={currentDomain}
                     projectDescription={projectDescription}
-                    projectObjective={projectObjective}
+                    projectObjective={currentObjective}
                     level={level}
                   />
                 </PanelBoundary>
@@ -330,7 +346,7 @@ export default function AnalysisWorkspace() {
 
             <TabsContent value="interpretation" className="mt-0 animate-fade-in">
               <PanelBoundary fallback={<PanelLoading />}>
-                <WorkspaceInterpretation level={level} projectTitle={projectTitle} projectType={projectType} projectDomain={projectDomain} />
+                <WorkspaceInterpretation level={level} projectTitle={projectTitle} projectType={currentType} projectDomain={currentDomain} />
               </PanelBoundary>
             </TabsContent>
 
@@ -338,8 +354,8 @@ export default function AnalysisWorkspace() {
               <PanelBoundary fallback={<PanelLoading />}>
                 <WorkspaceExport
                   projectTitle={projectTitle}
-                  projectType={projectType}
-                  projectDomain={projectDomain}
+                  projectType={currentType}
+                  projectDomain={currentDomain}
                   projectDescription={projectDescription}
                   level={level}
                 />
