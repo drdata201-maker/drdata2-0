@@ -23,6 +23,7 @@ export function WorkspaceInterpretation({ level, projectTitle, projectType, proj
   const { analysisResults, interpretationData, setInterpretationData } = useDataset();
   const data = interpretationData;
   const [loading, setLoading] = useState(false);
+  const [regeneratingSection, setRegeneratingSection] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<EditingField>(null);
   const [editValue, setEditValue] = useState("");
@@ -33,30 +34,52 @@ export function WorkspaceInterpretation({ level, projectTitle, projectType, proj
     return t("interpretation.level.bachelor");
   };
 
+  const callInterpret = async (results: typeof analysisResults) => {
+    const { data: respData, error: fnError } = await supabase.functions.invoke("joel-interpret", {
+      body: {
+        analysisResults: results,
+        level,
+        language,
+        projectContext: { title: projectTitle, type: projectType, domain: projectDomain },
+      },
+    });
+    if (fnError) throw fnError;
+    if (respData?.error) throw new Error(respData.error);
+    return respData as InterpretationData;
+  };
+
   const generateInterpretation = useCallback(async () => {
     if (!analysisResults.length) return;
     setLoading(true);
     setError(null);
 
     try {
-      const { data: respData, error: fnError } = await supabase.functions.invoke("joel-interpret", {
-        body: {
-          analysisResults,
-          level,
-          language,
-          projectContext: { title: projectTitle, type: projectType, domain: projectDomain },
-        },
-      });
-
-      if (fnError) throw fnError;
-      if (respData?.error) throw new Error(respData.error);
-      setInterpretationData(respData as InterpretationData);
+      const respData = await callInterpret(analysisResults);
+      setInterpretationData(respData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Interpretation error");
     } finally {
       setLoading(false);
     }
   }, [analysisResults, level, language, projectTitle, projectType, projectDomain]);
+
+  const regenerateSection = useCallback(async (sectionIndex: number) => {
+    if (!data || !analysisResults[sectionIndex]) return;
+    setRegeneratingSection(sectionIndex);
+
+    try {
+      const singleResult = [analysisResults[sectionIndex]];
+      const respData = await callInterpret(singleResult);
+      if (respData.sections?.[0]) {
+        const updated = { ...data, sections: data.sections.map((s, i) => i === sectionIndex ? respData.sections[0] : s) };
+        setInterpretationData(updated);
+      }
+    } catch (err) {
+      console.error("Regenerate section error:", err);
+    } finally {
+      setRegeneratingSection(null);
+    }
+  }, [data, analysisResults, level, language, projectTitle, projectType, projectDomain]);
 
   useEffect(() => {
     if (analysisResults.length > 0 && !data && !loading) {
@@ -200,10 +223,26 @@ export function WorkspaceInterpretation({ level, projectTitle, projectType, proj
       {data.sections.map((section, i) => (
         <Card key={i}>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <BookOpen className="h-4 w-4 text-primary" />
-              {t("interpretation.title")} — {section.analysisType}
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <BookOpen className="h-4 w-4 text-primary" />
+                {t("interpretation.title")} — {section.analysisType}
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs"
+                disabled={regeneratingSection !== null || loading}
+                onClick={() => regenerateSection(i)}
+              >
+                {regeneratingSection === i ? (
+                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                ) : (
+                  <RefreshCw className="mr-1 h-3 w-3" />
+                )}
+                {t("interpretation.regenerateSection") || "Regenerate"}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <EditableBlock value={section.interpretation} field={{ section: i, field: "interpretation" }} />
