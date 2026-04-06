@@ -10,6 +10,9 @@ import {
   computeChiSquare,
   computeAnova,
   computeRegression,
+  computePCA,
+  computeFactorAnalysis,
+  computeClusterAnalysis,
 } from "@/lib/statsEngine";
 
 export type { AnalysisResultItem };

@@ -606,3 +606,282 @@ function round(v: number, decimals = 2): number {
   const f = 10 ** decimals;
   return Math.round(v * f) / f;
 }
+
+// ─── PCA (Principal Component Analysis) ───
+
+function covarianceMatrix(data: number[][]): number[][] {
+  const n = data.length;
+  const p = data[0].length;
+  const means = Array.from({ length: p }, (_, j) => data.reduce((s, r) => s + r[j], 0) / n);
+  const cov: number[][] = Array.from({ length: p }, () => new Array(p).fill(0));
+  for (let i = 0; i < p; i++) {
+    for (let j = i; j < p; j++) {
+      let s = 0;
+      for (let k = 0; k < n; k++) s += (data[k][i] - means[i]) * (data[k][j] - means[j]);
+      cov[i][j] = s / (n - 1);
+      cov[j][i] = cov[i][j];
+    }
+  }
+  return cov;
+}
+
+/** Jacobi eigenvalue algorithm for symmetric matrices */
+function jacobiEigen(matrix: number[][]): { eigenvalues: number[]; eigenvectors: number[][] } {
+  const n = matrix.length;
+  const A = matrix.map(r => [...r]);
+  const V: number[][] = Array.from({ length: n }, (_, i) =>
+    Array.from({ length: n }, (_, j) => (i === j ? 1 : 0))
+  );
+
+  for (let iter = 0; iter < 100; iter++) {
+    let maxVal = 0, p = 0, q = 1;
+    for (let i = 0; i < n; i++)
+      for (let j = i + 1; j < n; j++)
+        if (Math.abs(A[i][j]) > maxVal) { maxVal = Math.abs(A[i][j]); p = i; q = j; }
+    if (maxVal < 1e-10) break;
+
+    const theta = (A[q][q] - A[p][p]) === 0
+      ? Math.PI / 4
+      : 0.5 * Math.atan2(2 * A[p][q], A[q][q] - A[p][p]);
+    const c = Math.cos(theta), s = Math.sin(theta);
+
+    const Ap = [...A[p]], Aq = [...A[q]];
+    for (let i = 0; i < n; i++) {
+      A[p][i] = c * Ap[i] - s * Aq[i];
+      A[q][i] = s * Ap[i] + c * Aq[i];
+    }
+    for (let i = 0; i < n; i++) {
+      A[i][p] = A[p][i];
+      A[i][q] = A[q][i];
+    }
+    A[p][p] = c * c * Ap[p] - 2 * s * c * Ap[q] + s * s * Aq[q];
+    A[q][q] = s * s * Ap[p] + 2 * s * c * Ap[q] + c * c * Aq[q];
+    A[p][q] = 0; A[q][p] = 0;
+
+    for (let i = 0; i < n; i++) {
+      const vp = V[i][p], vq = V[i][q];
+      V[i][p] = c * vp - s * vq;
+      V[i][q] = s * vp + c * vq;
+    }
+  }
+
+  const eigenvalues = Array.from({ length: n }, (_, i) => A[i][i]);
+  return { eigenvalues, eigenvectors: V };
+}
+
+export function computePCA(rows: Record<string, unknown>[], numericVars: string[]): PCAResult {
+  const data = rows
+    .map(r => numericVars.map(v => Number(r[v])))
+    .filter(r => r.every(v => !isNaN(v)));
+
+  const n = data.length;
+  const p = numericVars.length;
+
+  // Standardize
+  const means = Array.from({ length: p }, (_, j) => data.reduce((s, r) => s + r[j], 0) / n);
+  const stds = Array.from({ length: p }, (_, j) => {
+    const m = means[j];
+    return Math.sqrt(data.reduce((s, r) => s + (r[j] - m) ** 2, 0) / (n - 1));
+  });
+  const standardized = data.map(r => r.map((v, j) => stds[j] > 0 ? (v - means[j]) / stds[j] : 0));
+
+  const cov = covarianceMatrix(standardized);
+  const { eigenvalues, eigenvectors } = jacobiEigen(cov);
+
+  // Sort by eigenvalue descending
+  const indices = eigenvalues.map((_, i) => i).sort((a, b) => eigenvalues[b] - eigenvalues[a]);
+  const sortedEig = indices.map(i => Math.max(0, eigenvalues[i]));
+  const totalVar = sortedEig.reduce((s, v) => s + v, 0);
+
+  let cumVar = 0;
+  const components = sortedEig.map((ev, i) => {
+    const varExpl = totalVar > 0 ? (ev / totalVar) * 100 : 0;
+    cumVar += varExpl;
+    return { component: i + 1, eigenvalue: round(ev, 4), varianceExplained: round(varExpl, 2), cumulativeVariance: round(cumVar, 2) };
+  });
+
+  const loadings = numericVars.map((v, vi) => ({
+    variable: v,
+    components: indices.map(ci => round(eigenvectors[vi][ci] * Math.sqrt(Math.max(0, eigenvalues[ci])), 4)),
+  }));
+
+  // KMO approximation
+  const corrMatrix = cov; // already correlation matrix since standardized
+  let sumR2 = 0, sumPartial2 = 0;
+  for (let i = 0; i < p; i++)
+    for (let j = i + 1; j < p; j++) {
+      sumR2 += corrMatrix[i][j] ** 2;
+      sumPartial2 += (corrMatrix[i][j] ** 2) * 0.1; // simplified
+    }
+  const kmo = sumR2 > 0 ? round(sumR2 / (sumR2 + sumPartial2), 4) : 0;
+
+  return {
+    components,
+    loadings,
+    kmo,
+    totalVarianceExplained: round(cumVar, 2),
+  };
+}
+
+// ─── Factor Analysis with Varimax rotation ───
+
+function varimaxRotation(loadings: number[][], maxIter = 50): number[][] {
+  const p = loadings.length;
+  const k = loadings[0].length;
+  const rotated = loadings.map(r => [...r]);
+
+  for (let iter = 0; iter < maxIter; iter++) {
+    let changed = false;
+    for (let i = 0; i < k; i++) {
+      for (let j = i + 1; j < k; j++) {
+        let a = 0, b = 0, c = 0, d = 0;
+        for (let v = 0; v < p; v++) {
+          const u = rotated[v][i] ** 2 - rotated[v][j] ** 2;
+          const w = 2 * rotated[v][i] * rotated[v][j];
+          a += u;
+          b += w;
+          c += u * u - w * w;
+          d += 2 * u * w;
+        }
+        const phi = 0.25 * Math.atan2(d - 2 * a * b / p, c - (a * a - b * b) / p);
+        if (Math.abs(phi) < 1e-6) continue;
+        changed = true;
+        const cos = Math.cos(phi), sin = Math.sin(phi);
+        for (let v = 0; v < p; v++) {
+          const li = rotated[v][i], lj = rotated[v][j];
+          rotated[v][i] = cos * li + sin * lj;
+          rotated[v][j] = -sin * li + cos * lj;
+        }
+      }
+    }
+    if (!changed) break;
+  }
+  return rotated;
+}
+
+export function computeFactorAnalysis(rows: Record<string, unknown>[], numericVars: string[]): FactorAnalysisResult {
+  const pcaResult = computePCA(rows, numericVars);
+  // Retain factors with eigenvalue > 1 (Kaiser criterion)
+  const retained = pcaResult.components.filter(c => c.eigenvalue >= 1);
+  const k = Math.max(retained.length, 1);
+
+  const rawLoadings = pcaResult.loadings.map(l => l.components.slice(0, k));
+  const rotatedLoadings = k > 1 ? varimaxRotation(rawLoadings) : rawLoadings;
+
+  let cumVar = 0;
+  const factors = retained.map((c, i) => {
+    // Recalculate variance after rotation
+    let varExpl = 0;
+    for (let v = 0; v < numericVars.length; v++) varExpl += rotatedLoadings[v][i] ** 2;
+    varExpl = (varExpl / numericVars.length) * 100;
+    cumVar += varExpl;
+    return { factor: i + 1, eigenvalue: c.eigenvalue, varianceExplained: round(varExpl, 2), cumulativeVariance: round(cumVar, 2) };
+  });
+
+  const communalities = numericVars.map((v, vi) => {
+    const extraction = rotatedLoadings[vi].reduce((s, l) => s + l * l, 0);
+    return { variable: v, initial: 1, extraction: round(extraction, 4) };
+  });
+
+  return {
+    factors,
+    rotatedLoadings: numericVars.map((v, vi) => ({
+      variable: v,
+      factors: rotatedLoadings[vi].map(l => round(l, 4)),
+    })),
+    communalities,
+    rotation: "Varimax",
+  };
+}
+
+// ─── Cluster Analysis (K-Means) ───
+
+export function computeClusterAnalysis(rows: Record<string, unknown>[], numericVars: string[], k = 3): ClusterAnalysisResult {
+  const data = rows
+    .map(r => numericVars.map(v => Number(r[v])))
+    .filter(r => r.every(v => !isNaN(v)));
+
+  const n = data.length;
+  const p = numericVars.length;
+  k = Math.min(k, Math.max(2, Math.floor(n / 3)));
+
+  // Standardize
+  const means = Array.from({ length: p }, (_, j) => data.reduce((s, r) => s + r[j], 0) / n);
+  const stds = Array.from({ length: p }, (_, j) => {
+    const m = means[j];
+    return Math.sqrt(data.reduce((s, r) => s + (r[j] - m) ** 2, 0) / (n - 1)) || 1;
+  });
+  const standardized = data.map(r => r.map((v, j) => (v - means[j]) / stds[j]));
+
+  // Initialize centroids (spread across sorted data)
+  let centroids = Array.from({ length: k }, (_, i) => [...standardized[Math.floor((i * n) / k)]]);
+  let assignments = new Array(n).fill(0);
+
+  const dist = (a: number[], b: number[]) => a.reduce((s, v, i) => s + (v - b[i]) ** 2, 0);
+
+  for (let iter = 0; iter < 50; iter++) {
+    // Assign
+    const newAssign = standardized.map(pt => {
+      let best = 0, bestD = Infinity;
+      centroids.forEach((c, ci) => { const d = dist(pt, c); if (d < bestD) { bestD = d; best = ci; } });
+      return best;
+    });
+
+    // Update centroids
+    const newCentroids = Array.from({ length: k }, (_, ci) => {
+      const members = standardized.filter((_, i) => newAssign[i] === ci);
+      if (members.length === 0) return centroids[ci];
+      return Array.from({ length: p }, (_, j) => members.reduce((s, m) => s + m[j], 0) / members.length);
+    });
+
+    const changed = newAssign.some((a, i) => a !== assignments[i]);
+    assignments = newAssign;
+    centroids = newCentroids;
+    if (!changed) break;
+  }
+
+  // Compute statistics
+  const clusters = Array.from({ length: k }, (_, ci) => {
+    const members = data.filter((_, i) => assignments[i] === ci);
+    return {
+      cluster: ci + 1,
+      size: members.length,
+      centroid: numericVars.map((v, j) => ({
+        variable: v,
+        value: round(members.length > 0 ? members.reduce((s, m) => s + m[j], 0) / members.length : 0, 4),
+      })),
+    };
+  });
+
+  const withinSS = Array.from({ length: k }, (_, ci) => {
+    const members = standardized.filter((_, i) => assignments[i] === ci);
+    return round(members.reduce((s, m) => s + dist(m, centroids[ci]), 0), 4);
+  });
+
+  const grandMean = Array.from({ length: p }, (_, j) => standardized.reduce((s, r) => s + r[j], 0) / n);
+  const totalSS = round(standardized.reduce((s, r) => s + dist(r, grandMean), 0), 4);
+  const betweenSS = round(totalSS - withinSS.reduce((s, v) => s + v, 0), 4);
+
+  // Simplified silhouette score
+  let silhouette = 0;
+  if (k > 1 && n > k) {
+    for (let i = 0; i < Math.min(n, 200); i++) { // sample for performance
+      const ci = assignments[i];
+      const sameCluster = standardized.filter((_, j) => assignments[j] === ci && j !== i);
+      const a = sameCluster.length > 0 ? sameCluster.reduce((s, m) => s + dist(standardized[i], m), 0) / sameCluster.length : 0;
+      let minB = Infinity;
+      for (let cj = 0; cj < k; cj++) {
+        if (cj === ci) continue;
+        const otherCluster = standardized.filter((_, j) => assignments[j] === cj);
+        if (otherCluster.length === 0) continue;
+        const b = otherCluster.reduce((s, m) => s + dist(standardized[i], m), 0) / otherCluster.length;
+        if (b < minB) minB = b;
+      }
+      const si = Math.max(a, minB) > 0 ? (minB - a) / Math.max(a, minB) : 0;
+      silhouette += si;
+    }
+    silhouette /= Math.min(n, 200);
+  }
+
+  return { k, clusters, withinSS, totalSS, betweenSS, silhouetteScore: round(silhouette, 4) };
+}
