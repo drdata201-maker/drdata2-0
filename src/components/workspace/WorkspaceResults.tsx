@@ -474,10 +474,10 @@ function FactorAnalysisTable({ data, level }: { data: NonNullable<AnalysisResult
               <thead>
                 <tr className="border-b border-border">
                   <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">Variable</th>
-                  {data.factors.map(f => (
+                   {data.factors.map(f => (
                     <th key={f.factor} className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">F{f.factor}</th>
                   ))}
-                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("results.communality")}</th>
+                  {cfg.showCommunalities && <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("results.communality")}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -487,7 +487,7 @@ function FactorAnalysisTable({ data, level }: { data: NonNullable<AnalysisResult
                     {l.factors.map((v, i) => (
                       <td key={i} className={`px-2 py-1.5 text-right font-mono ${Math.abs(v) >= 0.5 ? "text-primary font-bold" : "text-foreground"}`}>{v}</td>
                     ))}
-                    <td className="px-2 py-1.5 text-right font-mono text-foreground">{data.communalities[li]?.extraction}</td>
+                    {cfg.showCommunalities && <td className="px-2 py-1.5 text-right font-mono text-foreground">{data.communalities[li]?.extraction}</td>}
                   </tr>
                 ))}
               </tbody>
