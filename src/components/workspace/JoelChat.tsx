@@ -306,6 +306,7 @@ Keep it under 100 words. No long paragraphs.`;
       onDelta: upsertAssistant,
       onDone: () => {
         chatHistoryRef.current.push({ role: "assistant", content: assistantSoFar });
+        syncChatHistory();
         setIsStreaming(false);
       },
       onError: (err) => {
