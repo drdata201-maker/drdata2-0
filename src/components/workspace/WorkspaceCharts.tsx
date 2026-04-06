@@ -128,7 +128,34 @@ export function WorkspaceCharts() {
               <CardContent className="space-y-3">
                 {/* Chart */}
                 <ResponsiveContainer width="100%" height={300}>
-                  {chart.type === "histogram" || chart.type === "bar" ? (
+                  {chart.type === "scree" ? (
+                    <ComposedChart data={chart.data as { name: string; value: number; cumulative?: number }[]}>
+                      {settings.showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
+                      <XAxis dataKey="name" className="text-xs" tick={settings.showLabels ? { fontSize: 10 } : false} />
+                      <YAxis yAxisId="left" className="text-xs" />
+                      <YAxis yAxisId="right" orientation="right" domain={[0, 100]} unit="%" className="text-xs" />
+                      <Tooltip />
+                      <Bar yAxisId="left" dataKey="value" fill={colors[0]} radius={barRadius} name="Eigenvalue" />
+                      <Line yAxisId="right" dataKey="cumulative" stroke={colors[1] || "#10b981"} strokeWidth={2} dot={{ r: 3 }} name="Cumulative %" />
+                      <Legend />
+                    </ComposedChart>
+                  ) : chart.type === "cluster-scatter" ? (
+                    <ScatterChart>
+                      {settings.showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
+                      <XAxis dataKey="x" type="number" className="text-xs" name="X" />
+                      <YAxis dataKey="y" type="number" className="text-xs" name="Y" />
+                      <Tooltip />
+                      {Array.from(new Set((chart.data as { cluster?: number }[]).map(d => d.cluster))).sort().map((cluster, ci) => (
+                        <Scatter
+                          key={cluster}
+                          name={`Cluster ${cluster}`}
+                          data={(chart.data as { x: number; y: number; cluster: number }[]).filter(d => d.cluster === cluster)}
+                          fill={colors[ci % colors.length]}
+                        />
+                      ))}
+                      <Legend />
+                    </ScatterChart>
+                  ) : chart.type === "histogram" || chart.type === "bar" ? (
                     <BarChart data={chart.data as { name: string; value: number }[]}>
                       {settings.showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
                       <XAxis dataKey="name" className="text-xs" tick={settings.showLabels ? { fontSize: 10 } : false} />
