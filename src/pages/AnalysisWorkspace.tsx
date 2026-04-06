@@ -11,6 +11,7 @@ import { ArrowLeft, Loader2, Table2, BarChart3, FileText, Bot, ClipboardList, Bo
 import { EditProjectDialog } from "@/components/workspace/EditProjectDialog";
 import { SaveAsProjectDialog } from "@/components/workspace/SaveAsProjectDialog";
 import { ProjectRestorer } from "@/components/workspace/ProjectRestorer";
+import { AutoSaver } from "@/components/workspace/AutoSaver";
 import { JoelChat } from "@/components/workspace/JoelChat";
 import { WorkspaceResults } from "@/components/workspace/WorkspaceResults";
 import { WorkspaceCharts } from "@/components/workspace/WorkspaceCharts";
