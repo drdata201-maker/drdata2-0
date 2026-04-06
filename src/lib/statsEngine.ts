@@ -446,44 +446,130 @@ export function computeTTest(
   };
 }
 
+/**
+ * Automatically categorize a numeric variable into groups using equal-frequency (tertiles).
+ * Returns a new array of category labels for each row.
+ */
+export function categorizeNumericVariable(
+  rows: Record<string, unknown>[],
+  varName: string,
+  labels?: string[]
+): string[] {
+  const values = rows.map(r => {
+    const v = r[varName];
+    return v != null && v !== "" && !isNaN(Number(v)) ? Number(v) : null;
+  });
+
+  // Collect valid numeric values and compute tertile boundaries
+  const valid = values.filter((v): v is number => v !== null);
+  if (valid.length === 0) return values.map(() => "N/A");
+
+  const sorted = [...valid].sort((a, b) => a - b);
+  const t1 = sorted[Math.floor(sorted.length / 3)];
+  const t2 = sorted[Math.floor((2 * sorted.length) / 3)];
+
+  const defaultLabels = labels || ["Low", "Medium", "High"];
+
+  return values.map(v => {
+    if (v === null) return "N/A";
+    if (v <= t1) return defaultLabels[0];
+    if (v <= t2) return defaultLabels[1];
+    return defaultLabels[2];
+  });
+}
+
+/** Check if a variable is numeric in the dataset */
+function isNumericVariable(rows: Record<string, unknown>[], varName: string): boolean {
+  const sample = rows.slice(0, 50);
+  let numCount = 0;
+  for (const r of sample) {
+    const v = r[varName];
+    if (v != null && v !== "" && !isNaN(Number(v))) numCount++;
+  }
+  return numCount / sample.length > 0.8;
+}
+
 export function computeChiSquare(
   rows: Record<string, unknown>[],
   var1: string,
   var2: string
 ): ChiSquareResult {
+  // Auto-categorize numeric variables
+  const var1IsNumeric = isNumericVariable(rows, var1);
+  const var2IsNumeric = isNumericVariable(rows, var2);
+
+  let cat1: string[];
+  let cat2: string[];
+
+  if (var1IsNumeric) {
+    cat1 = categorizeNumericVariable(rows, var1);
+  } else {
+    cat1 = rows.map(r => String(r[var1] ?? ""));
+  }
+
+  if (var2IsNumeric) {
+    cat2 = categorizeNumericVariable(rows, var2);
+  } else {
+    cat2 = rows.map(r => String(r[var2] ?? ""));
+  }
+
+  // Build contingency table
   const contingency: Record<string, Record<string, number>> = {};
-  rows.forEach(r => {
-    const a = String(r[var1] ?? "");
-    const b = String(r[var2] ?? "");
+  for (let i = 0; i < rows.length; i++) {
+    const a = cat1[i];
+    const b = cat2[i];
+    if (a === "N/A" || b === "N/A") continue;
     if (!contingency[a]) contingency[a] = {};
     contingency[a][b] = (contingency[a][b] || 0) + 1;
-  });
+  }
 
-  const rowKeys = Object.keys(contingency);
-  const colKeys = [...new Set(rowKeys.flatMap(rk => Object.keys(contingency[rk])))];
-  const n = rows.length;
+  const rowLabels = Object.keys(contingency).sort();
+  const colLabels = [...new Set(rowLabels.flatMap(rk => Object.keys(contingency[rk])))].sort();
+
+  // Build numeric matrices
+  const observed: number[][] = rowLabels.map(rk =>
+    colLabels.map(ck => contingency[rk]?.[ck] || 0)
+  );
+
+  const rowTotals = observed.map(row => row.reduce((s, v) => s + v, 0));
+  const colTotals = colLabels.map((_, ci) => observed.reduce((s, row) => s + row[ci], 0));
+  const grandTotal = rowTotals.reduce((s, v) => s + v, 0);
+
+  // Compute expected values and chi-square
+  const expected: number[][] = rowLabels.map((_, ri) =>
+    colLabels.map((_, ci) => (rowTotals[ri] * colTotals[ci]) / grandTotal)
+  );
 
   let chi2 = 0;
-  for (const rk of rowKeys) {
-    const rowTotal = colKeys.reduce((s, ck) => s + (contingency[rk][ck] || 0), 0);
-    for (const ck of colKeys) {
-      const colTotal = rowKeys.reduce((s, rk2) => s + (contingency[rk2]?.[ck] || 0), 0);
-      const expected = (rowTotal * colTotal) / n;
-      const observed = contingency[rk][ck] || 0;
-      if (expected > 0) chi2 += (observed - expected) ** 2 / expected;
+  for (let ri = 0; ri < rowLabels.length; ri++) {
+    for (let ci = 0; ci < colLabels.length; ci++) {
+      const e = expected[ri][ci];
+      if (e > 0) {
+        chi2 += (observed[ri][ci] - e) ** 2 / e;
+      }
     }
   }
 
-  const df = (rowKeys.length - 1) * (colKeys.length - 1);
-  const k = Math.min(rowKeys.length, colKeys.length);
-  const cramersV = k > 1 ? Math.sqrt(chi2 / (n * (k - 1))) : 0;
+  const df = (rowLabels.length - 1) * (colLabels.length - 1);
+  const k = Math.min(rowLabels.length, colLabels.length);
+  const cramersV = k > 1 && grandTotal > 0 ? Math.sqrt(chi2 / (grandTotal * (k - 1))) : 0;
 
   return {
     var1, var2,
     chiSquare: round(chi2, 4),
     df,
-    pValue: round(chi2sf(chi2, df), 4),
+    pValue: round(chi2sf(chi2, df > 0 ? df : 1), 4),
     cramersV: round(cramersV, 4),
+    contingencyTable: {
+      rowLabels,
+      colLabels,
+      observed,
+      expected: expected.map(row => row.map(v => round(v, 2))),
+      rowTotals,
+      colTotals,
+      grandTotal,
+    },
+    categorized: { var1Auto: var1IsNumeric, var2Auto: var2IsNumeric },
   };
 }
 
