@@ -649,6 +649,7 @@
   "student.status.draft": "Brouillon",
   "student.projects.progress": "Progression",
   "student.projects.continue": "Continuer l'analyse",
+  "student.projects.lastModified": "Modifié le",
   "student.projects.viewResults": "Voir les résultats",
   "student.analysis.selectProject": "Sélectionner un projet",
   "student.analysis.choosePlaceholder": "Choisir un projet existant...",
