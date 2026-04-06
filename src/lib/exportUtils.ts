@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import { dataUrlToUint8Array } from "./chartImageRenderer";
 import { getTableLabel, getFigureLabel, getSource, generateTableInterpretation, generateFigureInterpretation } from "./academicFormatter";
 import type { AnalysisResultItem } from "./statsEngine";
+import { stripLatex } from "./latexSanitizer";
 
 export interface ChartImage {
   title: string;
