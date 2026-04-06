@@ -221,20 +221,85 @@ function AnovaTable({ data }: { data: NonNullable<AnalysisResultItem["anovas"]> 
 }
 
 function ChiSquareTable({ data }: { data: NonNullable<AnalysisResultItem["chiSquares"]> }) {
+  const { t } = useLanguage();
   return (
     <>
       {data.map((c, i) => (
-        <Card key={i}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Chi-Square: {c.var1} × {c.var2}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">χ²</span><span className="font-mono text-foreground">{c.chiSquare}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">df</span><span className="font-mono text-foreground">{c.df}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">p-value</span><SignificanceBadge p={c.pValue} /></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Cramér's V</span><span className="font-mono text-foreground">{c.cramersV}</span></div>
-          </CardContent>
-        </Card>
+        <div key={i} className="space-y-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Chi-Square: {c.var1} × {c.var2}</CardTitle>
+              {c.categorized && (c.categorized.var1Auto || c.categorized.var2Auto) && (
+                <p className="text-xs text-muted-foreground italic mt-1">
+                  {t("results.autoCategorized") || "Variables numériques auto-catégorisées (Low/Medium/High)"}
+                </p>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">χ²</span><span className="font-mono text-foreground">{c.chiSquare}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">df</span><span className="font-mono text-foreground">{c.df}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">p-value</span><SignificanceBadge p={c.pValue} /></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Cramér's V</span><span className="font-mono text-foreground">{c.cramersV}</span></div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{t("results.effectSize") || "Taille d'effet"}</span>
+                <Badge variant="outline" className="text-xs">
+                  {c.cramersV < 0.1 ? (t("results.negligible") || "Négligeable") :
+                   c.cramersV < 0.3 ? (t("results.weak") || "Faible") :
+                   c.cramersV < 0.5 ? (t("results.moderate") || "Modéré") :
+                   (t("results.strong") || "Fort")}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Contingency table */}
+          {c.contingencyTable && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">{t("results.contingencyTable") || "Tableau de contingence"}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">{c.var1} \ {c.var2}</th>
+                        {c.contingencyTable.colLabels.map(cl => (
+                          <th key={cl} className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{cl}</th>
+                        ))}
+                        <th className="px-2 py-1.5 text-right font-medium text-primary text-xs">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {c.contingencyTable.rowLabels.map((rl, ri) => (
+                        <tr key={rl} className="border-b border-border/50">
+                          <td className="px-2 py-1.5 font-medium text-foreground">{rl}</td>
+                          {c.contingencyTable!.observed[ri].map((obs, ci) => (
+                            <td key={ci} className="px-2 py-1.5 text-right font-mono text-foreground">
+                              {obs}
+                              <span className="text-muted-foreground text-[10px] block">({c.contingencyTable!.expected[ri][ci]})</span>
+                            </td>
+                          ))}
+                          <td className="px-2 py-1.5 text-right font-mono font-bold text-primary">{c.contingencyTable!.rowTotals[ri]}</td>
+                        </tr>
+                      ))}
+                      <tr className="border-t-2 border-primary/20">
+                        <td className="px-2 py-1.5 font-bold text-primary">Total</td>
+                        {c.contingencyTable.colTotals.map((ct, ci) => (
+                          <td key={ci} className="px-2 py-1.5 text-right font-mono font-bold text-primary">{ct}</td>
+                        ))}
+                        <td className="px-2 py-1.5 text-right font-mono font-bold text-primary">{c.contingencyTable.grandTotal}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-2 italic">
+                  {t("results.expectedInParens") || "Les valeurs attendues sont indiquées entre parenthèses"}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       ))}
     </>
   );

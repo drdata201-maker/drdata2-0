@@ -6,6 +6,7 @@ import {
   computeChiSquare,
   computeAnova,
   computeRegression,
+  categorizeNumericVariable,
 } from "@/lib/statsEngine";
 
 // Helper dataset
@@ -137,7 +138,34 @@ describe("Chi-Square", () => {
     expect(res.df).toBe(1);
     expect(res.pValue).toBeLessThan(0.0001);
   });
-});
+  });
+
+  it("auto-categorizes numeric variables and returns contingency table", () => {
+    // Use numeric-only data — should be auto-categorized
+    const numData = Array.from({ length: 30 }, (_, i) => ({
+      score: i * 3,
+      grade: i * 2,
+    }));
+    const res = computeChiSquare(numData, "score", "grade");
+    expect(res.categorized).toBeDefined();
+    expect(res.categorized!.var1Auto).toBe(true);
+    expect(res.categorized!.var2Auto).toBe(true);
+    expect(res.contingencyTable).toBeDefined();
+    expect(res.contingencyTable!.rowLabels.length).toBeLessThanOrEqual(3);
+    expect(res.contingencyTable!.colLabels.length).toBeLessThanOrEqual(3);
+    expect(res.df).toBe((res.contingencyTable!.rowLabels.length - 1) * (res.contingencyTable!.colLabels.length - 1));
+    expect(res.cramersV).toBeGreaterThanOrEqual(0);
+    expect(res.cramersV).toBeLessThanOrEqual(1);
+  });
+
+  it("categorizeNumericVariable creates 3 groups", () => {
+    const data = Array.from({ length: 30 }, (_, i) => ({ val: i }));
+    const cats = categorizeNumericVariable(data, "val");
+    const unique = [...new Set(cats)];
+    expect(unique.length).toBeLessThanOrEqual(3);
+    expect(unique).toContain("Low");
+    expect(unique).toContain("High");
+  });
 
 describe("ANOVA", () => {
   it("returns valid F-statistic and p-value", () => {
