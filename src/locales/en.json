@@ -785,6 +785,8 @@
   "charts.scatter": "Scatter Plot",
   "charts.boxPlot": "Box Plot",
   "charts.regression": "Regression",
+  "charts.varianceExplained": "Variance Explained",
+  "charts.clusterScatter": "Cluster Scatter",
   "notifications.title": "Notifications",
   "notifications.empty": "No notifications",
   "notifications.loading": "Loading...",
