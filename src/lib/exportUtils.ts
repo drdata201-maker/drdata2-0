@@ -556,25 +556,58 @@ export function exportPdf(data: ExportData, content: ExportContent) {
     doc.setFont("helvetica", "normal");
   }
 
-  // Charts in PDF
+  // Charts in PDF with academic formatting
   if ((content === "full" || content === "results") && data.chartImages && data.chartImages.length > 0) {
+    const figLabel = getFigureLabel(data.lang);
+    const sourceText = getSource(data.lang);
     addH2(t.charts);
-    for (const chart of data.chartImages) {
-      // Check if enough space for chart (approx 80mm height)
-      if (y > 180) { doc.addPage(); y = 20; }
+
+    for (let i = 0; i < data.chartImages.length; i++) {
+      const chart = data.chartImages[i];
+      const figNum = i + 1;
+
+      if (y > 160) { doc.addPage(); y = 20; }
+
+      // Academic figure title
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
-      const chartTitle = chart.title.length > 70 ? chart.title.slice(0, 67) + "…" : chart.title;
-      doc.text(chartTitle, 14, y);
-      y += 4;
+      const figTitle = `${figLabel} ${figNum}: ${chart.title}`;
+      const titleText = figTitle.length > 80 ? figTitle.slice(0, 77) + "…" : figTitle;
+      doc.text(titleText, 14, y);
+      y += 5;
+
+      // Chart image
       try {
         const imgW = 170;
         const imgH = (chart.height / chart.width) * imgW;
         doc.addImage(chart.dataUrl, "PNG", 14, y, imgW, imgH);
-        y += imgH + 8;
+        y += imgH + 4;
       } catch {
         y += 4;
       }
+
+      // Source
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "italic");
+      doc.setTextColor(100);
+      doc.text(sourceText, 14, y);
+      doc.setTextColor(0);
+      y += 5;
+
+      // Figure interpretation
+      if (chart.chartType && chart.chartData) {
+        const figInterp = generateFigureInterpretation(chart.chartType, chart.title, chart.chartData, data.lang);
+        if (figInterp) {
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "italic");
+          const interpLines = doc.splitTextToSize(figInterp, 180);
+          doc.text(interpLines, 14, y);
+          y += interpLines.length * 5 + 4;
+        }
+      }
+
+      doc.setFont("helvetica", "normal");
+      y += 4;
     }
   }
 
