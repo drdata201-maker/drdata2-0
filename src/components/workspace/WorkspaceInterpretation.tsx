@@ -117,6 +117,32 @@ export function WorkspaceInterpretation({ level, projectTitle, projectType, proj
     setEditValue("");
   };
 
+  const copyAllToClipboard = () => {
+    if (!data) return;
+    const lines: string[] = [];
+    data.sections.forEach((s) => {
+      lines.push(`--- ${s.analysisType} ---`);
+      lines.push(s.interpretation);
+      if (s.conclusion) { lines.push(""); lines.push(`${t("interpretation.conclusionTitle")}:`); lines.push(s.conclusion); }
+      if (s.recommendations) { lines.push(""); lines.push(`${t("interpretation.recommendationsTitle")}:`); lines.push(s.recommendations); }
+      lines.push("");
+    });
+    if (data.globalConclusion) { lines.push(`${t("interpretation.globalConclusion")}:`); lines.push(data.globalConclusion); lines.push(""); }
+    if (data.globalRecommendations) { lines.push(`${t("interpretation.globalRecommendations")}:`); lines.push(data.globalRecommendations); }
+    navigator.clipboard.writeText(lines.join("\n")).then(() => {
+      toast.success(t("interpretation.copied") || "Copied to clipboard");
+    });
+  };
+
+  const copySectionToClipboard = (section: InterpretationSection) => {
+    const lines: string[] = [`--- ${section.analysisType} ---`, section.interpretation];
+    if (section.conclusion) { lines.push(""); lines.push(`${t("interpretation.conclusionTitle")}:`); lines.push(section.conclusion); }
+    if (section.recommendations) { lines.push(""); lines.push(`${t("interpretation.recommendationsTitle")}:`); lines.push(section.recommendations); }
+    navigator.clipboard.writeText(lines.join("\n")).then(() => {
+      toast.success(t("interpretation.copied") || "Copied to clipboard");
+    });
+  };
+
   const isEditing = (field: EditingField) => {
     if (!editing || !field) return false;
     if (typeof editing === "string" && typeof field === "string") return editing === field;
