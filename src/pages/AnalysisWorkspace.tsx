@@ -339,8 +339,8 @@ export default function AnalysisWorkspace() {
               <PanelBoundary fallback={<PanelLoading />}>
                 <WorkspaceExport
                   projectTitle={projectTitle}
-                  projectType={projectType}
-                  projectDomain={projectDomain}
+                  projectType={currentType}
+                  projectDomain={currentDomain}
                   projectDescription={projectDescription}
                   level={level}
                 />
