@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,10 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Check, ChevronsUpDown } from "lucide-react";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 const licenceProjectTypes = [
   "memoir_licence", "academic_project", "questionnaire_analysis",
@@ -26,6 +29,16 @@ const doctoratProjectTypes = [
   "advanced_analysis", "scientific_modeling", "experimental_research",
 ];
 
+const RESEARCH_DOMAINS = [
+  "health_sciences", "public_health", "medicine", "nursing", "pharmacy",
+  "economics", "management", "finance", "accounting", "marketing",
+  "sociology", "psychology", "education",
+  "computer_science", "engineering", "agriculture",
+  "law", "mathematics", "statistics",
+  "communication", "political_science", "environmental_science",
+  "biology", "chemistry", "physics",
+];
+
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
   visible: (i: number) => ({
@@ -39,9 +52,12 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
+  const [objective, setObjective] = useState("");
   const [description, setDescription] = useState("");
   const [projectType, setProjectType] = useState("");
   const [domain, setDomain] = useState("");
+  const [customDomain, setCustomDomain] = useState("");
+  const [domainOpen, setDomainOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const resolveStudentUserType = (): "student_license" | "student_master" | "student_doctorate" => {
@@ -63,8 +79,15 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
       ? doctoratProjectTypes
       : licenceProjectTypes;
 
+  const finalDomain = domain === "__other__" ? customDomain.trim() : domain;
+  const domainLabel = useMemo(() => {
+    if (!domain) return "";
+    if (domain === "__other__") return customDomain || t("student.newProject.otherDomain");
+    return t(`domain.${domain}`);
+  }, [domain, customDomain, t]);
+
   const handleCreate = async () => {
-    if (!title.trim() || !projectType) return;
+    if (!title.trim() || !projectType || !objective.trim()) return;
     setLoading(true);
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -77,7 +100,7 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
         user_id: user.id,
         title: title.trim(),
         description: description.trim() || null,
-        domain: domain.trim() || null,
+        domain: finalDomain || null,
         status: "draft",
         user_type: resolvedUserType,
       };
@@ -87,7 +110,7 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
         .single();
       if (error) throw new Error(error.message);
       toast.success(t("student.newProject.success"));
-      navigate(`/analysis/workspace?project=${data.id}&level=${resolvedUserType}&type=${encodeURIComponent(projectType)}&domain=${encodeURIComponent(domain || "")}`);
+      navigate(`/analysis/workspace?project=${data.id}&level=${resolvedUserType}&type=${encodeURIComponent(projectType)}&domain=${encodeURIComponent(finalDomain || "")}&objective=${encodeURIComponent(objective.trim())}`);
     } catch (err: any) {
       toast.error(err?.message || t("pme.newAnalysis.error"));
     } finally {
@@ -119,21 +142,23 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
             </h2>
 
             <div className="space-y-5">
+              {/* Study Topic */}
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground">
-                  {t("pme.newAnalysis.analysisTitle")}
+                  {t("student.newProject.studyTopic")} <span className="text-destructive">*</span>
                 </label>
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder={t("student.newProject.titlePlaceholder")}
+                  placeholder={t("student.newProject.studyTopicPlaceholder")}
                   className="h-11"
                 />
               </div>
 
+              {/* Project Type */}
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground">
-                  {t("student.wizard.projectType")}
+                  {t("student.wizard.projectType")} <span className="text-destructive">*</span>
                 </label>
                 <Select value={projectType} onValueChange={setProjectType}>
                   <SelectTrigger className="h-11">
@@ -147,18 +172,76 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
                 </Select>
               </div>
 
+              {/* Research Domain - Searchable */}
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground">
                   {t("student.wizard.domain")}
                 </label>
-                <Input
-                  value={domain}
-                  onChange={(e) => setDomain(e.target.value)}
-                  placeholder={t("student.wizard.domainPlaceholder")}
-                  className="h-11"
+                <Popover open={domainOpen} onOpenChange={setDomainOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={domainOpen}
+                      className="h-11 w-full justify-between font-normal"
+                    >
+                      {domainLabel || <span className="text-muted-foreground">{t("student.wizard.domainPlaceholder")}</span>}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder={t("student.newProject.searchDomain")} />
+                      <CommandList>
+                        <CommandEmpty>{t("history.noResults")}</CommandEmpty>
+                        <CommandGroup>
+                          {RESEARCH_DOMAINS.map((d) => (
+                            <CommandItem
+                              key={d}
+                              value={t(`domain.${d}`)}
+                              onSelect={() => { setDomain(d); setDomainOpen(false); }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", domain === d ? "opacity-100" : "opacity-0")} />
+                              {t(`domain.${d}`)}
+                            </CommandItem>
+                          ))}
+                          <CommandItem
+                            value={t("student.newProject.otherDomain")}
+                            onSelect={() => { setDomain("__other__"); setDomainOpen(false); }}
+                          >
+                            <Check className={cn("mr-2 h-4 w-4", domain === "__other__" ? "opacity-100" : "opacity-0")} />
+                            {t("student.newProject.otherDomain")}
+                          </CommandItem>
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                {domain === "__other__" && (
+                  <Input
+                    value={customDomain}
+                    onChange={(e) => setCustomDomain(e.target.value)}
+                    placeholder={t("student.newProject.customDomainPlaceholder")}
+                    className="mt-2 h-11"
+                  />
+                )}
+              </div>
+
+              {/* Study Objective */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">
+                  {t("student.newProject.objective")} <span className="text-destructive">*</span>
+                </label>
+                <Textarea
+                  value={objective}
+                  onChange={(e) => setObjective(e.target.value)}
+                  placeholder={t("student.newProject.objectivePlaceholder")}
+                  rows={3}
+                  className="min-h-[90px] resize-none"
                 />
               </div>
 
+              {/* Description (optional) */}
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground">
                   {t("pme.newAnalysis.description")}
@@ -167,8 +250,8 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder={t("student.newProject.descPlaceholder")}
-                  rows={4}
-                  className="min-h-[110px] resize-none"
+                  rows={3}
+                  className="min-h-[90px] resize-none"
                 />
               </div>
             </div>
@@ -185,7 +268,7 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
       >
         <Button
           onClick={handleCreate}
-          disabled={loading || !title.trim() || !projectType}
+          disabled={loading || !title.trim() || !projectType || !objective.trim()}
           size="lg"
           className="h-12 px-8 text-base font-medium shadow-sm"
         >
