@@ -480,6 +480,17 @@ export function exportPdf(data: ExportData, content: ExportContent) {
     y += 6;
 
     addH2(t.descriptiveStats);
+
+    const tableLabel = getTableLabel(data.lang);
+    const sourceText = getSource(data.lang);
+    let tableNum = 1;
+
+    // Academic table title
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text(`${tableLabel} ${tableNum}: ${t.descriptiveStats}`, 14, y);
+    y += 6;
+
     autoTable(doc, {
       startY: y,
       head: [[t.variable, "N", t.mean, t.std, "Min", "Max"]],
@@ -488,11 +499,61 @@ export function exportPdf(data: ExportData, content: ExportContent) {
       headStyles: { fillColor: [37, 99, 235] },
       margin: { left: 14 },
     });
-    y = (doc as any).lastAutoTable.finalY + 10;
+    y = (doc as any).lastAutoTable.finalY + 4;
+
+    // Source
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(100);
+    doc.text(sourceText, 14, y);
+    doc.setTextColor(0);
+    y += 5;
+
+    // Interpretation
+    if (data.analysisResults) {
+      const descResult = data.analysisResults.find(r => r.descriptive && r.descriptive.length > 0);
+      if (descResult) {
+        const interp = generateTableInterpretation(descResult, data.lang, data.level);
+        if (interp) {
+          if (y > 250) { doc.addPage(); y = 20; }
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "italic");
+          const interpLines = doc.splitTextToSize(interp, 180);
+          doc.text(interpLines, 14, y);
+          y += interpLines.length * 5 + 4;
+        }
+      }
+    }
+    doc.setFont("helvetica", "normal");
+    tableNum++;
+    y += 4;
 
     addH2(t.testResults);
-    data.testResults.forEach(r => addFieldPdf(r.label, r.value));
+
+    // Academic table title for test results
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text(`${tableLabel} ${tableNum}: ${t.testResults}`, 14, y);
     y += 6;
+
+    autoTable(doc, {
+      startY: y,
+      head: [["Test", t.variable]],
+      body: data.testResults.map(r => [r.label, r.value]),
+      theme: "grid",
+      headStyles: { fillColor: [37, 99, 235] },
+      margin: { left: 14 },
+    });
+    y = (doc as any).lastAutoTable.finalY + 4;
+
+    // Source
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(100);
+    doc.text(sourceText, 14, y);
+    doc.setTextColor(0);
+    y += 8;
+    doc.setFont("helvetica", "normal");
   }
 
   // Charts in PDF
