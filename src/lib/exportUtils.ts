@@ -4,12 +4,16 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { dataUrlToUint8Array } from "./chartImageRenderer";
+import { getTableLabel, getFigureLabel, getSource, generateTableInterpretation, generateFigureInterpretation } from "./academicFormatter";
+import type { AnalysisResultItem } from "./statsEngine";
 
 export interface ChartImage {
   title: string;
   dataUrl: string;
   width: number;
   height: number;
+  chartType?: string;
+  chartData?: { name?: string; value?: number; x?: number; y?: number }[];
 }
 
 export interface ExportData {
@@ -25,6 +29,7 @@ export interface ExportData {
   conclusion: string;
   recommendations: string;
   chartImages?: ChartImage[];
+  analysisResults?: AnalysisResultItem[];
 }
 
 type ExportContent = "full" | "results" | "graphs" | "interpretation" | "conclusion";
