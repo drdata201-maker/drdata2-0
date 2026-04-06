@@ -3,7 +3,7 @@ import { useDataset } from "@/contexts/DatasetContext";
 import type { AnalysisResultItem } from "@/contexts/DatasetContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table2, TrendingUp, BarChart3, Upload } from "lucide-react";
+import { Table2, TrendingUp, BarChart3, Upload, Layers, GitBranch, Scatter } from "lucide-react";
 
 function SignificanceBadge({ p }: { p: number }) {
   if (p < 0.001) return <Badge className="bg-green-600 text-white">p &lt; 0.001 ***</Badge>;
@@ -256,6 +256,217 @@ function TTestTable({ data }: { data: NonNullable<AnalysisResultItem["tTests"]> 
   );
 }
 
+function PCATable({ data }: { data: NonNullable<AnalysisResultItem["pca"]> }) {
+  const { t } = useLanguage();
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Layers className="h-4 w-4 text-primary" />
+            {t("results.pcaVariance")}
+          </CardTitle>
+          <div className="flex gap-2 mt-1">
+            <Badge variant="outline">KMO = {data.kmo}</Badge>
+            <Badge variant="outline">{t("results.totalVariance")}: {data.totalVarianceExplained}%</Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">{t("results.component")}</th>
+                <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("results.eigenvalue")}</th>
+                <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("results.varianceExplained")}</th>
+                <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("results.cumulativeVariance")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.components.map(c => (
+                <tr key={c.component} className={`border-b border-border/50 ${c.eigenvalue >= 1 ? "bg-primary/5" : ""}`}>
+                  <td className="px-2 py-1.5 font-medium text-foreground">PC{c.component}</td>
+                  <td className="px-2 py-1.5 text-right font-mono text-foreground">{c.eigenvalue}</td>
+                  <td className="px-2 py-1.5 text-right font-mono text-foreground">{c.varianceExplained}%</td>
+                  <td className="px-2 py-1.5 text-right font-mono text-foreground">{c.cumulativeVariance}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">{t("results.componentLoadings")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">Variable</th>
+                  {data.components.filter(c => c.eigenvalue >= 1).map(c => (
+                    <th key={c.component} className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">PC{c.component}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.loadings.map(l => (
+                  <tr key={l.variable} className="border-b border-border/50">
+                    <td className="px-2 py-1.5 font-medium text-foreground">{l.variable}</td>
+                    {l.components.slice(0, data.components.filter(c => c.eigenvalue >= 1).length).map((v, i) => (
+                      <td key={i} className={`px-2 py-1.5 text-right font-mono ${Math.abs(v) >= 0.5 ? "text-primary font-bold" : "text-foreground"}`}>{v}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function FactorAnalysisTable({ data }: { data: NonNullable<AnalysisResultItem["factorAnalysis"]> }) {
+  const { t } = useLanguage();
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <GitBranch className="h-4 w-4 text-primary" />
+            {t("results.factorAnalysisTitle")}
+          </CardTitle>
+          <Badge variant="outline" className="mt-1 w-fit">{t("results.rotation")}: {data.rotation}</Badge>
+        </CardHeader>
+        <CardContent>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">{t("results.factor")}</th>
+                <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("results.eigenvalue")}</th>
+                <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("results.varianceExplained")}</th>
+                <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("results.cumulativeVariance")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.factors.map(f => (
+                <tr key={f.factor} className="border-b border-border/50">
+                  <td className="px-2 py-1.5 font-medium text-foreground">F{f.factor}</td>
+                  <td className="px-2 py-1.5 text-right font-mono text-foreground">{f.eigenvalue}</td>
+                  <td className="px-2 py-1.5 text-right font-mono text-foreground">{f.varianceExplained}%</td>
+                  <td className="px-2 py-1.5 text-right font-mono text-foreground">{f.cumulativeVariance}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">{t("results.rotatedLoadings")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">Variable</th>
+                  {data.factors.map(f => (
+                    <th key={f.factor} className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">F{f.factor}</th>
+                  ))}
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("results.communality")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.rotatedLoadings.map((l, li) => (
+                  <tr key={l.variable} className="border-b border-border/50">
+                    <td className="px-2 py-1.5 font-medium text-foreground">{l.variable}</td>
+                    {l.factors.map((v, i) => (
+                      <td key={i} className={`px-2 py-1.5 text-right font-mono ${Math.abs(v) >= 0.5 ? "text-primary font-bold" : "text-foreground"}`}>{v}</td>
+                    ))}
+                    <td className="px-2 py-1.5 text-right font-mono text-foreground">{data.communalities[li]?.extraction}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function ClusterAnalysisTable({ data }: { data: NonNullable<AnalysisResultItem["clusterAnalysis"]> }) {
+  const { t } = useLanguage();
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Scatter className="h-4 w-4 text-primary" />
+            {t("results.clusterAnalysisTitle")}
+          </CardTitle>
+          <div className="flex flex-wrap gap-2 mt-1">
+            <Badge variant="outline">K = {data.k}</Badge>
+            <Badge variant="outline">{t("results.silhouette")}: {data.silhouetteScore}</Badge>
+            <Badge variant="outline">BSS/TSS = {data.totalSS > 0 ? ((data.betweenSS / data.totalSS) * 100).toFixed(1) : 0}%</Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">{t("results.cluster")}</th>
+                <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("results.size")}</th>
+                <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("results.withinSS")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.clusters.map((c, i) => (
+                <tr key={c.cluster} className="border-b border-border/50">
+                  <td className="px-2 py-1.5 font-medium text-foreground">{t("results.cluster")} {c.cluster}</td>
+                  <td className="px-2 py-1.5 text-right font-mono text-foreground">{c.size}</td>
+                  <td className="px-2 py-1.5 text-right font-mono text-foreground">{data.withinSS[i]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">{t("results.clusterCentroids")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">Variable</th>
+                  {data.clusters.map(c => (
+                    <th key={c.cluster} className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("results.cluster")} {c.cluster}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.clusters[0]?.centroid.map((cv, vi) => (
+                  <tr key={cv.variable} className="border-b border-border/50">
+                    <td className="px-2 py-1.5 font-medium text-foreground">{cv.variable}</td>
+                    {data.clusters.map(c => (
+                      <td key={c.cluster} className="px-2 py-1.5 text-right font-mono text-foreground">{c.centroid[vi]?.value}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export function WorkspaceResults() {
   const { t } = useLanguage();
   const { analysisResults, dataset } = useDataset();
@@ -301,6 +512,9 @@ export function WorkspaceResults() {
           {result.tTests && <TTestTable data={result.tTests} />}
           {result.anovas && <AnovaTable data={result.anovas} />}
           {result.chiSquares && <ChiSquareTable data={result.chiSquares} />}
+          {result.pca && <PCATable data={result.pca} />}
+          {result.factorAnalysis && <FactorAnalysisTable data={result.factorAnalysis} />}
+          {result.clusterAnalysis && <ClusterAnalysisTable data={result.clusterAnalysis} />}
         </div>
       ))}
     </div>
