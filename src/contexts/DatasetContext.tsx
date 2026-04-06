@@ -209,6 +209,16 @@ async function parseFile(file: File): Promise<Record<string, unknown>[]> {
   return XLSX.utils.sheet_to_json(sheet, { defval: null });
 }
 
+const DEFAULT_CHAT_STATE: ChatState = {
+  messages: [],
+  phase: "confirm",
+  chatHistory: [],
+  greetingSent: false,
+  selectedSoftware: "",
+  selectedAnalyses: [],
+  file: null,
+};
+
 export function DatasetProvider({ children }: { children: ReactNode }) {
   const [dataset, setDataset] = useState<DatasetSummary | null>(null);
   const [prepStatus, setPrepStatus] = useState<PrepStatus>("idle");
@@ -216,6 +226,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   const [cleanedData, setCleanedData] = useState<Record<string, unknown>[] | null>(null);
   const [analysisResults, setAnalysisResults] = useState<AnalysisResultItem[]>([]);
   const [interpretationData, setInterpretationData] = useState<InterpretationData | null>(null);
+  const [chatState, setChatState] = useState<ChatState>(DEFAULT_CHAT_STATE);
 
   const processFile = useCallback(async (file: File): Promise<DatasetSummary> => {
     setPrepStatus("uploading");
