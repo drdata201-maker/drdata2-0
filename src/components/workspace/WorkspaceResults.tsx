@@ -141,22 +141,22 @@ function RegressionTable({ data }: { data: NonNullable<AnalysisResultItem["regre
       {data.map((reg, i) => (
         <Card key={i}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">{t("results.regression")}: {reg.dependent}</CardTitle>
+            <CardTitle className="text-sm font-academic">{t("results.regression")}: {reg.dependent}</CardTitle>
             <div className="flex flex-wrap gap-2 mt-1">
-              <Badge variant="outline">R² = {reg.rSquared}</Badge>
-              <Badge variant="outline">Adj. R² = {reg.adjustedR2}</Badge>
-              <Badge variant="outline">F = {reg.fStat}</Badge>
-              <Badge variant="outline">N = {reg.n}</Badge>
+              <Badge variant="outline"><span className="stat-notation">R²</span> = {reg.rSquared}</Badge>
+              <Badge variant="outline">Adj. <span className="stat-notation">R²</span> = {reg.adjustedR2}</Badge>
+              <Badge variant="outline"><span className="stat-notation">F</span> = {reg.fStat}</Badge>
+              <Badge variant="outline"><span className="stat-notation">N</span> = {reg.n}</Badge>
             </div>
           </CardHeader>
           <CardContent>
-            <table className="w-full text-sm">
+            <table className="w-full text-sm font-academic">
               <thead>
                 <tr className="border-b border-border">
                   <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">Variable</th>
-                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">B</th>
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">B</th>
                   <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">SE</th>
-                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">t</th>
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">t</th>
                   <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">Sig.</th>
                 </tr>
               </thead>
