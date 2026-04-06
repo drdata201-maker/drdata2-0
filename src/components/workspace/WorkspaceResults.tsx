@@ -228,18 +228,23 @@ function ChiSquareTable({ data }: { data: NonNullable<AnalysisResultItem["chiSqu
         <div key={i} className="space-y-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Chi-Square: {c.var1} × {c.var2}</CardTitle>
+              <CardTitle className="text-sm font-academic">
+                <span className="stat-notation">χ²</span> : {c.var1} × {c.var2}
+              </CardTitle>
               {c.categorized && (c.categorized.var1Auto || c.categorized.var2Auto) && (
                 <p className="text-xs text-muted-foreground italic mt-1">
                   {t("results.autoCategorized") || "Variables numériques auto-catégorisées (Low/Medium/High)"}
                 </p>
               )}
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">χ²</span><span className="font-mono text-foreground">{c.chiSquare}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">df</span><span className="font-mono text-foreground">{c.df}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">p-value</span><SignificanceBadge p={c.pValue} /></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Cramér's V</span><span className="font-mono text-foreground">{c.cramersV}</span></div>
+            <CardContent className="space-y-2 text-sm font-academic">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground stat-notation">χ²({c.df})</span>
+                <span className="font-mono text-foreground">= {c.chiSquare}</span>
+              </div>
+              <div className="flex justify-between"><span className="text-muted-foreground stat-notation">p</span><span className="font-mono text-foreground">= {c.pValue}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Sig.</span><SignificanceBadge p={c.pValue} /></div>
+              <div className="flex justify-between"><span className="text-muted-foreground stat-notation">V</span><span className="font-mono text-foreground">= {c.cramersV}</span></div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t("results.effectSize") || "Taille d'effet"}</span>
                 <Badge variant="outline" className="text-xs">
