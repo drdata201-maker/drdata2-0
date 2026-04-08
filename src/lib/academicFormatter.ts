@@ -2,6 +2,17 @@
 
 import type { AnalysisResultItem } from "@/lib/statsEngine";
 
+export interface ProjectContext {
+  title?: string;
+  domain?: string;
+  type?: string;
+  objective?: string;
+  specificObjectives?: string[];
+  studyType?: string;
+  population?: string;
+  primaryVariable?: string;
+}
+
 export interface AcademicTableMeta {
   number: number;
   title: string;
