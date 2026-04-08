@@ -58,42 +58,42 @@ export function generateTableTitle(
 
   if (result.descriptive && result.descriptive.length > 0) {
     const vars = result.descriptive.map(d => d.variable).join(", ");
-    return titleByLang(lang, "descriptive", analysisLabel, vars);
+    return enrichTitle(titleByLang(lang, "descriptive", analysisLabel, vars), ctx, lang);
   }
   if (result.frequencies && result.frequencies.length > 0) {
     const vars = result.frequencies.map(f => f.variable).join(", ");
-    return titleByLang(lang, "frequency", analysisLabel, vars);
+    return enrichTitle(titleByLang(lang, "frequency", analysisLabel, vars), ctx, lang);
   }
   if (result.correlations && result.correlations.length > 0) {
     const pairs = result.correlations.slice(0, 2).map(c => `${c.var1} - ${c.var2}`).join(", ");
-    return titleByLang(lang, "correlation", analysisLabel, pairs);
+    return enrichTitle(titleByLang(lang, "correlation", analysisLabel, pairs), ctx, lang);
   }
   if (result.regressions && result.regressions.length > 0) {
     const reg = result.regressions[0];
-    return titleByLang(lang, "regression", analysisLabel, `${reg.dependent} ~ ${reg.independents.join(", ")}`);
+    return enrichTitle(titleByLang(lang, "regression", analysisLabel, `${reg.dependent} ~ ${reg.independents.join(", ")}`), ctx, lang);
   }
   if (result.tTests && result.tTests.length > 0) {
     const tt = result.tTests[0];
-    return titleByLang(lang, "ttest", analysisLabel, `${tt.variable} × ${tt.groupVar}`);
+    return enrichTitle(titleByLang(lang, "ttest", analysisLabel, `${tt.variable} × ${tt.groupVar}`), ctx, lang);
   }
   if (result.anovas && result.anovas.length > 0) {
     const a = result.anovas[0];
-    return titleByLang(lang, "anova", analysisLabel, `${a.dependent} × ${a.factor}`);
+    return enrichTitle(titleByLang(lang, "anova", analysisLabel, `${a.dependent} × ${a.factor}`), ctx, lang);
   }
   if (result.chiSquares && result.chiSquares.length > 0) {
     const c = result.chiSquares[0];
-    return titleByLang(lang, "chi", analysisLabel, `${c.var1} × ${c.var2}`);
+    return enrichTitle(titleByLang(lang, "chi", analysisLabel, `${c.var1} × ${c.var2}`), ctx, lang);
   }
   if (result.pca) {
-    return titleByLang(lang, "pca", analysisLabel, "");
+    return enrichTitle(titleByLang(lang, "pca", analysisLabel, ""), ctx, lang);
   }
   if (result.factorAnalysis) {
-    return titleByLang(lang, "factor", analysisLabel, "");
+    return enrichTitle(titleByLang(lang, "factor", analysisLabel, ""), ctx, lang);
   }
   if (result.clusterAnalysis) {
-    return titleByLang(lang, "cluster", analysisLabel, "");
+    return enrichTitle(titleByLang(lang, "cluster", analysisLabel, ""), ctx, lang);
   }
-  return enrichTitle(titleByLang(lang, type, analysisLabel, vars), ctx, lang);
+  return enrichTitle(analysisLabel, ctx, lang);
 }
 
 /** Enrich a generated title with population/context when available */
@@ -104,7 +104,6 @@ function enrichTitle(base: string, ctx?: ProjectContext, lang?: string): string 
   };
   const among = amongMap[lang || "en"] || "among";
   return `${base} ${among} ${ctx.population}`;
-}
 }
 
 function titleByLang(lang: string, type: string, label: string, vars: string): string {
