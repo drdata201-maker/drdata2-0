@@ -52,6 +52,7 @@ export function generateTableTitle(
   result: AnalysisResultItem,
   lang: string,
   t: TFn,
+  ctx?: ProjectContext,
 ): string {
   const analysisLabel = t(`student.analysis.${result.type}`) || result.title;
 
@@ -92,7 +93,18 @@ export function generateTableTitle(
   if (result.clusterAnalysis) {
     return titleByLang(lang, "cluster", analysisLabel, "");
   }
-  return analysisLabel;
+  return enrichTitle(titleByLang(lang, type, analysisLabel, vars), ctx, lang);
+}
+
+/** Enrich a generated title with population/context when available */
+function enrichTitle(base: string, ctx?: ProjectContext, lang?: string): string {
+  if (!ctx?.population) return base;
+  const amongMap: Record<string, string> = {
+    fr: "auprès de", en: "among", es: "entre", de: "bei", pt: "entre",
+  };
+  const among = amongMap[lang || "en"] || "among";
+  return `${base} ${among} ${ctx.population}`;
+}
 }
 
 function titleByLang(lang: string, type: string, label: string, vars: string): string {
