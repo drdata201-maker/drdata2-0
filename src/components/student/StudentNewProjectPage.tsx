@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Check, ChevronsUpDown } from "lucide-react";
+import { Sparkles, Check, ChevronsUpDown, Plus, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +39,11 @@ const RESEARCH_DOMAINS = [
   "biology", "chemistry", "physics",
 ];
 
+const STUDY_TYPES = [
+  "descriptive", "analytical", "comparative",
+  "experimental", "cross_sectional", "longitudinal",
+];
+
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
   visible: (i: number) => ({
@@ -53,11 +58,15 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [objective, setObjective] = useState("");
+  const [specificObjectives, setSpecificObjectives] = useState<string[]>([]);
   const [description, setDescription] = useState("");
   const [projectType, setProjectType] = useState("");
   const [domain, setDomain] = useState("");
   const [customDomain, setCustomDomain] = useState("");
   const [domainOpen, setDomainOpen] = useState(false);
+  const [studyType, setStudyType] = useState("");
+  const [studyPopulation, setStudyPopulation] = useState("");
+  const [primaryVariable, setPrimaryVariable] = useState("");
   const [loading, setLoading] = useState(false);
 
   const resolveStudentUserType = (): "student_license" | "student_master" | "student_doctorate" => {
@@ -86,6 +95,18 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
     return t(`domain.${domain}`);
   }, [domain, customDomain, t]);
 
+  const addSpecificObjective = () => {
+    setSpecificObjectives((prev) => [...prev, ""]);
+  };
+
+  const updateSpecificObjective = (index: number, value: string) => {
+    setSpecificObjectives((prev) => prev.map((o, i) => (i === index ? value : o)));
+  };
+
+  const removeSpecificObjective = (index: number) => {
+    setSpecificObjectives((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleCreate = async () => {
     if (!title.trim() || !projectType || !objective.trim()) return;
     setLoading(true);
@@ -110,7 +131,21 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
         .single();
       if (error) throw new Error(error.message);
       toast.success(t("student.newProject.success"));
-      navigate(`/analysis/workspace?project=${data.id}&level=${resolvedUserType}&type=${encodeURIComponent(projectType)}&domain=${encodeURIComponent(finalDomain || "")}&objective=${encodeURIComponent(objective.trim())}`);
+
+      const filteredObjectives = specificObjectives.filter((o) => o.trim());
+      const params = new URLSearchParams({
+        project: data.id,
+        level: resolvedUserType,
+        type: projectType,
+        domain: finalDomain || "",
+        objective: objective.trim(),
+      });
+      if (filteredObjectives.length > 0) params.set("specificObjectives", JSON.stringify(filteredObjectives));
+      if (studyType) params.set("studyType", studyType);
+      if (studyPopulation.trim()) params.set("population", studyPopulation.trim());
+      if (primaryVariable.trim()) params.set("primaryVariable", primaryVariable.trim());
+
+      navigate(`/analysis/workspace?${params.toString()}`);
     } catch (err: any) {
       toast.error(err?.message || t("pme.newAnalysis.error"));
     } finally {
@@ -119,13 +154,8 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-8 py-2 lg:py-4">
-      <motion.div
-        variants={fadeUp}
-        initial="hidden"
-        animate="visible"
-        custom={0}
-      >
+    <div className="mx-auto w-full max-w-3xl space-y-6 py-2 lg:py-4">
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0}>
         <h1 className="text-2xl font-bold tracking-tight text-foreground lg:text-3xl">
           {t("dashboard.newProject")}
         </h1>
@@ -134,15 +164,15 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
         </p>
       </motion.div>
 
+      {/* SECTION 1 — Study Information */}
       <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1}>
         <Card className="border border-border/60 shadow-sm">
           <CardContent className="p-6 lg:p-8">
             <h2 className="mb-6 text-lg font-semibold text-foreground">
-              {t("student.wizard.step1Title")}
+              {t("student.newProject.sectionStudyInfo")}
             </h2>
-
             <div className="space-y-5">
-              {/* Study Topic */}
+              {/* Study Title */}
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground">
                   {t("student.newProject.studyTopic")} <span className="text-destructive">*</span>
@@ -172,7 +202,7 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
                 </Select>
               </div>
 
-              {/* Research Domain - Searchable */}
+              {/* Research Domain */}
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground">
                   {t("student.wizard.domain")}
@@ -226,8 +256,20 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
                   />
                 )}
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
-              {/* Study Objective */}
+      {/* SECTION 2 — Objectives */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2}>
+        <Card className="border border-border/60 shadow-sm">
+          <CardContent className="p-6 lg:p-8">
+            <h2 className="mb-6 text-lg font-semibold text-foreground">
+              {t("student.newProject.sectionObjectives")}
+            </h2>
+            <div className="space-y-5">
+              {/* General Objective */}
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground">
                   {t("student.newProject.objective")} <span className="text-destructive">*</span>
@@ -241,7 +283,101 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
                 />
               </div>
 
-              {/* Description (optional) */}
+              {/* Specific Objectives */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  {t("student.newProject.specificObjectives")}
+                </label>
+                {specificObjectives.map((obj, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                      {idx + 1}
+                    </span>
+                    <Input
+                      value={obj}
+                      onChange={(e) => updateSpecificObjective(idx, e.target.value)}
+                      placeholder={t("student.newProject.objectivePlaceholderSpecific")}
+                      className="h-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeSpecificObjective(idx)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-1 gap-1.5"
+                  onClick={addSpecificObjective}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  {t("student.newProject.addObjective")}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* SECTION 3 — Study Details */}
+      <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={3}>
+        <Card className="border border-border/60 shadow-sm">
+          <CardContent className="p-6 lg:p-8">
+            <h2 className="mb-6 text-lg font-semibold text-foreground">
+              {t("student.newProject.sectionDetails")}
+            </h2>
+            <div className="space-y-5">
+              {/* Study Type */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">
+                  {t("student.newProject.studyType")}
+                </label>
+                <Select value={studyType} onValueChange={setStudyType}>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder={t("student.newProject.studyTypePlaceholder")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STUDY_TYPES.map((st) => (
+                      <SelectItem key={st} value={st}>{t(`studyType.${st}`)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Study Population */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">
+                  {t("student.newProject.studyPopulation")}
+                </label>
+                <Input
+                  value={studyPopulation}
+                  onChange={(e) => setStudyPopulation(e.target.value)}
+                  placeholder={t("student.newProject.studyPopulationPlaceholder")}
+                  className="h-11"
+                />
+              </div>
+
+              {/* Primary Variable */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">
+                  {t("student.newProject.primaryVariable")}
+                </label>
+                <Input
+                  value={primaryVariable}
+                  onChange={(e) => setPrimaryVariable(e.target.value)}
+                  placeholder={t("student.newProject.primaryVariablePlaceholder")}
+                  className="h-11"
+                />
+              </div>
+
+              {/* Description */}
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground">
                   {t("pme.newAnalysis.description")}
@@ -249,7 +385,7 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
                 <Textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder={t("student.newProject.descPlaceholder")}
+                  placeholder={t("student.newProject.descPlaceholderEnhanced")}
                   rows={3}
                   className="min-h-[90px] resize-none"
                 />
@@ -259,11 +395,12 @@ export function StudentNewProjectPage({ baseRoute, userType }: { baseRoute: stri
         </Card>
       </motion.div>
 
+      {/* Submit */}
       <motion.div
         variants={fadeUp}
         initial="hidden"
         animate="visible"
-        custom={2}
+        custom={4}
         className="flex justify-end pb-4"
       >
         <Button
