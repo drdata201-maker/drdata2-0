@@ -18,12 +18,15 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 
+import type { ProjectContext } from "@/lib/academicFormatter";
+
 interface WorkspaceExportProps {
   projectTitle: string;
   projectType: string;
   projectDomain: string;
   projectDescription: string;
   level: string;
+  projectContext?: ProjectContext;
 }
 
 type ContentType = "full" | "results" | "interpretation" | "conclusion";

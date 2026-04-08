@@ -11,16 +11,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { BookOpen, GraduationCap, Target, Lightbulb, Loader2, RefreshCw, AlertCircle, Pencil, Check, X, Copy } from "lucide-react";
 import { toast } from "sonner";
 
+import type { ProjectContext } from "@/lib/academicFormatter";
+
 interface WorkspaceInterpretationProps {
   level: string;
   projectTitle?: string;
   projectType?: string;
   projectDomain?: string;
+  projectContext?: ProjectContext;
 }
 
 type EditingField = { section: number; field: "interpretation" | "conclusion" | "recommendations" } | "globalConclusion" | "globalRecommendations" | null;
 
-export function WorkspaceInterpretation({ level, projectTitle, projectType, projectDomain }: WorkspaceInterpretationProps) {
+export function WorkspaceInterpretation({ level, projectTitle, projectType, projectDomain, projectContext }: WorkspaceInterpretationProps) {
   const { t, lang: language } = useLanguage();
   const { analysisResults, interpretationData, setInterpretationData } = useDataset();
   const data = interpretationData;
@@ -42,7 +45,16 @@ export function WorkspaceInterpretation({ level, projectTitle, projectType, proj
         analysisResults: results,
         level,
         language,
-        projectContext: { title: projectTitle, type: projectType, domain: projectDomain },
+        projectContext: {
+          title: projectTitle,
+          type: projectType,
+          domain: projectDomain,
+          objective: projectContext?.objective,
+          specificObjectives: projectContext?.specificObjectives,
+          studyType: projectContext?.studyType,
+          population: projectContext?.population,
+          primaryVariable: projectContext?.primaryVariable,
+        },
       },
     });
     if (fnError) throw fnError;

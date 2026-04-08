@@ -15,7 +15,7 @@ import {
 import { BarChart3, Upload, Pencil, Check, X } from "lucide-react";
 import { buildChartData } from "@/lib/chartDataBuilder";
 import { ChartStyleSettingsPanel } from "./ChartStyleSettings";
-import { getFigureLabel, getSource, generateFigureInterpretation } from "@/lib/academicFormatter";
+import { getFigureLabel, getSource, generateFigureInterpretation, type ProjectContext } from "@/lib/academicFormatter";
 
 function EditableText({ value, onChange, variant = "text" }: { value: string; onChange: (v: string) => void; variant?: "title" | "text" }) {
   const [editing, setEditing] = useState(false);
@@ -54,7 +54,7 @@ function EditableText({ value, onChange, variant = "text" }: { value: string; on
   );
 }
 
-export function WorkspaceCharts() {
+export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectContext } = {}) {
   const { t, lang } = useLanguage();
   const { dataset, analysisResults } = useDataset();
   const { settings } = useChartStyle();
