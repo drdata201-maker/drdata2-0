@@ -19,15 +19,4 @@ export default defineConfig(({ mode }) => ({
     },
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
   },
-  optimizeDeps: {
-    include: ["xlsx", "jspdf", "jspdf-autotable"],
-    exclude: ["core-js"],
-  },
-  build: {
-    commonjsOptions: {
-      ignoreDynamicRequires: true,
-      transformMixedEsModules: true,
-      ignore: (id: string) => id.includes("core-js/internals"),
-    },
-  },
 }));
