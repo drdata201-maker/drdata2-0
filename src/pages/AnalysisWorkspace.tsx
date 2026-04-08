@@ -356,19 +356,19 @@ export default function AnalysisWorkspace() {
 
             <TabsContent value="results" className="mt-0 animate-fade-in">
               <PanelBoundary fallback={<PanelLoading />}>
-                <WorkspaceResults level={level} />
+                <WorkspaceResults level={level} projectContext={{ ...projectContext, title: projectTitle }} />
               </PanelBoundary>
             </TabsContent>
 
             <TabsContent value="charts" className="mt-0 animate-fade-in">
               <PanelBoundary fallback={<PanelLoading />}>
-                <WorkspaceCharts />
+                <WorkspaceCharts projectContext={{ ...projectContext, title: projectTitle }} />
               </PanelBoundary>
             </TabsContent>
 
             <TabsContent value="interpretation" className="mt-0 animate-fade-in">
               <PanelBoundary fallback={<PanelLoading />}>
-                <WorkspaceInterpretation level={level} projectTitle={projectTitle} projectType={currentType} projectDomain={currentDomain} />
+                <WorkspaceInterpretation level={level} projectTitle={projectTitle} projectType={currentType} projectDomain={currentDomain} projectContext={{ ...projectContext, title: projectTitle }} />
               </PanelBoundary>
             </TabsContent>
 
@@ -380,6 +380,7 @@ export default function AnalysisWorkspace() {
                   projectDomain={currentDomain}
                   projectDescription={projectDescription}
                   level={level}
+                  projectContext={{ ...projectContext, title: projectTitle }}
                 />
               </PanelBoundary>
             </TabsContent>
