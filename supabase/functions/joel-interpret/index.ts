@@ -54,6 +54,11 @@ ${levelStyle[level] || levelStyle.student_license}
 - Title: ${projectContext?.title || "N/A"}
 - Domain: ${projectContext?.domain || "N/A"}
 - Type: ${projectContext?.type || "N/A"}
+- Objective: ${projectContext?.objective || "N/A"}
+${projectContext?.specificObjectives?.length ? `- Specific Objectives:\n${projectContext.specificObjectives.map((o: string, i: number) => `  ${i + 1}. ${o}`).join("\n")}` : ""}
+${projectContext?.studyType ? `- Study Type: ${projectContext.studyType}` : ""}
+${projectContext?.population ? `- Study Population: ${projectContext.population}` : ""}
+${projectContext?.primaryVariable ? `- Primary Variable: ${projectContext.primaryVariable}` : ""}
 
 ## CRITICAL OUTPUT FORMAT
 You must return a valid JSON object with this exact structure:
