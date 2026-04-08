@@ -16,8 +16,18 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      xlsx: "xlsx/dist/xlsx.mini.min.js",
     },
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
+  },
+  optimizeDeps: {
+    include: ["xlsx", "jspdf", "jspdf-autotable"],
+    exclude: ["core-js"],
+  },
+  build: {
+    commonjsOptions: {
+      ignoreDynamicRequires: true,
+      transformMixedEsModules: true,
+      ignore: (id: string) => id.includes("core-js/internals"),
+    },
   },
 }));
