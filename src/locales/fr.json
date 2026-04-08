@@ -647,6 +647,7 @@
   "student.status.active": "Actif",
   "student.status.pending": "En attente",
   "student.status.draft": "Brouillon",
+  "student.status.archived": "Archivé",
   "student.projects.progress": "Progression",
   "student.projects.continue": "Continuer l'analyse",
   "student.projects.lastModified": "Modifié le",
