@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Table2, TrendingUp, BarChart3, Upload, Layers, GitBranch, CircleDot, Pencil, Check, X } from "lucide-react";
-import { generateTableTitle, generateTableInterpretation, getTableLabel, getSource } from "@/lib/academicFormatter";
+import { generateTableTitle, generateTableInterpretation, getTableLabel, getSource, type ProjectContext } from "@/lib/academicFormatter";
 
 function SignificanceBadge({ p }: { p: number }) {
   if (p < 0.001) return <Badge className="bg-green-600 text-white">p &lt; 0.001 ***</Badge>;
@@ -654,7 +654,7 @@ function EditableText({ value, onChange, variant = "text" }: { value: string; on
   );
 }
 
-export function WorkspaceResults({ level = "student_license" }: { level?: string }) {
+export function WorkspaceResults({ level = "student_license", projectContext }: { level?: string; projectContext?: ProjectContext }) {
   const { t, lang } = useLanguage();
   const { analysisResults, dataset } = useDataset();
 
@@ -695,7 +695,7 @@ export function WorkspaceResults({ level = "student_license" }: { level?: string
     <div className="space-y-8">
       {analysisResults.map((result, idx) => {
         const tableNum = idx + 1;
-        const autoTitle = generateTableTitle(result, lang, t);
+        const autoTitle = generateTableTitle(result, lang, t, projectContext);
         const autoInterp = generateTableInterpretation(result, lang, level);
         const ov = overrides[result.id] || {};
         const title = ov.title || autoTitle;
