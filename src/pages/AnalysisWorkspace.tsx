@@ -80,6 +80,25 @@ export default function AnalysisWorkspace() {
   const [currentObjective, setCurrentObjective] = useState(decodeURIComponent(searchParams.get("objective") || ""));
   const isQuickMode = searchParams.get("mode") === "quick";
 
+  // New metadata from enhanced form
+  const [specificObjectives] = useState<string[]>(() => {
+    try { return JSON.parse(searchParams.get("specificObjectives") || "[]"); } catch { return []; }
+  });
+  const [studyType] = useState(searchParams.get("studyType") || "");
+  const [studyPopulation] = useState(decodeURIComponent(searchParams.get("population") || ""));
+  const [primaryVariable] = useState(decodeURIComponent(searchParams.get("primaryVariable") || ""));
+
+  const projectContext = {
+    title: "", // will be set from projectTitle
+    domain: currentDomain,
+    type: currentType,
+    objective: currentObjective,
+    specificObjectives,
+    studyType,
+    population: studyPopulation,
+    primaryVariable,
+  };
+
   const [projectTitle, setProjectTitle] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
   const [mounted, setMounted] = useState(false);
