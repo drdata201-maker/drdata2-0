@@ -94,7 +94,7 @@ async function streamChat({
   onError,
 }: {
   messages: { role: string; content: string }[];
-  projectContext: Record<string, string>;
+  projectContext: Record<string, unknown>;
   language: string;
   onDelta: (text: string) => void;
   onDone: () => void;
