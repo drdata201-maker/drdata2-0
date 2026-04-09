@@ -34,6 +34,21 @@ export interface ExportData {
   recommendations: string;
   chartImages?: ChartImage[];
   analysisResults?: AnalysisResultItem[];
+  // Academic metadata
+  objective?: string;
+  specificObjectives?: string[];
+  studyType?: string;
+  studyDesign?: string;
+  population?: string;
+  primaryVariable?: string;
+  hypothesis?: string;
+  advancedHypothesis?: string;
+  independentVars?: string;
+  dependentVar?: string;
+  controlVars?: string;
+  mediatorVars?: string;
+  moderatorVars?: string;
+  conceptualModel?: string;
 }
 
 type ExportContent = "full" | "results" | "graphs" | "interpretation" | "conclusion";
