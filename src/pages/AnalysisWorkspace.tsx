@@ -382,6 +382,13 @@ export default function AnalysisWorkspace() {
                     projectDescription={projectDescription}
                     projectObjective={currentObjective}
                     level={level}
+                    projectMetadata={{
+                      specificObjectives, studyType, studyDesign,
+                      population: studyPopulation, primaryVariable,
+                      hypothesis, advancedHypothesis,
+                      independentVars, dependentVar, controlVars,
+                      mediatorVars, moderatorVars, conceptualModel,
+                    }}
                   />
                 </PanelBoundary>
               </div>
