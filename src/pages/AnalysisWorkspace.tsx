@@ -87,6 +87,15 @@ export default function AnalysisWorkspace() {
   const [studyType] = useState(searchParams.get("studyType") || "");
   const [studyPopulation] = useState(decodeURIComponent(searchParams.get("population") || ""));
   const [primaryVariable] = useState(decodeURIComponent(searchParams.get("primaryVariable") || ""));
+  const [studyDesign] = useState(searchParams.get("studyDesign") || "");
+  const [hypothesis] = useState(decodeURIComponent(searchParams.get("hypothesis") || ""));
+  const [independentVars] = useState(decodeURIComponent(searchParams.get("independentVars") || ""));
+  const [dependentVar] = useState(decodeURIComponent(searchParams.get("dependentVar") || ""));
+  const [controlVars] = useState(decodeURIComponent(searchParams.get("controlVars") || ""));
+  const [mediatorVars] = useState(decodeURIComponent(searchParams.get("mediatorVars") || ""));
+  const [moderatorVars] = useState(decodeURIComponent(searchParams.get("moderatorVars") || ""));
+  const [conceptualModel] = useState(decodeURIComponent(searchParams.get("conceptualModel") || ""));
+  const [advancedHypothesis] = useState(decodeURIComponent(searchParams.get("advancedHypothesis") || ""));
 
   const projectContext = {
     title: "", // will be set from projectTitle
@@ -95,8 +104,17 @@ export default function AnalysisWorkspace() {
     objective: currentObjective,
     specificObjectives,
     studyType,
+    studyDesign,
     population: studyPopulation,
     primaryVariable,
+    hypothesis,
+    independentVars,
+    dependentVar,
+    controlVars,
+    mediatorVars,
+    moderatorVars,
+    conceptualModel,
+    advancedHypothesis,
   };
 
   const [projectTitle, setProjectTitle] = useState("");
