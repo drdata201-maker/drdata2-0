@@ -57,8 +57,17 @@ ${levelStyle[level] || levelStyle.student_license}
 - Objective: ${projectContext?.objective || "N/A"}
 ${projectContext?.specificObjectives?.length ? `- Specific Objectives:\n${projectContext.specificObjectives.map((o: string, i: number) => `  ${i + 1}. ${o}`).join("\n")}` : ""}
 ${projectContext?.studyType ? `- Study Type: ${projectContext.studyType}` : ""}
+${projectContext?.studyDesign ? `- Study Design: ${projectContext.studyDesign}` : ""}
 ${projectContext?.population ? `- Study Population: ${projectContext.population}` : ""}
 ${projectContext?.primaryVariable ? `- Primary Variable: ${projectContext.primaryVariable}` : ""}
+${projectContext?.hypothesis ? `- Hypothesis: ${projectContext.hypothesis}` : ""}
+${projectContext?.advancedHypothesis ? `- Advanced Hypothesis: ${projectContext.advancedHypothesis}` : ""}
+${projectContext?.independentVars ? `- Independent Variables: ${projectContext.independentVars}` : ""}
+${projectContext?.dependentVar ? `- Dependent Variable: ${projectContext.dependentVar}` : ""}
+${projectContext?.controlVars ? `- Control Variables: ${projectContext.controlVars}` : ""}
+${projectContext?.mediatorVars ? `- Mediator Variables: ${projectContext.mediatorVars}` : ""}
+${projectContext?.moderatorVars ? `- Moderator Variables: ${projectContext.moderatorVars}` : ""}
+${projectContext?.conceptualModel ? `- Conceptual Model: ${projectContext.conceptualModel}` : ""}
 
 ## CRITICAL OUTPUT FORMAT
 You must return a valid JSON object with this exact structure:
