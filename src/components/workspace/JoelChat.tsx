@@ -280,9 +280,20 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     if (projectTitle) parts.push(`**${t("joel.summary.title")}** : ${projectTitle}`);
     if (projectType) parts.push(`**${t("joel.summary.type")}** : ${t(`student.type.${projectType}`)}`);
     if (domainLabel) parts.push(`**${t("joel.summary.domain")}** : ${domainLabel}`);
-    if (cleanObjective) parts.push(`**${t("joel.summary.objective")}** : ${cleanObjective}`);
     parts.push(`**${t("joel.summary.level")}** : ${getLevelLabel()}`);
-
+    if (projectMetadata?.studyType) parts.push(`**${t("joel.summary.studyType")}** : ${t(`student.studyType.${projectMetadata.studyType}`)}`);
+    if (projectMetadata?.studyDesign) parts.push(`**${t("joel.summary.studyDesign")}** : ${t(`student.studyDesign.${projectMetadata.studyDesign}`)}`);
+    if (cleanObjective) parts.push(`**${t("joel.summary.objective")}** : ${cleanObjective}`);
+    if (projectMetadata?.specificObjectives?.length) {
+      const objList = projectMetadata.specificObjectives.map((o, i) => `${i + 1}. ${o}`).join("\n");
+      parts.push(`**${t("joel.summary.specificObjectives")}** :\n${objList}`);
+    }
+    if (projectMetadata?.hypothesis) parts.push(`**${t("joel.summary.hypothesis")}** : ${projectMetadata.hypothesis}`);
+    if (projectMetadata?.population) parts.push(`**${t("joel.summary.population")}** : ${projectMetadata.population}`);
+    if (projectMetadata?.independentVars) parts.push(`**${t("joel.summary.independentVars")}** : ${projectMetadata.independentVars}`);
+    if (projectMetadata?.dependentVar) parts.push(`**${t("joel.summary.dependentVar")}** : ${projectMetadata.dependentVar}`);
+    if (projectMetadata?.advancedHypothesis) parts.push(`**${t("joel.summary.advancedHypothesis")}** : ${projectMetadata.advancedHypothesis}`);
+    if (projectMetadata?.conceptualModel) parts.push(`**${t("joel.summary.conceptualModel")}** : ${projectMetadata.conceptualModel}`);
     const content = `${greeting}\n\n**${t("joel.projectSummary")} :**\n\n${parts.join("\n\n")}\n\n${t("joel.confirmQuestion")}`;
 
     setMessages([{ role: "assistant", content, type: "greeting" }]);
