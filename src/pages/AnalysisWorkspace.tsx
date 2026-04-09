@@ -81,21 +81,21 @@ export default function AnalysisWorkspace() {
   const isQuickMode = searchParams.get("mode") === "quick";
 
   // New metadata from enhanced form
-  const [specificObjectives] = useState<string[]>(() => {
+  const [specificObjectives, setSpecificObjectives] = useState<string[]>(() => {
     try { return JSON.parse(searchParams.get("specificObjectives") || "[]"); } catch { return []; }
   });
-  const [studyType] = useState(searchParams.get("studyType") || "");
-  const [studyPopulation] = useState(decodeURIComponent(searchParams.get("population") || ""));
-  const [primaryVariable] = useState(decodeURIComponent(searchParams.get("primaryVariable") || ""));
-  const [studyDesign] = useState(searchParams.get("studyDesign") || "");
-  const [hypothesis] = useState(decodeURIComponent(searchParams.get("hypothesis") || ""));
-  const [independentVars] = useState(decodeURIComponent(searchParams.get("independentVars") || ""));
-  const [dependentVar] = useState(decodeURIComponent(searchParams.get("dependentVar") || ""));
-  const [controlVars] = useState(decodeURIComponent(searchParams.get("controlVars") || ""));
-  const [mediatorVars] = useState(decodeURIComponent(searchParams.get("mediatorVars") || ""));
-  const [moderatorVars] = useState(decodeURIComponent(searchParams.get("moderatorVars") || ""));
-  const [conceptualModel] = useState(decodeURIComponent(searchParams.get("conceptualModel") || ""));
-  const [advancedHypothesis] = useState(decodeURIComponent(searchParams.get("advancedHypothesis") || ""));
+  const [studyType, setStudyType] = useState(searchParams.get("studyType") || "");
+  const [studyPopulation, setStudyPopulation] = useState(decodeURIComponent(searchParams.get("population") || ""));
+  const [primaryVariable, setPrimaryVariable] = useState(decodeURIComponent(searchParams.get("primaryVariable") || ""));
+  const [studyDesign, setStudyDesign] = useState(searchParams.get("studyDesign") || "");
+  const [hypothesis, setHypothesis] = useState(decodeURIComponent(searchParams.get("hypothesis") || ""));
+  const [independentVars, setIndependentVars] = useState(decodeURIComponent(searchParams.get("independentVars") || ""));
+  const [dependentVar, setDependentVar] = useState(decodeURIComponent(searchParams.get("dependentVar") || ""));
+  const [controlVars, setControlVars] = useState(decodeURIComponent(searchParams.get("controlVars") || ""));
+  const [mediatorVars, setMediatorVars] = useState(decodeURIComponent(searchParams.get("mediatorVars") || ""));
+  const [moderatorVars, setModeratorVars] = useState(decodeURIComponent(searchParams.get("moderatorVars") || ""));
+  const [conceptualModel, setConceptualModel] = useState(decodeURIComponent(searchParams.get("conceptualModel") || ""));
+  const [advancedHypothesis, setAdvancedHypothesis] = useState(decodeURIComponent(searchParams.get("advancedHypothesis") || ""));
 
   const projectContext = {
     title: "", // will be set from projectTitle
@@ -258,11 +258,32 @@ export default function AnalysisWorkspace() {
                 domain={currentDomain}
                 objective={currentObjective}
                 description={projectDescription}
+                level={level}
+                metadata={{
+                  specificObjectives, studyType, studyDesign,
+                  population: studyPopulation, primaryVariable,
+                  hypothesis, advancedHypothesis,
+                  independentVars, dependentVar, controlVars,
+                  mediatorVars, moderatorVars, conceptualModel,
+                }}
                 onSaved={(updates) => {
                   setProjectTitle(updates.title);
                   setCurrentDomain(updates.domain);
                   setCurrentObjective(updates.objective);
                   setProjectDescription(updates.description);
+                  if (updates.specificObjectives) setSpecificObjectives(updates.specificObjectives);
+                  if (updates.studyType !== undefined) setStudyType(updates.studyType || "");
+                  if (updates.studyDesign !== undefined) setStudyDesign(updates.studyDesign || "");
+                  if (updates.population !== undefined) setStudyPopulation(updates.population || "");
+                  if (updates.primaryVariable !== undefined) setPrimaryVariable(updates.primaryVariable || "");
+                  if (updates.hypothesis !== undefined) setHypothesis(updates.hypothesis || "");
+                  if (updates.advancedHypothesis !== undefined) setAdvancedHypothesis(updates.advancedHypothesis || "");
+                  if (updates.independentVars !== undefined) setIndependentVars(updates.independentVars || "");
+                  if (updates.dependentVar !== undefined) setDependentVar(updates.dependentVar || "");
+                  if (updates.controlVars !== undefined) setControlVars(updates.controlVars || "");
+                  if (updates.mediatorVars !== undefined) setMediatorVars(updates.mediatorVars || "");
+                  if (updates.moderatorVars !== undefined) setModeratorVars(updates.moderatorVars || "");
+                  if (updates.conceptualModel !== undefined) setConceptualModel(updates.conceptualModel || "");
                 }}
               />
             )}
