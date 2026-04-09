@@ -66,6 +66,21 @@ interface JoelChatProps {
   projectDescription?: string;
   projectObjective?: string;
   level: string;
+  projectMetadata?: {
+    specificObjectives?: string[];
+    studyType?: string;
+    studyDesign?: string;
+    population?: string;
+    primaryVariable?: string;
+    hypothesis?: string;
+    advancedHypothesis?: string;
+    independentVars?: string;
+    dependentVar?: string;
+    controlVars?: string;
+    mediatorVars?: string;
+    moderatorVars?: string;
+    conceptualModel?: string;
+  };
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/joel-chat`;
@@ -149,7 +164,7 @@ async function streamChat({
   }
 }
 
-export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, projectObjective, level }: JoelChatProps) {
+export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, projectObjective, level, projectMetadata }: JoelChatProps) {
   const { t, lang } = useLanguage();
   const { processFile, dataset, runAnalyses, chatState, setChatState } = useDataset();
 
@@ -223,6 +238,19 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     description: projectDescription || "",
     objective: projectObjective || "",
     level: getLevelLabel(),
+    specificObjectives: projectMetadata?.specificObjectives || [],
+    studyType: projectMetadata?.studyType || "",
+    studyDesign: projectMetadata?.studyDesign || "",
+    population: projectMetadata?.population || "",
+    primaryVariable: projectMetadata?.primaryVariable || "",
+    hypothesis: projectMetadata?.hypothesis || "",
+    advancedHypothesis: projectMetadata?.advancedHypothesis || "",
+    independentVars: projectMetadata?.independentVars || "",
+    dependentVar: projectMetadata?.dependentVar || "",
+    controlVars: projectMetadata?.controlVars || "",
+    mediatorVars: projectMetadata?.mediatorVars || "",
+    moderatorVars: projectMetadata?.moderatorVars || "",
+    conceptualModel: projectMetadata?.conceptualModel || "",
   };
 
   // Scroll to bottom on mount (when returning to tab)
