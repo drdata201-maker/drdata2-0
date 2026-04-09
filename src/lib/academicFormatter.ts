@@ -9,8 +9,17 @@ export interface ProjectContext {
   objective?: string;
   specificObjectives?: string[];
   studyType?: string;
+  studyDesign?: string;
   population?: string;
   primaryVariable?: string;
+  hypothesis?: string;
+  independentVars?: string;
+  dependentVar?: string;
+  controlVars?: string;
+  mediatorVars?: string;
+  moderatorVars?: string;
+  conceptualModel?: string;
+  advancedHypothesis?: string;
 }
 
 export interface AcademicTableMeta {
