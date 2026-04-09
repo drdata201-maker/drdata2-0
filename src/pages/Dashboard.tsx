@@ -95,7 +95,9 @@ export default function Dashboard() {
       case "settings":
         return <SettingsView userName={userName} userEmail={userEmail} userLevel={userLevel} userCountry={userCountry} onLogout={handleLogout} />;
       case "new-project":
-        return <StudentNewProjectPage baseRoute={baseRoute} userType={userType} />;
+        if (routeUserType === "student_doctorate") return <DoctorateNewProjectPage baseRoute={baseRoute} />;
+        if (routeUserType === "student_master") return <MasterNewProjectPage baseRoute={baseRoute} />;
+        return <LicenceNewProjectPage baseRoute={baseRoute} />;
       case "projects":
         return <StudentProjectsPage baseRoute={baseRoute} userType={userType} />;
       case "quick-analysis":
