@@ -306,7 +306,47 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
     addField(t.type, data.projectType);
     addField(t.domain, data.projectDomain);
     if (data.projectDescription) addField(t.description, data.projectDescription);
+    if (data.population) addField(t.population, data.population);
+    if (data.primaryVariable) addField(t.primaryVariable, data.primaryVariable);
     sections.push(new Paragraph({ children: [] }));
+
+    // Study Objectives
+    const hasObjectives = data.objective || (data.specificObjectives && data.specificObjectives.length > 0);
+    if (hasObjectives) {
+      addHeading(t.studyObjectives, HeadingLevel.HEADING_2);
+      if (data.objective) addField(t.generalObjective, data.objective);
+      if (data.specificObjectives && data.specificObjectives.length > 0) {
+        sections.push(new Paragraph({
+          children: [new TextRun({ text: `${t.specificObjectives}:`, bold: true })],
+          spacing: { after: 40 },
+        }));
+        data.specificObjectives.forEach((obj, i) => {
+          sections.push(new Paragraph({
+            children: [new TextRun(`${i + 1}. ${obj}`)],
+            spacing: { after: 40 },
+            indent: { left: 360 },
+          }));
+        });
+      }
+      sections.push(new Paragraph({ children: [] }));
+    }
+
+    // Methodology
+    const hasMethodology = data.studyType || data.studyDesign || data.hypothesis || data.independentVars || data.dependentVar;
+    if (hasMethodology) {
+      addHeading(t.methodology, HeadingLevel.HEADING_2);
+      if (data.studyType) addField(t.studyType, data.studyType);
+      if (data.studyDesign) addField(t.studyDesign, data.studyDesign);
+      if (data.hypothesis) addField(t.hypothesis, data.hypothesis);
+      if (data.advancedHypothesis) addField(t.advancedHypothesis, data.advancedHypothesis);
+      if (data.independentVars) addField(t.independentVars, data.independentVars);
+      if (data.dependentVar) addField(t.dependentVar, data.dependentVar);
+      if (data.controlVars) addField(t.controlVars, data.controlVars);
+      if (data.mediatorVars) addField(t.mediatorVars, data.mediatorVars);
+      if (data.moderatorVars) addField(t.moderatorVars, data.moderatorVars);
+      if (data.conceptualModel) addField(t.conceptualModel, data.conceptualModel);
+      sections.push(new Paragraph({ children: [] }));
+    }
   }
 
   // Stats tables with academic formatting
