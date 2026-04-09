@@ -813,7 +813,7 @@ export function exportXlsx(data: ExportData, content: ExportContent) {
   const wb = XLSX.utils.book_new();
 
   if (content === "full" || content === "results") {
-    const infoData = [
+    const infoData: (string | undefined)[][] = [
       [t.projectInfo, ""],
       [t.title, data.projectTitle],
       [t.level, levelLabel(data.level, data.lang)],
@@ -821,8 +821,28 @@ export function exportXlsx(data: ExportData, content: ExportContent) {
       [t.domain, data.projectDomain],
       [t.description, data.projectDescription],
     ];
+    if (data.population) infoData.push([t.population, data.population]);
+    if (data.primaryVariable) infoData.push([t.primaryVariable, data.primaryVariable]);
+    if (data.objective) infoData.push([], [t.studyObjectives, ""], [t.generalObjective, data.objective]);
+    if (data.specificObjectives?.length) {
+      infoData.push([t.specificObjectives, ""]);
+      data.specificObjectives.forEach((o, i) => infoData.push([`  ${i + 1}.`, o]));
+    }
+    if (data.studyType || data.hypothesis || data.independentVars) {
+      infoData.push([], [t.methodology, ""]);
+      if (data.studyType) infoData.push([t.studyType, data.studyType]);
+      if (data.studyDesign) infoData.push([t.studyDesign, data.studyDesign]);
+      if (data.hypothesis) infoData.push([t.hypothesis, data.hypothesis]);
+      if (data.advancedHypothesis) infoData.push([t.advancedHypothesis, data.advancedHypothesis]);
+      if (data.independentVars) infoData.push([t.independentVars, data.independentVars]);
+      if (data.dependentVar) infoData.push([t.dependentVar, data.dependentVar]);
+      if (data.controlVars) infoData.push([t.controlVars, data.controlVars]);
+      if (data.mediatorVars) infoData.push([t.mediatorVars, data.mediatorVars]);
+      if (data.moderatorVars) infoData.push([t.moderatorVars, data.moderatorVars]);
+      if (data.conceptualModel) infoData.push([t.conceptualModel, data.conceptualModel]);
+    }
     const infoSheet = XLSX.utils.aoa_to_sheet(infoData);
-    infoSheet["!cols"] = [{ wch: 25 }, { wch: 50 }];
+    infoSheet["!cols"] = [{ wch: 30 }, { wch: 60 }];
     XLSX.utils.book_append_sheet(wb, infoSheet, t.projectInfo.substring(0, 31));
 
     const statsData = [
