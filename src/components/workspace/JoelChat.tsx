@@ -66,6 +66,21 @@ interface JoelChatProps {
   projectDescription?: string;
   projectObjective?: string;
   level: string;
+  projectMetadata?: {
+    specificObjectives?: string[];
+    studyType?: string;
+    studyDesign?: string;
+    population?: string;
+    primaryVariable?: string;
+    hypothesis?: string;
+    advancedHypothesis?: string;
+    independentVars?: string;
+    dependentVar?: string;
+    controlVars?: string;
+    mediatorVars?: string;
+    moderatorVars?: string;
+    conceptualModel?: string;
+  };
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/joel-chat`;
@@ -79,7 +94,7 @@ async function streamChat({
   onError,
 }: {
   messages: { role: string; content: string }[];
-  projectContext: Record<string, string>;
+  projectContext: Record<string, unknown>;
   language: string;
   onDelta: (text: string) => void;
   onDone: () => void;
@@ -149,7 +164,7 @@ async function streamChat({
   }
 }
 
-export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, projectObjective, level }: JoelChatProps) {
+export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, projectObjective, level, projectMetadata }: JoelChatProps) {
   const { t, lang } = useLanguage();
   const { processFile, dataset, runAnalyses, chatState, setChatState } = useDataset();
 
@@ -223,6 +238,19 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     description: projectDescription || "",
     objective: projectObjective || "",
     level: getLevelLabel(),
+    specificObjectives: projectMetadata?.specificObjectives || [],
+    studyType: projectMetadata?.studyType || "",
+    studyDesign: projectMetadata?.studyDesign || "",
+    population: projectMetadata?.population || "",
+    primaryVariable: projectMetadata?.primaryVariable || "",
+    hypothesis: projectMetadata?.hypothesis || "",
+    advancedHypothesis: projectMetadata?.advancedHypothesis || "",
+    independentVars: projectMetadata?.independentVars || "",
+    dependentVar: projectMetadata?.dependentVar || "",
+    controlVars: projectMetadata?.controlVars || "",
+    mediatorVars: projectMetadata?.mediatorVars || "",
+    moderatorVars: projectMetadata?.moderatorVars || "",
+    conceptualModel: projectMetadata?.conceptualModel || "",
   };
 
   // Scroll to bottom on mount (when returning to tab)
@@ -252,9 +280,20 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     if (projectTitle) parts.push(`**${t("joel.summary.title")}** : ${projectTitle}`);
     if (projectType) parts.push(`**${t("joel.summary.type")}** : ${t(`student.type.${projectType}`)}`);
     if (domainLabel) parts.push(`**${t("joel.summary.domain")}** : ${domainLabel}`);
-    if (cleanObjective) parts.push(`**${t("joel.summary.objective")}** : ${cleanObjective}`);
     parts.push(`**${t("joel.summary.level")}** : ${getLevelLabel()}`);
-
+    if (projectMetadata?.studyType) parts.push(`**${t("joel.summary.studyType")}** : ${t(`student.studyType.${projectMetadata.studyType}`)}`);
+    if (projectMetadata?.studyDesign) parts.push(`**${t("joel.summary.studyDesign")}** : ${t(`student.studyDesign.${projectMetadata.studyDesign}`)}`);
+    if (cleanObjective) parts.push(`**${t("joel.summary.objective")}** : ${cleanObjective}`);
+    if (projectMetadata?.specificObjectives?.length) {
+      const objList = projectMetadata.specificObjectives.map((o, i) => `${i + 1}. ${o}`).join("\n");
+      parts.push(`**${t("joel.summary.specificObjectives")}** :\n${objList}`);
+    }
+    if (projectMetadata?.hypothesis) parts.push(`**${t("joel.summary.hypothesis")}** : ${projectMetadata.hypothesis}`);
+    if (projectMetadata?.population) parts.push(`**${t("joel.summary.population")}** : ${projectMetadata.population}`);
+    if (projectMetadata?.independentVars) parts.push(`**${t("joel.summary.independentVars")}** : ${projectMetadata.independentVars}`);
+    if (projectMetadata?.dependentVar) parts.push(`**${t("joel.summary.dependentVar")}** : ${projectMetadata.dependentVar}`);
+    if (projectMetadata?.advancedHypothesis) parts.push(`**${t("joel.summary.advancedHypothesis")}** : ${projectMetadata.advancedHypothesis}`);
+    if (projectMetadata?.conceptualModel) parts.push(`**${t("joel.summary.conceptualModel")}** : ${projectMetadata.conceptualModel}`);
     const content = `${greeting}\n\n**${t("joel.projectSummary")} :**\n\n${parts.join("\n\n")}\n\n${t("joel.confirmQuestion")}`;
 
     setMessages([{ role: "assistant", content, type: "greeting" }]);
