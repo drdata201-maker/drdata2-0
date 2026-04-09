@@ -616,7 +616,46 @@ export function exportPdf(data: ExportData, content: ExportContent) {
     addFieldPdf(t.type, data.projectType);
     addFieldPdf(t.domain, data.projectDomain);
     if (data.projectDescription) addFieldPdf(t.description, data.projectDescription);
-    y += 6;
+    if (data.population) addFieldPdf(t.population, data.population);
+    if (data.primaryVariable) addFieldPdf(t.primaryVariable, data.primaryVariable);
+    y += 4;
+
+    // Study Objectives
+    if (data.objective || (data.specificObjectives && data.specificObjectives.length > 0)) {
+      addH2(t.studyObjectives);
+      if (data.objective) addFieldPdf(t.generalObjective, data.objective);
+      if (data.specificObjectives && data.specificObjectives.length > 0) {
+        if (y > 260) { doc.addPage(); y = 20; }
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${t.specificObjectives}:`, 14, y);
+        y += 6;
+        doc.setFont("helvetica", "normal");
+        data.specificObjectives.forEach((obj, i) => {
+          if (y > 270) { doc.addPage(); y = 20; }
+          doc.text(`${i + 1}. ${obj}`, 20, y);
+          y += 6;
+        });
+      }
+      y += 4;
+    }
+
+    // Methodology
+    if (data.studyType || data.studyDesign || data.hypothesis || data.independentVars || data.dependentVar) {
+      addH2(t.methodology);
+      if (data.studyType) addFieldPdf(t.studyType, data.studyType);
+      if (data.studyDesign) addFieldPdf(t.studyDesign, data.studyDesign);
+      if (data.hypothesis) addFieldPdf(t.hypothesis, data.hypothesis);
+      if (data.advancedHypothesis) addFieldPdf(t.advancedHypothesis, data.advancedHypothesis);
+      if (data.independentVars) addFieldPdf(t.independentVars, data.independentVars);
+      if (data.dependentVar) addFieldPdf(t.dependentVar, data.dependentVar);
+      if (data.controlVars) addFieldPdf(t.controlVars, data.controlVars);
+      if (data.mediatorVars) addFieldPdf(t.mediatorVars, data.mediatorVars);
+      if (data.moderatorVars) addFieldPdf(t.moderatorVars, data.moderatorVars);
+      if (data.conceptualModel) addFieldPdf(t.conceptualModel, data.conceptualModel);
+      y += 4;
+    }
+    y += 2;
 
     addH2(t.descriptiveStats);
 
