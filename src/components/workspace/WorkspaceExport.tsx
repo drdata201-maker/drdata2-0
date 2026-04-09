@@ -76,7 +76,7 @@ function MiniChart({ chart, colors, barRadius, showGrid, showLabels }: { chart: 
   );
 }
 
-export function WorkspaceExport({ projectTitle, projectType, projectDomain, projectDescription, level }: WorkspaceExportProps) {
+export function WorkspaceExport({ projectTitle, projectType, projectDomain, projectDescription, level, projectContext }: WorkspaceExportProps) {
   const { t, lang } = useLanguage();
   const { dataset, analysisResults, interpretationData } = useDataset();
   const { settings: chartSettings } = useChartStyle();
@@ -161,6 +161,20 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
       projectTitle: projectTitle || "Untitled Project",
       projectType, projectDomain, projectDescription, level, lang,
       statsTable, testResults, interpretation, conclusion, recommendations,
+      objective: projectContext?.objective,
+      specificObjectives: projectContext?.specificObjectives,
+      studyType: projectContext?.studyType,
+      studyDesign: projectContext?.studyDesign,
+      population: projectContext?.population,
+      primaryVariable: projectContext?.primaryVariable,
+      hypothesis: projectContext?.hypothesis,
+      advancedHypothesis: projectContext?.advancedHypothesis,
+      independentVars: projectContext?.independentVars,
+      dependentVar: projectContext?.dependentVar,
+      controlVars: projectContext?.controlVars,
+      mediatorVars: projectContext?.mediatorVars,
+      moderatorVars: projectContext?.moderatorVars,
+      conceptualModel: projectContext?.conceptualModel,
     };
   }, [dataset, analysisResults, interpretationData, projectTitle, projectType, projectDomain, projectDescription, level, lang, t]);
 
