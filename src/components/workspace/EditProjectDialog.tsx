@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { Edit3, Check, ChevronsUpDown, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatMetadataLabel } from "@/lib/projectMetadataLabels";
 
 const RESEARCH_DOMAINS = [
   "health_sciences", "public_health", "medicine", "nursing", "pharmacy",
@@ -228,7 +229,7 @@ export function EditProjectDialog({ projectId, title, domain, objective, descrip
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="h-10 w-full justify-between font-normal">
-                    {studyType ? studyType.split(",").map(v => t(`student.studyType.${v.trim()}`)).join(", ") : <span className="text-muted-foreground">{t("student.newProject.studyTypePlaceholder")}</span>}
+                    {studyType ? formatMetadataLabel(studyType, "studyType", t) : <span className="text-muted-foreground">{t("student.newProject.studyTypePlaceholder")}</span>}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
@@ -291,7 +292,7 @@ export function EditProjectDialog({ projectId, title, domain, objective, descrip
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="h-10 w-full justify-between font-normal">
-                    {studyDesign ? studyDesign.split(",").map(v => t(`student.studyDesign.${v.trim()}`)).join(", ") : <span className="text-muted-foreground">{t("student.newProject.studyDesignPlaceholder")}</span>}
+                    {studyDesign ? formatMetadataLabel(studyDesign, "studyDesign", t) : <span className="text-muted-foreground">{t("student.newProject.studyDesignPlaceholder")}</span>}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>

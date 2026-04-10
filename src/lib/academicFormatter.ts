@@ -1,6 +1,7 @@
 // Academic table and graph formatting utilities for Dr Data 2.0
 
 import type { AnalysisResultItem } from "@/lib/statsEngine";
+import { formatMetadataLabel } from "@/lib/projectMetadataLabels";
 
 export interface ProjectContext {
   title?: string;
@@ -63,7 +64,7 @@ export function generateTableTitle(
   t: TFn,
   ctx?: ProjectContext,
 ): string {
-  const analysisLabel = t(`student.analysis.${result.type}`) || result.title;
+  const analysisLabel = formatMetadataLabel(result.type, "analysis", t) || result.title;
 
   if (result.descriptive && result.descriptive.length > 0) {
     const vars = result.descriptive.map(d => d.variable).join(", ");
