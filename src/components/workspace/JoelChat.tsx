@@ -352,7 +352,7 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
 
     await streamChat({
       messages: chatHistoryRef.current,
-      projectContext,
+      projectContext: localizedProjectContext || {},
       language: lang,
       onDelta: upsertAssistant,
       onDone: () => {
