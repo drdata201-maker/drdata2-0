@@ -8,7 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Table2, TrendingUp, BarChart3, Upload, Layers, GitBranch, CircleDot, Pencil, Check, X } from "lucide-react";
-import { generateTableTitle, generateTableInterpretation, getTableLabel, getSource, type ProjectContext } from "@/lib/academicFormatter";
+import {
+  generateTableTitle, generateTableInterpretation, getTableLabel,
+  getDescriptiveHeadersShort, getFrequencyHeaders, getCorrelationHeaders,
+  isIdentifierVariable,
+  type ProjectContext,
+} from "@/lib/academicFormatter";
 
 function SignificanceBadge({ p }: { p: number }) {
   if (p < 0.001) return <Badge className="bg-green-600 text-white">p &lt; 0.001 ***</Badge>;
@@ -31,7 +36,11 @@ function getLevelConfig(level: StudyLevel) {
 }
 
 function DescriptiveTable({ data }: { data: NonNullable<AnalysisResultItem["descriptive"]> }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const headers = getDescriptiveHeadersShort(lang);
+  // Filter out identifier variables
+  const filtered = data.filter(row => !isIdentifierVariable(row.variable));
+  if (filtered.length === 0) return null;
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -45,13 +54,13 @@ function DescriptiveTable({ data }: { data: NonNullable<AnalysisResultItem["desc
           <table className="w-full text-sm font-academic">
             <thead>
               <tr className="border-b border-border">
-                {["Variable", "N", "M", "SD", "Min", "Q1", "Mdn", "Q3", "Max"].map(h => (
-                  <th key={h} className={`px-2 py-1.5 text-left font-medium text-muted-foreground text-xs ${["M", "SD", "N", "Mdn"].includes(h) ? "stat-notation" : ""}`}>{h}</th>
+                {headers.map(h => (
+                  <th key={h} className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {data.map(row => (
+              {filtered.map(row => (
                 <tr key={row.variable} className="border-b border-border/50">
                   <td className="px-2 py-1.5 font-medium text-foreground">{row.variable}</td>
                   <td className="px-2 py-1.5 text-foreground">{row.n}</td>
@@ -73,10 +82,13 @@ function DescriptiveTable({ data }: { data: NonNullable<AnalysisResultItem["desc
 }
 
 function FrequencyTable({ data }: { data: NonNullable<AnalysisResultItem["frequencies"]> }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const h = getFrequencyHeaders(lang);
+  const filtered = data.filter(freq => !isIdentifierVariable(freq.variable));
+  if (filtered.length === 0) return null;
   return (
     <>
-      {data.map(freq => (
+      {filtered.map(freq => (
         <Card key={freq.variable}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">{t("results.frequency")}: {freq.variable}</CardTitle>
@@ -85,9 +97,9 @@ function FrequencyTable({ data }: { data: NonNullable<AnalysisResultItem["freque
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">{t("results.value")}</th>
-                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("results.count")}</th>
-                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">%</th>
+                  <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">{h.value}</th>
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{h.count}</th>
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{h.pct}</th>
                 </tr>
               </thead>
               <tbody>
@@ -108,7 +120,8 @@ function FrequencyTable({ data }: { data: NonNullable<AnalysisResultItem["freque
 }
 
 function CorrelationTable({ data }: { data: NonNullable<AnalysisResultItem["correlations"]> }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const h = getCorrelationHeaders(lang);
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -121,12 +134,12 @@ function CorrelationTable({ data }: { data: NonNullable<AnalysisResultItem["corr
         <table className="w-full text-sm font-academic">
           <thead>
             <tr className="border-b border-border">
-              <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">Var 1</th>
-              <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">Var 2</th>
-              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">r</th>
-              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">p</th>
-              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">N</th>
-              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">Sig.</th>
+              <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">{h.var1}</th>
+              <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">{h.var2}</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">{h.r}</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">{h.p}</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">{h.n}</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{h.sig}</th>
             </tr>
           </thead>
           <tbody>
@@ -171,7 +184,7 @@ function RegressionTable({ data, level }: { data: NonNullable<AnalysisResultItem
                   <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">B</th>
                   <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">SE</th>
                   <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">t</th>
-                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">Sig.</th>
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("results.interpretation") ? "Sig." : "Sig."}</th>
                 </tr>
               </thead>
               <tbody>
@@ -194,7 +207,8 @@ function RegressionTable({ data, level }: { data: NonNullable<AnalysisResultItem
 }
 
 function AnovaTable({ data }: { data: NonNullable<AnalysisResultItem["anovas"]> }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const descH = getDescriptiveHeadersShort(lang);
   return (
     <>
       {data.map((a, i) => (
@@ -211,9 +225,9 @@ function AnovaTable({ data }: { data: NonNullable<AnalysisResultItem["anovas"]> 
               <thead>
                 <tr className="border-b border-border">
                   <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">{t("results.group")}</th>
-                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">N</th>
-                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">M</th>
-                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">SD</th>
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{descH[1]}</th>
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{descH[2]}</th>
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{descH[3]}</th>
                 </tr>
               </thead>
               <tbody>
@@ -238,7 +252,6 @@ function ChiSquareTable({ data, level }: { data: NonNullable<AnalysisResultItem[
   const { t, lang } = useLanguage();
   const cfg = getLevelConfig(level);
 
-  // Translated category label mapping for display
   const categoryLabels: Record<string, Record<string, string>> = {
     fr: { Low: "Faible", Medium: "Moyen", High: "Élevé" },
     es: { Low: "Bajo", Medium: "Medio", High: "Alto" },
@@ -248,7 +261,6 @@ function ChiSquareTable({ data, level }: { data: NonNullable<AnalysisResultItem[
   const labelMap = categoryLabels[lang] || {};
   const translateLabel = (label: string) => labelMap[label] || label;
 
-  // Translated auto-categorized explanation
   const autoCatText: Record<string, string> = {
     fr: "Les variables numériques ont été regroupées en catégories (Faible, Moyen, Élevé).",
     en: "Numeric variables were grouped into categories (Low, Medium, High).",
@@ -257,7 +269,6 @@ function ChiSquareTable({ data, level }: { data: NonNullable<AnalysisResultItem[
     pt: "As variáveis numéricas foram agrupadas em categorias (Baixo, Médio, Alto).",
   };
 
-  // Relation title template
   const relationTitle: Record<string, string> = {
     fr: "Relation entre",
     en: "Relationship between",
@@ -320,7 +331,6 @@ function ChiSquareTable({ data, level }: { data: NonNullable<AnalysisResultItem[
             </CardContent>
           </Card>
 
-          {/* Contingency table with academic title */}
           {c.contingencyTable && (
             <Card>
               <CardHeader className="pb-2">
@@ -380,7 +390,8 @@ function ChiSquareTable({ data, level }: { data: NonNullable<AnalysisResultItem[
 }
 
 function TTestTable({ data }: { data: NonNullable<AnalysisResultItem["tTests"]> }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const descH = getDescriptiveHeadersShort(lang);
   return (
     <>
       {data.map((tt, i) => (
@@ -391,8 +402,8 @@ function TTestTable({ data }: { data: NonNullable<AnalysisResultItem["tTests"]> 
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm font-academic">
-            <div className="flex justify-between"><span className="text-muted-foreground">{tt.groups[0]} (<span className="stat-notation">M</span>)</span><span className="font-mono text-foreground">= {tt.means[0]}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">{tt.groups[1]} (<span className="stat-notation">M</span>)</span><span className="font-mono text-foreground">= {tt.means[1]}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{tt.groups[0]} ({descH[2]})</span><span className="font-mono text-foreground">= {tt.means[0]}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{tt.groups[1]} ({descH[2]})</span><span className="font-mono text-foreground">= {tt.means[1]}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground stat-notation">t({tt.df})</span><span className="font-mono text-foreground">= {tt.tStat}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground stat-notation">p</span><SignificanceBadge p={tt.pValue} /></div>
           </CardContent>
@@ -616,7 +627,7 @@ function ClusterAnalysisTable({ data, level }: { data: NonNullable<AnalysisResul
   );
 }
 
-// Editable text block for titles, interpretations, and source
+// Editable text block for titles, interpretations
 function EditableText({ value, onChange, variant = "text" }: { value: string; onChange: (v: string) => void; variant?: "title" | "text" }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -658,10 +669,9 @@ export function WorkspaceResults({ level = "student_license", projectContext }: 
   const { t, lang } = useLanguage();
   const { analysisResults, dataset } = useDataset();
 
-  // Track editable overrides for titles, interpretations, sources
-  const [overrides, setOverrides] = useState<Record<string, { title?: string; interpretation?: string; source?: string }>>({});
+  const [overrides, setOverrides] = useState<Record<string, { title?: string; interpretation?: string }>>({});
 
-  const updateOverride = (id: string, field: "title" | "interpretation" | "source", value: string) => {
+  const updateOverride = (id: string, field: "title" | "interpretation", value: string) => {
     setOverrides(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
   };
 
@@ -689,7 +699,6 @@ export function WorkspaceResults({ level = "student_license", projectContext }: 
   }
 
   const tableLabel = getTableLabel(lang);
-  const defaultSource = getSource(lang);
 
   return (
     <div className="space-y-8">
@@ -700,7 +709,6 @@ export function WorkspaceResults({ level = "student_license", projectContext }: 
         const ov = overrides[result.id] || {};
         const title = ov.title || autoTitle;
         const interpretation = ov.interpretation || autoInterp;
-        const source = ov.source || defaultSource;
 
         return (
           <div key={result.id} className="space-y-3">
@@ -726,18 +734,13 @@ export function WorkspaceResults({ level = "student_license", projectContext }: 
             {result.factorAnalysis && <FactorAnalysisTable data={result.factorAnalysis} level={level} />}
             {result.clusterAnalysis && <ClusterAnalysisTable data={result.clusterAnalysis} level={level} />}
 
-            {/* Source */}
-            <div className="pl-1">
-              <EditableText value={source} onChange={v => updateOverride(result.id, "source", v)} />
-            </div>
-
-            {/* Inline interpretation */}
+            {/* Inline interpretation (no Source text) */}
             {interpretation && (
               <Card className="bg-muted/30 border-dashed">
                 <CardContent className="py-3 px-4">
                   <div className="flex items-start gap-2">
                     <Badge variant="outline" className="text-[10px] shrink-0 mt-0.5">{t("results.interpretation") || "Interpretation"}</Badge>
-                    <span className="text-xs text-muted-foreground italic leading-relaxed font-academic" style={{ textAlign: "justify" }}>{interpretation}</span>
+                    <EditableText value={interpretation} onChange={v => updateOverride(result.id, "interpretation", v)} />
                   </div>
                 </CardContent>
               </Card>
