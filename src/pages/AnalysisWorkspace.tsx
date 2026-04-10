@@ -183,6 +183,13 @@ export default function AnalysisWorkspace() {
     setActiveTab("dataprep");
   }, []);
 
+  const handleAnalysisComplete = useCallback(() => {
+    setCompletedSteps(prev => new Set([...prev, "assistant", "dataprep"]));
+    setVisitedSteps(prev => new Set([...prev, "results", "charts", "interpretation"]));
+    // Auto-switch to Results tab after a brief delay so state updates propagate
+    setTimeout(() => setActiveTab("results"), 300);
+  }, []);
+
   const handleProjectRestored = useCallback((hasResults: boolean) => {
     if (hasResults) {
       setCompletedSteps(new Set(["assistant", "dataprep"]));
@@ -382,6 +389,7 @@ export default function AnalysisWorkspace() {
                     projectDescription={projectDescription}
                     projectObjective={currentObjective}
                     level={level}
+                    onAnalysisComplete={handleAnalysisComplete}
                     projectMetadata={{
                       specificObjectives, studyType, studyDesign,
                       population: studyPopulation, primaryVariable,
