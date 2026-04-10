@@ -55,6 +55,13 @@ export interface InterpretationData {
   globalRecommendations: string;
 }
 
+export interface CachedChart {
+  key: string;
+  title: string;
+  type: string;
+  data: Record<string, unknown>[];
+}
+
 export type ChatMessage = { role: "assistant" | "user"; content: string; type?: string };
 export type ChatPhase = "confirm" | "upload" | "software" | "analysis" | "variables" | "ready";
 
@@ -76,6 +83,8 @@ interface DatasetContextType {
   analysisResults: AnalysisResultItem[];
   interpretationData: InterpretationData | null;
   setInterpretationData: (data: InterpretationData | null) => void;
+  cachedCharts: CachedChart[] | null;
+  setCachedCharts: (charts: CachedChart[] | null) => void;
   processFile: (file: File) => Promise<DatasetSummary>;
   runCleaning: () => void;
   runAnalyses: (analysisKeys: string[], software: string, depVar?: string, indVars?: string[]) => void;
