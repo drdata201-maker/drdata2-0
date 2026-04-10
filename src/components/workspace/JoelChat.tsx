@@ -305,13 +305,11 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     if (projectType) parts.push(`**${t("joel.summary.type")}** : ${t(`student.type.${projectType}`)}`);
     if (domainLabel) parts.push(`**${t("joel.summary.domain")}** : ${domainLabel}`);
     parts.push(`**${t("joel.summary.level")}** : ${getLevelLabel()}`);
-    if (projectMetadata?.studyType) {
-      const stLabel = projectMetadata.studyType.split(",").map((v: string) => t(`student.studyType.${v.trim()}`)).join(", ");
-      parts.push(`**${t("joel.summary.studyType")}** : ${stLabel}`);
+    if (localizedProjectContext?.studyType) {
+      parts.push(`**${t("joel.summary.studyType")}** : ${localizedProjectContext.studyType}`);
     }
-    if (projectMetadata?.studyDesign) {
-      const sdLabel = projectMetadata.studyDesign.split(",").map((v: string) => t(`student.studyDesign.${v.trim()}`)).join(", ");
-      parts.push(`**${t("joel.summary.studyDesign")}** : ${sdLabel}`);
+    if (localizedProjectContext?.studyDesign) {
+      parts.push(`**${t("joel.summary.studyDesign")}** : ${localizedProjectContext.studyDesign}`);
     }
     if (cleanObjective) parts.push(`**${t("joel.summary.objective")}** : ${cleanObjective}`);
     if (projectMetadata?.specificObjectives?.length) {
