@@ -12,6 +12,11 @@ export function WorkspaceDataPrep() {
   const { t } = useLanguage();
   const { dataset, prepStatus, prepError, runCleaning } = useDataset();
 
+  const excludedVars = useMemo(
+    () => dataset ? dataset.variables.filter(v => isIdentifierVariable(v.name, dataset.rawData)) : [],
+    [dataset]
+  );
+
   // No dataset yet
   if (!dataset && prepStatus === "idle") {
     return (
@@ -69,10 +74,6 @@ export function WorkspaceDataPrep() {
   if (!dataset) return null;
 
   const rows = dataset.rawData;
-  const excludedVars = useMemo(
-    () => dataset.variables.filter(v => isIdentifierVariable(v.name, rows)),
-    [dataset.variables, rows]
-  );
   const analyticalVars = dataset.variables.length - excludedVars.length;
   const numericCount = dataset.variables.filter(v => v.type === "numeric" && !isIdentifierVariable(v.name, rows)).length;
   const catCount = dataset.variables.filter(v => (v.type === "categorical" || v.type === "ordinal") && !isIdentifierVariable(v.name, rows)).length;
