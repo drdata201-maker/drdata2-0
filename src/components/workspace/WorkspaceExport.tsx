@@ -19,6 +19,7 @@ import {
 } from "recharts";
 
 import type { ProjectContext } from "@/lib/academicFormatter";
+import { getLocalizedProjectContext } from "@/lib/projectMetadataLabels";
 
 interface WorkspaceExportProps {
   projectTitle: string;
@@ -78,6 +79,7 @@ function MiniChart({ chart, colors, barRadius, showGrid, showLabels }: { chart: 
 
 export function WorkspaceExport({ projectTitle, projectType, projectDomain, projectDescription, level, projectContext }: WorkspaceExportProps) {
   const { t, lang } = useLanguage();
+  const localizedProjectContext = useMemo(() => getLocalizedProjectContext(projectContext, t), [projectContext, t]);
   const { dataset, analysisResults, interpretationData } = useDataset();
   const { settings: chartSettings } = useChartStyle();
   const [loading, setLoading] = useState<string | null>(null);
@@ -161,20 +163,20 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
       projectTitle: projectTitle || "Untitled Project",
       projectType, projectDomain, projectDescription, level, lang,
       statsTable, testResults, interpretation, conclusion, recommendations,
-      objective: projectContext?.objective,
-      specificObjectives: projectContext?.specificObjectives,
-      studyType: projectContext?.studyType?.split(",").map(v => t(`student.studyType.${v.trim()}`)).join(", "),
-      studyDesign: projectContext?.studyDesign?.split(",").map(v => t(`student.studyDesign.${v.trim()}`)).join(", "),
-      population: projectContext?.population,
-      primaryVariable: projectContext?.primaryVariable,
-      hypothesis: projectContext?.hypothesis,
-      advancedHypothesis: projectContext?.advancedHypothesis,
-      independentVars: projectContext?.independentVars,
-      dependentVar: projectContext?.dependentVar,
-      controlVars: projectContext?.controlVars,
-      mediatorVars: projectContext?.mediatorVars,
-      moderatorVars: projectContext?.moderatorVars,
-      conceptualModel: projectContext?.conceptualModel,
+      objective: localizedProjectContext?.objective,
+      specificObjectives: localizedProjectContext?.specificObjectives,
+      studyType: localizedProjectContext?.studyType,
+      studyDesign: localizedProjectContext?.studyDesign,
+      population: localizedProjectContext?.population,
+      primaryVariable: localizedProjectContext?.primaryVariable,
+      hypothesis: localizedProjectContext?.hypothesis,
+      advancedHypothesis: localizedProjectContext?.advancedHypothesis,
+      independentVars: localizedProjectContext?.independentVars,
+      dependentVar: localizedProjectContext?.dependentVar,
+      controlVars: localizedProjectContext?.controlVars,
+      mediatorVars: localizedProjectContext?.mediatorVars,
+      moderatorVars: localizedProjectContext?.moderatorVars,
+      conceptualModel: localizedProjectContext?.conceptualModel,
     };
   }, [dataset, analysisResults, interpretationData, projectTitle, projectType, projectDomain, projectDescription, level, lang, t]);
 

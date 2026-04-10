@@ -18,6 +18,7 @@ import { WorkspaceCharts } from "@/components/workspace/WorkspaceCharts";
 import { WorkspaceExport } from "@/components/workspace/WorkspaceExport";
 import { WorkspaceDataPrep } from "@/components/workspace/WorkspaceDataPrep";
 import { WorkspaceInterpretation } from "@/components/workspace/WorkspaceInterpretation";
+import { getLocalizedProjectContext } from "@/lib/projectMetadataLabels";
 import { cn } from "@/lib/utils";
 
 class PanelBoundary extends Component<{ fallback: ReactNode; children: ReactNode }, { hasError: boolean }> {

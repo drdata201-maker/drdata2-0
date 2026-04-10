@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Send, Upload, Sparkles, Bot, Loader2, CheckCircle, Edit3, RotateCcw, CheckCheck, Variable } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { stripLatex } from "@/lib/latexSanitizer";
+import { formatProjectMetadataValue, getLocalizedProjectContext } from "@/lib/projectMetadataLabels";
 import { toast } from "sonner";
 
 const ACCEPTED_FORMATS = ".xlsx,.xls,.csv,.sav,.dta";
@@ -255,7 +256,7 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     return t("auth.level.licence");
   };
 
-  const projectContext = {
+  const localizedProjectContext = useMemo(() => getLocalizedProjectContext({
     title: projectTitle,
     type: projectType,
     domain: projectDomain,
@@ -275,8 +276,7 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     mediatorVars: projectMetadata?.mediatorVars || "",
     moderatorVars: projectMetadata?.moderatorVars || "",
     conceptualModel: projectMetadata?.conceptualModel || "",
-  };
-
+  }, t), [projectTitle, projectType, projectDomain, projectDescription, projectObjective, projectMetadata, t]);
   // Scroll to bottom on mount (when returning to tab)
   useEffect(() => {
     scrollToBottom();
@@ -305,13 +305,11 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     if (projectType) parts.push(`**${t("joel.summary.type")}** : ${t(`student.type.${projectType}`)}`);
     if (domainLabel) parts.push(`**${t("joel.summary.domain")}** : ${domainLabel}`);
     parts.push(`**${t("joel.summary.level")}** : ${getLevelLabel()}`);
-    if (projectMetadata?.studyType) {
-      const stLabel = projectMetadata.studyType.split(",").map((v: string) => t(`student.studyType.${v.trim()}`)).join(", ");
-      parts.push(`**${t("joel.summary.studyType")}** : ${stLabel}`);
+    if (localizedProjectContext?.studyType) {
+      parts.push(`**${t("joel.summary.studyType")}** : ${localizedProjectContext.studyType}`);
     }
-    if (projectMetadata?.studyDesign) {
-      const sdLabel = projectMetadata.studyDesign.split(",").map((v: string) => t(`student.studyDesign.${v.trim()}`)).join(", ");
-      parts.push(`**${t("joel.summary.studyDesign")}** : ${sdLabel}`);
+    if (localizedProjectContext?.studyDesign) {
+      parts.push(`**${t("joel.summary.studyDesign")}** : ${localizedProjectContext.studyDesign}`);
     }
     if (cleanObjective) parts.push(`**${t("joel.summary.objective")}** : ${cleanObjective}`);
     if (projectMetadata?.specificObjectives?.length) {
@@ -354,7 +352,7 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
 
     await streamChat({
       messages: chatHistoryRef.current,
-      projectContext,
+      projectContext: localizedProjectContext || {},
       language: lang,
       onDelta: upsertAssistant,
       onDone: () => {
@@ -370,7 +368,7 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
         setIsStreaming(false);
       },
     });
-  }, [lang, projectContext, scrollToBottom, t, syncChatHistory, setMessages]);
+  }, [lang, localizedProjectContext, scrollToBottom, t, syncChatHistory, setMessages]);
 
   const handleConfirm = () => {
     setMessages(prev => [...prev, { role: "user", content: t("joel.confirmContinue") }]);
