@@ -608,9 +608,10 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
     <>
       {/* Header */}
       <div className="flex items-center gap-2 border-b border-border px-4 py-3 bg-primary/5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
-          <Bot className="h-4 w-4" />
-        </div>
+        <Avatar className="h-10 w-10">
+          <AvatarImage src={JOEL_AVATARS[level] || joelLicence} alt="Assistant Joël" />
+          <AvatarFallback className="bg-primary text-primary-foreground"><Bot className="h-4 w-4" /></AvatarFallback>
+        </Avatar>
         <div>
           <p className="text-sm font-semibold text-foreground">Assistant Joël</p>
           <p className="text-xs text-muted-foreground">{t("joel.subtitle")}</p>
