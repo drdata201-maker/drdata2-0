@@ -622,7 +622,13 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+          <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start items-start gap-2"}`}>
+            {msg.role === "assistant" && (
+              <Avatar className="h-7 w-7 shrink-0 mt-0.5">
+                <AvatarImage src={JOEL_AVATARS[level] || joelLicence} alt="Joël" />
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs"><Bot className="h-3 w-3" /></AvatarFallback>
+              </Avatar>
+            )}
             <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
               msg.role === "user"
                 ? "bg-primary text-primary-foreground"
