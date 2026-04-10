@@ -228,7 +228,7 @@ export function EditProjectDialog({ projectId, title, domain, objective, descrip
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="h-10 w-full justify-between font-normal">
-                    {studyType ? t(`student.studyType.${studyType}`) : <span className="text-muted-foreground">{t("student.newProject.studyTypePlaceholder")}</span>}
+                    {studyType ? studyType.split(",").map(v => t(`student.studyType.${v.trim()}`)).join(", ") : <span className="text-muted-foreground">{t("student.newProject.studyTypePlaceholder")}</span>}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
@@ -291,7 +291,7 @@ export function EditProjectDialog({ projectId, title, domain, objective, descrip
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="h-10 w-full justify-between font-normal">
-                    {studyDesign ? t(`student.studyDesign.${studyDesign}`) : <span className="text-muted-foreground">{t("student.newProject.studyDesignPlaceholder")}</span>}
+                    {studyDesign ? studyDesign.split(",").map(v => t(`student.studyDesign.${v.trim()}`)).join(", ") : <span className="text-muted-foreground">{t("student.newProject.studyDesignPlaceholder")}</span>}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
