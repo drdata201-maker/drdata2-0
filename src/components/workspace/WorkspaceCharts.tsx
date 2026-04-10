@@ -228,7 +228,7 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
     <div className="space-y-4">
       <ChartStyleSettingsPanel />
       <div className="space-y-6">
-        {charts.map((chart, idx) => {
+        {displayCharts.map((chart, idx) => {
           const figNum = idx + 1;
           const ov = overrides[chart.key] || {};
           const title = ov.title || chart.title;
