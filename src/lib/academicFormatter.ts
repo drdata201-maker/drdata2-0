@@ -49,10 +49,44 @@ const ID_PATTERNS = [
   /^id$/i, /^identifier$/i, /^identifiant$/i, /^index$/i, /^code$/i,
   /^record[_ ]?id$/i, /^numéro$/i, /^numero$/i, /^num$/i, /^no$/i,
   /^row[_ ]?id$/i, /^entry$/i, /^_id$/i, /^record$/i,
+  /^participant[_ ]?id$/i, /^serial[_ ]?(number|no)$/i, /^student[_ ]?id$/i,
+  /^row[_ ]?(number|num|no)$/i, /^sn$/i, /^s\.?n\.?$/i, /^n°$/i,
+  /^matricule$/i, /^matricula$/i, /^matrikelnummer$/i,
+  /^respondent[_ ]?id$/i, /^case[_ ]?id$/i, /^subject[_ ]?id$/i,
+  /^observation$/i, /^obs$/i, /^seq$/i, /^sequence$/i,
 ];
 
-export function isIdentifierVariable(name: string): boolean {
-  return ID_PATTERNS.some(p => p.test(name.trim()));
+const ID_CONTAINS_PATTERNS = [
+  /\bid\b/i, /\bidentif/i, /\bindex\b/i, /\bserial\b/i, /\bmatricul/i,
+];
+
+export function isIdentifierVariable(name: string, rows?: Record<string, unknown>[]): boolean {
+  const trimmed = name.trim();
+  // Pattern-based detection
+  if (ID_PATTERNS.some(p => p.test(trimmed))) return true;
+  // Loose pattern — only if name also looks non-analytical
+  if (trimmed.length <= 15 && ID_CONTAINS_PATTERNS.some(p => p.test(trimmed))) return true;
+  // Heuristic: if rows provided, check for unique sequential values
+  if (rows && rows.length >= 5) {
+    const vals = rows.map(r => r[name]).filter(v => v != null && v !== "");
+    // All unique values → likely identifier
+    const uniqueRatio = new Set(vals.map(String)).size / vals.length;
+    if (uniqueRatio > 0.95 && vals.length >= 10) {
+      // Check if sequential numeric
+      const nums = vals.map(Number).filter(n => !isNaN(n));
+      if (nums.length === vals.length) {
+        const sorted = [...nums].sort((a, b) => a - b);
+        let isSequential = true;
+        for (let i = 1; i < sorted.length; i++) {
+          if (sorted[i] - sorted[i - 1] !== sorted[1] - sorted[0]) { isSequential = false; break; }
+        }
+        if (isSequential) return true;
+      }
+      // All unique strings with high cardinality → likely identifier
+      if (nums.length === 0 && uniqueRatio === 1) return true;
+    }
+  }
+  return false;
 }
 
 // Full academic column headers (no abbreviations)
