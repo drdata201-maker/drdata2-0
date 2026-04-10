@@ -945,5 +945,8 @@
   "student.studyDesign.cross_sectional": "Querschnitt",
   "student.studyDesign.longitudinal": "Längsschnitt",
   "student.studyDesign.prospective": "Prospektiv",
-  "student.studyDesign.retrospective": "Retrospektiv"
+  "student.studyDesign.retrospective": "Retrospektiv",
+  "dataPrep.excludedIdentifiers": "automatisch ausgeschlossen (technische Bezeichner)",
+  "dataPrep.excludedDesc": "Diese Variablen werden nicht in Analysen, Diagramme oder Interpretationen einbezogen.",
+  "dataPrep.identifier": "Bezeichner"
 }
