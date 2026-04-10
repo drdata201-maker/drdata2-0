@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Send, Upload, Sparkles, Bot, Loader2, CheckCircle, Edit3, RotateCcw, CheckCheck, Variable } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { stripLatex } from "@/lib/latexSanitizer";
-import { formatProjectMetadataValue, getLocalizedProjectContext } from "@/lib/projectMetadataLabels";
+import { formatMetadataLabel, getLocalizedProjectContext } from "@/lib/projectMetadataLabels";
 import { toast } from "sonner";
 
 const ACCEPTED_FORMATS = ".xlsx,.xls,.csv,.sav,.dta";
@@ -290,10 +290,7 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     const h = new Date().getHours();
     const greeting = h < 12 ? t("joel.greeting.morning") : h < 18 ? t("joel.greeting.afternoon") : t("joel.greeting.evening");
 
-    // Translate domain key if it matches a known domain translation
-    const domainLabel = t(`domain.${projectDomain}`) !== `domain.${projectDomain}`
-      ? t(`domain.${projectDomain}`)
-      : projectDomain;
+    const domainLabel = formatMetadataLabel(projectDomain, "domain", t) || projectDomain;
 
     // Auto-correct common grammar issues
     const cleanObjective = (projectObjective || "")
@@ -302,7 +299,7 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
 
     const parts: string[] = [];
     if (projectTitle) parts.push(`**${t("joel.summary.title")}** : ${projectTitle}`);
-    if (projectType) parts.push(`**${t("joel.summary.type")}** : ${t(`student.type.${projectType}`)}`);
+    if (projectType) parts.push(`**${t("joel.summary.type")}** : ${formatMetadataLabel(projectType, "projectType", t)}`);
     if (domainLabel) parts.push(`**${t("joel.summary.domain")}** : ${domainLabel}`);
     parts.push(`**${t("joel.summary.level")}** : ${getLevelLabel()}`);
     if (localizedProjectContext?.studyType) {
@@ -456,7 +453,7 @@ Keep under 80 words.`;
   const handleConfirmAnalysesStep = () => {
     if (needsVariableSelection) {
       const selected = selectedAnalyses.map(a =>
-        a.startsWith("custom:") ? a.slice(7) : t(`student.analysis.${a}`)
+        a.startsWith("custom:") ? a.slice(7) : formatMetadataLabel(a, "analysis", t)
       ).join(", ");
       setMessages(prev => [
         ...prev,
@@ -483,7 +480,7 @@ Keep under 80 words.`;
 
   const executeAnalyses = async () => {
     const selected = selectedAnalyses.map(a =>
-      a.startsWith("custom:") ? a.slice(7) : t(`student.analysis.${a}`)
+      a.startsWith("custom:") ? a.slice(7) : formatMetadataLabel(a, "analysis", t)
     ).join(", ");
 
     setPhase("ready");
@@ -724,7 +721,7 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
               <div className="rounded-md bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-foreground">
                 💡 {t("joel.smartRecommendation").replace(
                   "{domain}",
-                  t(`domain.${projectDomain}`) !== `domain.${projectDomain}` ? t(`domain.${projectDomain}`) : projectDomain
+                  formatMetadataLabel(projectDomain, "domain", t) || projectDomain
                 )}
               </div>
             )}
@@ -777,7 +774,7 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
                                 className="h-auto py-1.5 text-xs justify-start"
                                 onClick={() => toggleAnalysis(key)}
                               >
-                                {t(`student.analysis.${key}`)}
+                                {formatMetadataLabel(key, "analysis", t)}
                               </Button>
                             ))}
                           </div>
