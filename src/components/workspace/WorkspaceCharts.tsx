@@ -155,7 +155,7 @@ function SingleChart({ chart, colors, barRadius, showGrid, showLabels }: {
 
 export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectContext } = {}) {
   const { t, lang } = useLanguage();
-  const { dataset, analysisResults } = useDataset();
+  const { dataset, analysisResults, cachedCharts, setCachedCharts } = useDataset();
   const { settings } = useChartStyle();
   const [retryKeys, setRetryKeys] = useState<Record<string, number>>({});
 
@@ -163,9 +163,18 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
   const barRadius: [number, number, number, number] = settings.style === "rounded" ? [4, 4, 0, 0] : settings.style === "flat" ? [0, 0, 0, 0] : [2, 2, 0, 0];
 
   const charts = useMemo(() => {
-    if (!dataset) return [];
-    return buildChartData(dataset.rawData, dataset.variables, analysisResults, t);
-  }, [dataset, analysisResults, t]);
+    if (!dataset) return cachedCharts as ChartItem[] || [];
+    // Only build from rawData if we have actual data rows
+    if (!dataset.rawData || dataset.rawData.length === 0) {
+      return cachedCharts as ChartItem[] || [];
+    }
+    const built = buildChartData(dataset.rawData, dataset.variables, analysisResults, t);
+    // Cache the built charts for persistence
+    if (built.length > 0) {
+      setCachedCharts(built as any);
+    }
+    return built;
+  }, [dataset, analysisResults, t, cachedCharts, setCachedCharts]);
 
   const [overrides, setOverrides] = useState<Record<string, { title?: string; interpretation?: string }>>({});
 

@@ -11,7 +11,7 @@ interface AutoSaverProps {
  * and updates project status as the user progresses through the workflow.
  */
 export function AutoSaver({ projectId }: AutoSaverProps) {
-  const { dataset, analysisResults, interpretationData } = useDataset();
+  const { dataset, analysisResults, interpretationData, cachedCharts } = useDataset();
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedResultsRef = useRef<string>("");
   const lastSavedDatasetRef = useRef<string>("");
@@ -57,6 +57,7 @@ export function AutoSaver({ projectId }: AutoSaverProps) {
     const payload = {
       analysisResults,
       interpretationData,
+      cachedCharts: cachedCharts || [],
     };
     const serialized = JSON.stringify(payload);
     if (serialized === lastSavedResultsRef.current) return;
@@ -105,7 +106,7 @@ export function AutoSaver({ projectId }: AutoSaverProps) {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [projectId, analysisResults, interpretationData]);
+  }, [projectId, analysisResults, interpretationData, cachedCharts]);
 
   return null;
 }
