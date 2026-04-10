@@ -362,7 +362,14 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
         if (numVars.length >= 2) result.correlations = computeCorrelations(rows, numVars);
       }
 
-      newResults.push(result);
+      // Only keep results that have actual data
+      const hasData = (r: AnalysisResultItem) =>
+        r.descriptive || r.frequencies || r.correlations || r.tTests || r.chiSquares ||
+        r.anovas || r.regressions || r.pca || r.factorAnalysis || r.clusterAnalysis;
+
+      if (hasData(result)) {
+        newResults.push(result);
+      }
     }
 
     setAnalysisResults(prev => [...prev, ...newResults]);

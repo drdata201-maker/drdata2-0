@@ -89,6 +89,7 @@ interface JoelChatProps {
   projectDescription?: string;
   projectObjective?: string;
   level: string;
+  onAnalysisComplete?: () => void;
   projectMetadata?: {
     specificObjectives?: string[];
     studyType?: string;
@@ -187,7 +188,7 @@ async function streamChat({
   }
 }
 
-export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, projectObjective, level, projectMetadata }: JoelChatProps) {
+export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, projectObjective, level, onAnalysisComplete, projectMetadata }: JoelChatProps) {
   const { t, lang } = useLanguage();
   const { processFile, dataset, runAnalyses, chatState, setChatState } = useDataset();
 
@@ -485,6 +486,9 @@ Keep under 80 words.`;
 
     // Run analyses with selected variables
     runAnalyses(selectedAnalyses, selectedSoftware, selectedDepVar || undefined, selectedIndVars.length > 0 ? selectedIndVars : undefined);
+
+    // Notify parent to switch to Results tab
+    onAnalysisComplete?.();
 
     // Auto-save analysis to database
     try {
