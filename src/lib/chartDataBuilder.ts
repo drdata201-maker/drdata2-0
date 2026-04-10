@@ -1,5 +1,6 @@
 import type { AnalysisResultItem } from "@/lib/statsEngine";
 import type { VariableInfo } from "@/contexts/DatasetContext";
+import { isIdentifierVariable } from "@/lib/academicFormatter";
 
 export interface ChartItem {
   key: string;
@@ -38,8 +39,8 @@ export function buildChartData(
   analysisResults: AnalysisResultItem[],
   tFn: (key: string) => string,
 ): ChartItem[] {
-  const numVars = variables.filter(v => v.type === "numeric").map(v => v.name);
-  const catVars = variables.filter(v => v.type === "categorical" || v.type === "ordinal").map(v => v.name);
+  const numVars = variables.filter(v => v.type === "numeric" && !isIdentifierVariable(v.name, rows)).map(v => v.name);
+  const catVars = variables.filter(v => (v.type === "categorical" || v.type === "ordinal") && !isIdentifierVariable(v.name, rows)).map(v => v.name);
   const items: ChartItem[] = [];
 
   for (const result of analysisResults) {
