@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
+import { isIdentifierVariable } from "@/lib/academicFormatter";
 import {
   AnalysisResultItem,
   computeDescriptive,
@@ -298,8 +299,13 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   const runAnalyses = useCallback((analysisKeys: string[], software: string, depVar?: string, indVars?: string[]) => {
     if (!dataset) return;
     const rows = cleanedData || dataset.rawData;
-    const numVars = dataset.variables.filter(v => v.type === "numeric").map(v => v.name);
-    const catVars = dataset.variables.filter(v => v.type === "categorical" || v.type === "ordinal").map(v => v.name);
+    // Filter out identifier/technical variables before any analysis
+    const numVars = dataset.variables
+      .filter(v => v.type === "numeric" && !isIdentifierVariable(v.name, rows))
+      .map(v => v.name);
+    const catVars = dataset.variables
+      .filter(v => (v.type === "categorical" || v.type === "ordinal") && !isIdentifierVariable(v.name, rows))
+      .map(v => v.name);
     const newResults: AnalysisResultItem[] = [];
     const ts = new Date().toISOString();
 
