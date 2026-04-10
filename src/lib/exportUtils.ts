@@ -395,10 +395,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
         rows: [headerRow, ...dataRows],
       }));
 
-      // Source
-      sections.push(new Paragraph({
-        spacing: { before: 60, after: 40 },
-      }));
+      sections.push(new Paragraph({ spacing: { before: 60, after: 40 }, children: [] }));
 
       // Interpretation for descriptive stats
       if (data.analysisResults) {
@@ -455,10 +452,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
         rows: [headerRow, ...testRows],
       }));
 
-      // Source
-      sections.push(new Paragraph({
-        spacing: { before: 60, after: 120 },
-      }));
+      sections.push(new Paragraph({ spacing: { before: 60, after: 120 }, children: [] }));
 
       tableNum++;
       sections.push(new Paragraph({ children: [] }));
@@ -500,10 +494,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
         // Skip chart if image fails
       }
 
-      // Source
-      sections.push(new Paragraph({
-        spacing: { before: 60, after: 40 },
-      }));
+      sections.push(new Paragraph({ spacing: { before: 60, after: 40 }, children: [] }));
 
       // Figure interpretation
       if (chart.chartType && chart.chartData) {
@@ -676,12 +667,7 @@ export function exportPdf(data: ExportData, content: ExportContent) {
     });
     y = (doc as any).lastAutoTable.finalY + 4;
 
-    // Source
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "italic");
-    doc.setTextColor(100);
-    doc.setTextColor(0);
-    y += 5;
+    y += 4;
 
     // Interpretation
     if (data.analysisResults) {
@@ -720,12 +706,7 @@ export function exportPdf(data: ExportData, content: ExportContent) {
     });
     y = (doc as any).lastAutoTable.finalY + 4;
 
-    // Source
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "italic");
-    doc.setTextColor(100);
-    doc.setTextColor(0);
-    y += 8;
+    y += 4;
     doc.setFont("helvetica", "normal");
   }
 
@@ -759,12 +740,7 @@ export function exportPdf(data: ExportData, content: ExportContent) {
         y += 4;
       }
 
-      // Source
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "italic");
-      doc.setTextColor(100);
-      doc.setTextColor(0);
-      y += 5;
+      y += 4;
 
       // Figure interpretation
       if (chart.chartType && chart.chartData) {

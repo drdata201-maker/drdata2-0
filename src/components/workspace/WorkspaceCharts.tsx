@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, Component, type ReactNode } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset } from "@/contexts/DatasetContext";
 import { useChartStyle } from "@/contexts/ChartStyleContext";
@@ -12,10 +12,30 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, ComposedChart,
 } from "recharts";
-import { BarChart3, Upload, Pencil, Check, X } from "lucide-react";
-import { buildChartData } from "@/lib/chartDataBuilder";
+import { BarChart3, Upload, Pencil, Check, X, RefreshCw } from "lucide-react";
+import { buildChartData, type ChartItem } from "@/lib/chartDataBuilder";
 import { ChartStyleSettingsPanel } from "./ChartStyleSettings";
 import { getFigureLabel, generateFigureInterpretation, type ProjectContext } from "@/lib/academicFormatter";
+
+// Error boundary for individual charts — prevents one broken chart from crashing all
+class ChartErrorBoundary extends Component<{ children: ReactNode; onRetry: () => void; chartTitle: string }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center gap-3 py-8">
+          <BarChart3 className="h-8 w-8 text-muted-foreground/50" />
+          <p className="text-sm text-muted-foreground">Chart rendering error</p>
+          <Button variant="outline" size="sm" onClick={() => { this.setState({ hasError: false }); this.props.onRetry(); }}>
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
+          </Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function EditableText({ value, onChange, variant = "text" }: { value: string; onChange: (v: string) => void; variant?: "title" | "text" }) {
   const [editing, setEditing] = useState(false);
@@ -54,10 +74,90 @@ function EditableText({ value, onChange, variant = "text" }: { value: string; on
   );
 }
 
+function SingleChart({ chart, colors, barRadius, showGrid, showLabels }: {
+  chart: ChartItem; colors: string[]; barRadius: [number, number, number, number];
+  showGrid: boolean; showLabels: boolean;
+}) {
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      {chart.type === "scree" ? (
+        <ComposedChart data={chart.data as { name: string; value: number; cumulative?: number }[]}>
+          {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
+          <XAxis dataKey="name" className="text-xs" tick={showLabels ? { fontSize: 10 } : false} />
+          <YAxis yAxisId="left" className="text-xs" />
+          <YAxis yAxisId="right" orientation="right" domain={[0, 100]} unit="%" className="text-xs" />
+          <Tooltip />
+          <Bar yAxisId="left" dataKey="value" fill={colors[0]} radius={barRadius} name="Eigenvalue" />
+          <Line yAxisId="right" dataKey="cumulative" stroke={colors[1] || "#10b981"} strokeWidth={2} dot={{ r: 3 }} name="Cumulative %" />
+          <Legend />
+        </ComposedChart>
+      ) : chart.type === "cluster-scatter" ? (
+        <ScatterChart>
+          {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
+          <XAxis dataKey="x" type="number" className="text-xs" name="X" />
+          <YAxis dataKey="y" type="number" className="text-xs" name="Y" />
+          <Tooltip />
+          {Array.from(new Set((chart.data as { cluster?: number }[]).map(d => d.cluster))).sort().map((cluster, ci) => (
+            <Scatter
+              key={cluster}
+              name={`Cluster ${cluster}`}
+              data={(chart.data as { x: number; y: number; cluster: number }[]).filter(d => d.cluster === cluster)}
+              fill={colors[ci % colors.length]}
+            />
+          ))}
+          <Legend />
+        </ScatterChart>
+      ) : chart.type === "histogram" || chart.type === "bar" ? (
+        <BarChart data={chart.data as { name: string; value: number }[]}>
+          {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
+          <XAxis dataKey="name" className="text-xs" tick={showLabels ? { fontSize: 10 } : false} />
+          <YAxis className="text-xs" />
+          <Tooltip />
+          <Bar dataKey="value" fill={colors[0]} radius={barRadius} />
+        </BarChart>
+      ) : chart.type === "scatter" ? (
+        <ScatterChart>
+          {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
+          <XAxis dataKey="x" type="number" className="text-xs" />
+          <YAxis dataKey="y" type="number" className="text-xs" />
+          <Tooltip />
+          <Scatter data={chart.data as { x: number; y: number }[]} fill={colors[0]} />
+        </ScatterChart>
+      ) : chart.type === "pie" ? (
+        <PieChart>
+          <Pie
+            data={chart.data as { name: string; value: number }[]}
+            dataKey="value"
+            nameKey="name"
+            cx="50%"
+            cy="50%"
+            outerRadius={90}
+            label={showLabels ? ({ name, percent }: { name: string; percent: number }) => `${name} ${(percent * 100).toFixed(0)}%` : false}
+          >
+            {(chart.data as { name: string }[]).map((_, i) => (
+              <Cell key={i} fill={colors[i % colors.length]} />
+            ))}
+          </Pie>
+          <Tooltip />
+        </PieChart>
+      ) : (
+        <BarChart data={chart.data as { name: string; value: number }[]}>
+          {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
+          <XAxis dataKey="name" className="text-xs" />
+          <YAxis className="text-xs" />
+          <Tooltip />
+          <Bar dataKey="value" fill={colors[0]} radius={barRadius} />
+        </BarChart>
+      )}
+    </ResponsiveContainer>
+  );
+}
+
 export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectContext } = {}) {
   const { t, lang } = useLanguage();
   const { dataset, analysisResults } = useDataset();
   const { settings } = useChartStyle();
+  const [retryKeys, setRetryKeys] = useState<Record<string, number>>({});
 
   const colors = settings.palette.colors;
   const barRadius: [number, number, number, number] = settings.style === "rounded" ? [4, 4, 0, 0] : settings.style === "flat" ? [0, 0, 0, 0] : [2, 2, 0, 0];
@@ -71,6 +171,10 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
 
   const updateOverride = (key: string, field: "title" | "interpretation", value: string) => {
     setOverrides(prev => ({ ...prev, [key]: { ...prev[key], [field]: value } }));
+  };
+
+  const retryChart = (key: string) => {
+    setRetryKeys(prev => ({ ...prev, [key]: (prev[key] || 0) + 1 }));
   };
 
   if (!dataset) {
@@ -111,9 +215,10 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
           const title = ov.title || chart.title;
           const autoInterp = generateFigureInterpretation(chart.type, chart.title, chart.data, lang);
           const interpretation = ov.interpretation || autoInterp;
+          const retryKey = retryKeys[chart.key] || 0;
 
           return (
-            <Card key={chart.key}>
+            <Card key={`${chart.key}-${retryKey}`}>
               {/* Academic header */}
               <CardHeader className="pb-2">
                 <div className="flex items-baseline gap-2">
@@ -124,80 +229,18 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                {/* Chart */}
-                <ResponsiveContainer width="100%" height={300}>
-                  {chart.type === "scree" ? (
-                    <ComposedChart data={chart.data as { name: string; value: number; cumulative?: number }[]}>
-                      {settings.showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
-                      <XAxis dataKey="name" className="text-xs" tick={settings.showLabels ? { fontSize: 10 } : false} />
-                      <YAxis yAxisId="left" className="text-xs" />
-                      <YAxis yAxisId="right" orientation="right" domain={[0, 100]} unit="%" className="text-xs" />
-                      <Tooltip />
-                      <Bar yAxisId="left" dataKey="value" fill={colors[0]} radius={barRadius} name="Eigenvalue" />
-                      <Line yAxisId="right" dataKey="cumulative" stroke={colors[1] || "#10b981"} strokeWidth={2} dot={{ r: 3 }} name="Cumulative %" />
-                      <Legend />
-                    </ComposedChart>
-                  ) : chart.type === "cluster-scatter" ? (
-                    <ScatterChart>
-                      {settings.showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
-                      <XAxis dataKey="x" type="number" className="text-xs" name="X" />
-                      <YAxis dataKey="y" type="number" className="text-xs" name="Y" />
-                      <Tooltip />
-                      {Array.from(new Set((chart.data as { cluster?: number }[]).map(d => d.cluster))).sort().map((cluster, ci) => (
-                        <Scatter
-                          key={cluster}
-                          name={`Cluster ${cluster}`}
-                          data={(chart.data as { x: number; y: number; cluster: number }[]).filter(d => d.cluster === cluster)}
-                          fill={colors[ci % colors.length]}
-                        />
-                      ))}
-                      <Legend />
-                    </ScatterChart>
-                  ) : chart.type === "histogram" || chart.type === "bar" ? (
-                    <BarChart data={chart.data as { name: string; value: number }[]}>
-                      {settings.showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
-                      <XAxis dataKey="name" className="text-xs" tick={settings.showLabels ? { fontSize: 10 } : false} />
-                      <YAxis className="text-xs" />
-                      <Tooltip />
-                      <Bar dataKey="value" fill={colors[0]} radius={barRadius} />
-                    </BarChart>
-                  ) : chart.type === "scatter" ? (
-                    <ScatterChart>
-                      {settings.showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
-                      <XAxis dataKey="x" type="number" className="text-xs" />
-                      <YAxis dataKey="y" type="number" className="text-xs" />
-                      <Tooltip />
-                      <Scatter data={chart.data as { x: number; y: number }[]} fill={colors[0]} />
-                    </ScatterChart>
-                  ) : chart.type === "pie" ? (
-                    <PieChart>
-                      <Pie
-                        data={chart.data as { name: string; value: number }[]}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={90}
-                        label={settings.showLabels ? ({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%` : false}
-                      >
-                        {(chart.data as { name: string }[]).map((_, i) => (
-                          <Cell key={i} fill={colors[i % colors.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  ) : (
-                    <BarChart data={chart.data as { name: string; value: number }[]}>
-                      {settings.showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
-                      <XAxis dataKey="name" className="text-xs" />
-                      <YAxis className="text-xs" />
-                      <Tooltip />
-                      <Bar dataKey="value" fill={colors[0]} radius={barRadius} />
-                    </BarChart>
-                  )}
-                </ResponsiveContainer>
+                {/* Chart with error boundary */}
+                <ChartErrorBoundary chartTitle={title} onRetry={() => retryChart(chart.key)}>
+                  <SingleChart
+                    chart={chart}
+                    colors={colors}
+                    barRadius={barRadius}
+                    showGrid={settings.showGrid}
+                    showLabels={settings.showLabels}
+                  />
+                </ChartErrorBoundary>
 
-                {/* Inline interpretation (no Source text) */}
+                {/* Inline interpretation */}
                 {interpretation && (
                   <div className="bg-muted/30 border border-dashed border-border rounded-md py-2 px-3">
                     <div className="flex items-start gap-2">
