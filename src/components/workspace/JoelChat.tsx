@@ -652,7 +652,23 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
           </div>
         ))}
 
-        {/* Confirm/Modify buttons */}
+        {/* Typing indicator */}
+        {isStreaming && (
+          <div className="flex items-start gap-2">
+            <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}>
+              <Avatar className="h-7 w-7 shrink-0 mt-0.5">
+                <AvatarImage src={JOEL_AVATARS[level] || joelLicence} alt="Joël" />
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs"><Bot className="h-3 w-3" /></AvatarFallback>
+              </Avatar>
+            </motion.div>
+            <div className="bg-muted rounded-lg px-4 py-3 flex items-center gap-1.5">
+              <motion.span className="block h-2 w-2 rounded-full bg-muted-foreground/50" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0 }} />
+              <motion.span className="block h-2 w-2 rounded-full bg-muted-foreground/50" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0.2 }} />
+              <motion.span className="block h-2 w-2 rounded-full bg-muted-foreground/50" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity, delay: 0.4 }} />
+            </div>
+          </div>
+        )}
+
         {phase === "confirm" && !isStreaming && messages.length > 0 && (
           <div className="mt-2 flex gap-2">
             <Button size="sm" onClick={handleConfirm} className="gap-1.5">
