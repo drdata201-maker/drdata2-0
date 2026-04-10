@@ -1,10 +1,12 @@
+import { useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset } from "@/contexts/DatasetContext";
+import { isIdentifierVariable } from "@/lib/academicFormatter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Database, AlertTriangle, CheckCircle, Sparkles, ArrowRight, Settings2, Upload, Loader2, FileSpreadsheet } from "lucide-react";
+import { Database, AlertTriangle, CheckCircle, Sparkles, ArrowRight, Settings2, Upload, Loader2, FileSpreadsheet, ShieldOff } from "lucide-react";
 
 export function WorkspaceDataPrep() {
   const { t } = useLanguage();
@@ -66,8 +68,14 @@ export function WorkspaceDataPrep() {
 
   if (!dataset) return null;
 
-  const numericCount = dataset.variables.filter(v => v.type === "numeric").length;
-  const catCount = dataset.variables.filter(v => v.type === "categorical" || v.type === "ordinal").length;
+  const rows = dataset.rawData;
+  const excludedVars = useMemo(
+    () => dataset.variables.filter(v => isIdentifierVariable(v.name, rows)),
+    [dataset.variables, rows]
+  );
+  const analyticalVars = dataset.variables.length - excludedVars.length;
+  const numericCount = dataset.variables.filter(v => v.type === "numeric" && !isIdentifierVariable(v.name, rows)).length;
+  const catCount = dataset.variables.filter(v => (v.type === "categorical" || v.type === "ordinal") && !isIdentifierVariable(v.name, rows)).length;
   const dateCount = dataset.variables.filter(v => v.type === "date").length;
   const hasMissing = dataset.totalMissing > 0;
   const hasOutliers = dataset.variables.some(v => v.outliers > 0);
