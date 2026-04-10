@@ -18,6 +18,7 @@ const JOEL_AVATARS: Record<string, string> = {
   student_doctorate: joelPhd,
 };
 import ReactMarkdown from "react-markdown";
+import { motion } from "framer-motion";
 import { stripLatex } from "@/lib/latexSanitizer";
 import { formatMetadataLabel, getLocalizedProjectContext } from "@/lib/projectMetadataLabels";
 import { toast } from "sonner";
@@ -608,10 +609,12 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
     <>
       {/* Header */}
       <div className="flex items-center gap-2 border-b border-border px-4 py-3 bg-primary/5">
-        <Avatar className="h-10 w-10">
-          <AvatarImage src={JOEL_AVATARS[level] || joelLicence} alt="Assistant Joël" />
-          <AvatarFallback className="bg-primary text-primary-foreground"><Bot className="h-4 w-4" /></AvatarFallback>
-        </Avatar>
+        <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}>
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={JOEL_AVATARS[level] || joelLicence} alt="Assistant Joël" />
+            <AvatarFallback className="bg-primary text-primary-foreground"><Bot className="h-4 w-4" /></AvatarFallback>
+          </Avatar>
+        </motion.div>
         <div>
           <p className="text-sm font-semibold text-foreground">Assistant Joël</p>
           <p className="text-xs text-muted-foreground">{t("joel.subtitle")}</p>
@@ -624,10 +627,12 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start items-start gap-2"}`}>
             {msg.role === "assistant" && (
-              <Avatar className="h-7 w-7 shrink-0 mt-0.5">
-                <AvatarImage src={JOEL_AVATARS[level] || joelLicence} alt="Joël" />
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs"><Bot className="h-3 w-3" /></AvatarFallback>
-              </Avatar>
+              <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}>
+                <Avatar className="h-7 w-7 shrink-0 mt-0.5">
+                  <AvatarImage src={JOEL_AVATARS[level] || joelLicence} alt="Joël" />
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xs"><Bot className="h-3 w-3" /></AvatarFallback>
+                </Avatar>
+              </motion.div>
             )}
             <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
               msg.role === "user"
