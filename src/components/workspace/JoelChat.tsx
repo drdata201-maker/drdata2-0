@@ -18,25 +18,48 @@ interface AnalysisCategory {
   analyses: string[];
 }
 
-const ANALYSIS_CATEGORIES_BY_LEVEL: Record<string, AnalysisCategory[]> = {
+interface AnalysisCategoryGroup {
+  groupKey?: "recommended" | "advanced_optional";
+  categories: AnalysisCategory[];
+}
+
+const ANALYSIS_GROUPS_BY_LEVEL: Record<string, AnalysisCategoryGroup[]> = {
   student_license: [
-    { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
-    { key: "comparative", analyses: ["t_test", "chi_square", "anova_basic"] },
-    { key: "relationship", analyses: ["correlation"] },
+    {
+      groupKey: "recommended",
+      categories: [
+        { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab", "chi_square"] },
+      ],
+    },
+    {
+      groupKey: "advanced_optional",
+      categories: [
+        { key: "comparative", analyses: ["t_test", "anova_basic"] },
+        { key: "relationship", analyses: ["correlation"] },
+      ],
+    },
   ],
   student_master: [
-    { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
-    { key: "comparative", analyses: ["t_test", "chi_square", "anova", "nonparametric"] },
-    { key: "relationship", analyses: ["correlation", "simple_regression", "multiple_regression"] },
-    { key: "predictive", analyses: ["logistic_regression", "factor_analysis"] },
-    { key: "reliability", analyses: ["cronbach_alpha", "pca"] },
+    {
+      categories: [
+        { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
+        { key: "comparative", analyses: ["t_test", "chi_square", "anova", "nonparametric"] },
+        { key: "relationship", analyses: ["correlation", "simple_regression", "multiple_regression"] },
+        { key: "predictive", analyses: ["logistic_regression", "factor_analysis"] },
+        { key: "reliability", analyses: ["cronbach_alpha", "pca"] },
+      ],
+    },
   ],
   student_doctorate: [
-    { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
-    { key: "comparative", analyses: ["t_test", "chi_square", "anova", "nonparametric"] },
-    { key: "relationship", analyses: ["correlation", "simple_regression", "multiple_regression"] },
-    { key: "predictive", analyses: ["logistic_regression", "factor_analysis", "sem"] },
-    { key: "advanced", analyses: ["pca", "cluster_analysis", "panel_data", "time_series", "survival_analysis", "multilevel_modeling", "multivariate"] },
+    {
+      categories: [
+        { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
+        { key: "comparative", analyses: ["t_test", "chi_square", "anova", "nonparametric"] },
+        { key: "relationship", analyses: ["correlation", "simple_regression", "multiple_regression"] },
+        { key: "predictive", analyses: ["logistic_regression", "factor_analysis", "sem"] },
+        { key: "advanced", analyses: ["pca", "cluster_analysis", "panel_data", "time_series", "survival_analysis", "multilevel_modeling", "multivariate"] },
+      ],
+    },
   ],
 };
 
@@ -563,7 +586,8 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
     sendToAI(`Based on the analysis results, recommend and describe the most appropriate charts and visualizations for this research. Include: which chart type for each variable/relationship, what it would show, and how to interpret it academically. Suggest: histogram, bar chart, scatter plot, box plot, heatmap, pie chart, or correlation matrix as appropriate.`);
   };
 
-  const categories = ANALYSIS_CATEGORIES_BY_LEVEL[level] || ANALYSIS_CATEGORIES_BY_LEVEL.student_license;
+  const analysisGroups = ANALYSIS_GROUPS_BY_LEVEL[level] || ANALYSIS_GROUPS_BY_LEVEL.student_license;
+  const [advancedExpanded, setAdvancedExpanded] = useState(false);
 
   return (
     <>
@@ -682,33 +706,77 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
           </div>
         )}
 
-        {/* Analysis selection - categorized */}
+        {/* Analysis selection - categorized with recommended/advanced groups */}
         {phase === "analysis" && !isStreaming && (
           <div className="mt-2 space-y-3">
             <p className="text-xs font-medium text-muted-foreground">{t("joel.askAnalysis")}</p>
-            {categories.map(cat => (
-              <div key={cat.key} className="space-y-1.5">
-                <button
-                  onClick={() => setExpandedCategory(expandedCategory === cat.key ? null : cat.key)}
-                  className="flex w-full items-center justify-between rounded-md bg-muted/50 px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted transition-colors"
-                >
-                  {t(`joel.category.${cat.key}`)}
-                  <span className="text-muted-foreground">{expandedCategory === cat.key ? "−" : "+"}</span>
-                </button>
-                {(expandedCategory === cat.key || expandedCategory === null) && (
-                  <div className="grid grid-cols-2 gap-1 pl-1">
-                    {cat.analyses.map(key => (
-                      <Button
-                        key={key}
-                        variant={selectedAnalyses.includes(key) ? "default" : "outline"}
-                        size="sm"
-                        className="h-auto py-1.5 text-xs justify-start"
-                        onClick={() => toggleAnalysis(key)}
+
+            {/* Smart recommendation message for Licence */}
+            {level === "student_license" && projectDomain && (
+              <div className="rounded-md bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-foreground">
+                💡 {t("joel.smartRecommendation").replace(
+                  "{domain}",
+                  t(`domain.${projectDomain}`) !== `domain.${projectDomain}` ? t(`domain.${projectDomain}`) : projectDomain
+                )}
+              </div>
+            )}
+
+            {analysisGroups.map((group, gi) => (
+              <div key={gi} className="space-y-2">
+                {/* Group header for recommended / advanced */}
+                {group.groupKey && (
+                  <div className="flex items-center gap-2">
+                    {group.groupKey === "recommended" ? (
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        {t("joel.group.recommended")}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setAdvancedExpanded(!advancedExpanded)}
+                        className="flex w-full items-center justify-between rounded-md bg-muted/30 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/50 transition-colors"
                       >
-                        {t(`student.analysis.${key}`)}
-                      </Button>
-                    ))}
+                        {t("joel.group.advanced_optional")}
+                        <span>{advancedExpanded ? "−" : "+"}</span>
+                      </button>
+                    )}
                   </div>
+                )}
+
+                {/* Hide advanced categories if collapsed */}
+                {(!group.groupKey || group.groupKey === "recommended" || advancedExpanded) && (
+                  <>
+                    {group.categories.map(cat => (
+                      <div key={cat.key} className="space-y-1.5">
+                        <button
+                          onClick={() => setExpandedCategory(expandedCategory === cat.key ? null : cat.key)}
+                          className={`flex w-full items-center justify-between rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                            group.groupKey === "recommended"
+                              ? "bg-primary/10 text-primary hover:bg-primary/15"
+                              : "bg-muted/50 text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          {t(`joel.category.${cat.key}`)}
+                          <span className="text-muted-foreground">{expandedCategory === cat.key ? "−" : "+"}</span>
+                        </button>
+                        {(expandedCategory === cat.key || (group.groupKey === "recommended" && expandedCategory === null)) && (
+                          <div className="grid grid-cols-2 gap-1 pl-1">
+                            {cat.analyses.map(key => (
+                              <Button
+                                key={key}
+                                variant={selectedAnalyses.includes(key) ? "default" : "outline"}
+                                size="sm"
+                                className="h-auto py-1.5 text-xs justify-start"
+                                onClick={() => toggleAnalysis(key)}
+                              >
+                                {t(`student.analysis.${key}`)}
+                              </Button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </>
                 )}
               </div>
             ))}

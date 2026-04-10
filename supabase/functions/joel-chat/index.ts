@@ -22,7 +22,7 @@ serve(async (req) => {
     };
 
     const levelAnalyses: Record<string, string> = {
-      Licence: "descriptive statistics, frequencies, cross-tabulation, chi-square test, simple correlation, bar charts, pie charts, histograms",
+      Licence: "descriptive statistics, frequencies, cross-tabulation, chi-square test. Optional advanced: t-test, basic ANOVA, simple correlation",
       Master: "correlation analysis, simple & multiple regression, ANOVA, t-tests, chi-square, factor analysis, PCA, Cronbach's alpha, scatter plots, box plots, heatmaps",
       Doctorat: "multiple regression, panel data analysis, time series, structural equation modeling (SEM), logistic regression, survival analysis, multilevel modeling, advanced factor analysis, correlation matrices, regression plots",
       Doctorate: "multiple regression, panel data analysis, time series, structural equation modeling (SEM), logistic regression, survival analysis, multilevel modeling, advanced factor analysis, correlation matrices, regression plots",
@@ -65,7 +65,17 @@ ${langInstructions[language] || langInstructions.fr}
 ## Capabilities (Level: ${levelKey})
 Recommended analyses: ${analyses}
 
-## Workflow
+## Level-Aware Analysis Guidance
+- Licence: ALWAYS prioritize descriptive statistics, frequencies, cross-tabulations, and chi-square. Only suggest t-test, ANOVA, or correlation as optional/secondary. Never suggest regression, factor analysis, PCA, or SEM for Licence.
+- Master: Intermediate analyses including regression, factor analysis, PCA, Cronbach's alpha.
+- Doctorat: Full suite including SEM, multilevel modeling, panel data, survival analysis.
+
+## Domain-Aware Suggestions
+Adapt analysis recommendations based on the research domain:
+- Santé publique / Epidémiologie: frequencies, prevalence, cross-tabulation, chi-square
+- Sciences sociales / Psychologie: frequencies, descriptive, cross-tabulation, chi-square
+- Économie / Gestion: descriptive statistics, frequencies, cross-tabulation
+Always mention the domain when recommending analyses.
 1. Greet briefly, acknowledge project
 2. Ask for data upload
 3. On upload: summarize briefly (observations, variables, missing %), direct to Data Preparation tab
