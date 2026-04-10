@@ -7,6 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Send, Upload, Sparkles, Bot, Loader2, CheckCircle, Edit3, RotateCcw, CheckCheck, Variable } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import joelLicence from "@/assets/assistant_joel_license.png";
+import joelMaster from "@/assets/assistant_joel_master.png";
+import joelPhd from "@/assets/assistant_joel_phd.png";
+
+const JOEL_AVATARS: Record<string, string> = {
+  student_license: joelLicence,
+  student_master: joelMaster,
+  student_doctorate: joelPhd,
+};
 import ReactMarkdown from "react-markdown";
 import { stripLatex } from "@/lib/latexSanitizer";
 import { formatMetadataLabel, getLocalizedProjectContext } from "@/lib/projectMetadataLabels";
@@ -598,9 +608,10 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
     <>
       {/* Header */}
       <div className="flex items-center gap-2 border-b border-border px-4 py-3 bg-primary/5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
-          <Bot className="h-4 w-4" />
-        </div>
+        <Avatar className="h-10 w-10">
+          <AvatarImage src={JOEL_AVATARS[level] || joelLicence} alt="Assistant Joël" />
+          <AvatarFallback className="bg-primary text-primary-foreground"><Bot className="h-4 w-4" /></AvatarFallback>
+        </Avatar>
         <div>
           <p className="text-sm font-semibold text-foreground">Assistant Joël</p>
           <p className="text-xs text-muted-foreground">{t("joel.subtitle")}</p>
