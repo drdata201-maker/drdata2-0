@@ -309,10 +309,53 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                       <div><span className="font-medium text-foreground">{t("export.level") || "Level"}:</span> <span className="text-muted-foreground">{lvl}</span></div>
                       <div><span className="font-medium text-foreground">{t("export.type") || "Type"}:</span> <span className="text-muted-foreground">{data.projectType || "—"}</span></div>
                       <div><span className="font-medium text-foreground">{t("export.domain") || "Domain"}:</span> <span className="text-muted-foreground">{data.projectDomain || "—"}</span></div>
+                      {data.studyType && <div><span className="font-medium text-foreground">{t("export.studyType") || "Study Type"}:</span> <span className="text-muted-foreground">{data.studyType}</span></div>}
+                      {data.studyDesign && <div><span className="font-medium text-foreground">{t("export.studyDesign") || "Study Design"}:</span> <span className="text-muted-foreground">{data.studyDesign}</span></div>}
+                      {data.population && <div className="sm:col-span-2"><span className="font-medium text-foreground">{t("export.population") || "Population"}:</span> <span className="text-muted-foreground">{data.population}</span></div>}
                     </div>
                     {data.projectDescription && <p className="text-sm text-muted-foreground">{data.projectDescription}</p>}
                   </section>
                 )}
+
+                {/* Objectives */}
+                {showProjectInfo(previewContent) && (data.objective || (data.specificObjectives && data.specificObjectives.length > 0)) && (
+                  <section className="space-y-2">
+                    <h2 className="text-lg font-semibold text-foreground">{t("export.objectives") || "Study Objectives"}</h2>
+                    {data.objective && (
+                      <div className="text-sm">
+                        <span className="font-medium text-foreground">{t("export.generalObjective") || "General Objective"}:</span>{" "}
+                        <span className="text-muted-foreground">{data.objective}</span>
+                      </div>
+                    )}
+                    {data.specificObjectives && data.specificObjectives.length > 0 && (
+                      <div className="text-sm">
+                        <span className="font-medium text-foreground">{t("export.specificObjectives") || "Specific Objectives"}:</span>
+                        <ul className="list-disc list-inside mt-1 text-muted-foreground space-y-0.5">
+                          {data.specificObjectives.map((obj, i) => <li key={i}>{obj}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                  </section>
+                )}
+
+                {/* Hypotheses & Variables */}
+                {showProjectInfo(previewContent) && (data.hypothesis || data.advancedHypothesis || data.independentVars || data.dependentVar) && (
+                  <section className="space-y-2">
+                    <h2 className="text-lg font-semibold text-foreground">{t("export.methodology") || "Methodology"}</h2>
+                    <div className="grid grid-cols-1 gap-y-1 text-sm">
+                      {data.hypothesis && <div><span className="font-medium text-foreground">{t("export.hypothesis") || "Hypothesis"}:</span> <span className="text-muted-foreground">{data.hypothesis}</span></div>}
+                      {data.advancedHypothesis && <div><span className="font-medium text-foreground">{t("export.advancedHypothesis") || "Advanced Hypothesis"}:</span> <span className="text-muted-foreground">{data.advancedHypothesis}</span></div>}
+                      {data.independentVars && <div><span className="font-medium text-foreground">{t("export.independentVars") || "Independent Variables"}:</span> <span className="text-muted-foreground">{data.independentVars}</span></div>}
+                      {data.dependentVar && <div><span className="font-medium text-foreground">{t("export.dependentVar") || "Dependent Variable"}:</span> <span className="text-muted-foreground">{data.dependentVar}</span></div>}
+                      {data.controlVars && <div><span className="font-medium text-foreground">{t("export.controlVars") || "Control Variables"}:</span> <span className="text-muted-foreground">{data.controlVars}</span></div>}
+                      {data.mediatorVars && <div><span className="font-medium text-foreground">{t("export.mediatorVars") || "Mediator Variables"}:</span> <span className="text-muted-foreground">{data.mediatorVars}</span></div>}
+                      {data.moderatorVars && <div><span className="font-medium text-foreground">{t("export.moderatorVars") || "Moderator Variables"}:</span> <span className="text-muted-foreground">{data.moderatorVars}</span></div>}
+                      {data.conceptualModel && <div><span className="font-medium text-foreground">{t("export.conceptualModel") || "Conceptual Model"}:</span> <span className="text-muted-foreground">{data.conceptualModel}</span></div>}
+                    </div>
+                  </section>
+                )}
+
+                <Separator />
 
                 {/* Stats tables */}
                 {showStats(previewContent) && data.statsTable.length > 0 && (
