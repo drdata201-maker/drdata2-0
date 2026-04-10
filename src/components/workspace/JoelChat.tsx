@@ -714,9 +714,10 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
             {/* Smart recommendation message for Licence */}
             {level === "student_license" && projectDomain && (
               <div className="rounded-md bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-foreground">
-                💡 {t("joel.smartRecommendation", {
-                  domain: t(`domain.${projectDomain}`) !== `domain.${projectDomain}` ? t(`domain.${projectDomain}`) : projectDomain
-                })}
+                💡 {t("joel.smartRecommendation").replace(
+                  "{domain}",
+                  t(`domain.${projectDomain}`) !== `domain.${projectDomain}` ? t(`domain.${projectDomain}`) : projectDomain
+                )}
               </div>
             )}
 
