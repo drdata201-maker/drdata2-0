@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useDataset } from "@/contexts/DatasetContext";
 import { supabase } from "@/integrations/supabase/client";
-import type { AnalysisResultItem, InterpretationData, ChatState } from "@/contexts/DatasetContext";
+import type { AnalysisResultItem, InterpretationData, ChatState, CachedChart } from "@/contexts/DatasetContext";
 
 interface ProjectRestorerProps {
   projectId: string | null;
@@ -9,7 +9,7 @@ interface ProjectRestorerProps {
 }
 
 export function ProjectRestorer({ projectId, onRestored }: ProjectRestorerProps) {
-  const { restoreState, restoreDatasetSummary, analysisResults, chatState, setChatState } = useDataset();
+  const { restoreState, restoreDatasetSummary, analysisResults, chatState, setChatState, setCachedCharts } = useDataset();
   const [restored, setRestored] = useState(false);
 
   // Restore chat + analysis + dataset state on mount
@@ -67,9 +67,13 @@ export function ProjectRestorer({ projectId, onRestored }: ProjectRestorerProps)
           const saved = typeof data.results === "string" ? JSON.parse(data.results) : data.results;
           const results: AnalysisResultItem[] = saved.analysisResults || [];
           const interpretation: InterpretationData | null = saved.interpretationData || null;
+          const charts: CachedChart[] | null = saved.cachedCharts || null;
 
           if (results.length > 0) {
             restoreState(results, interpretation);
+            if (charts && charts.length > 0) {
+              setCachedCharts(charts);
+            }
             onRestored(true);
             return;
           }
@@ -80,7 +84,7 @@ export function ProjectRestorer({ projectId, onRestored }: ProjectRestorerProps)
         onRestored(false);
       }
     })();
-  }, [projectId, restored, restoreState, restoreDatasetSummary, onRestored, analysisResults.length, setChatState]);
+  }, [projectId, restored, restoreState, restoreDatasetSummary, onRestored, analysisResults.length, setChatState, setCachedCharts]);
 
   // Auto-save chat state to DB with debounce
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

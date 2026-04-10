@@ -55,6 +55,13 @@ export interface InterpretationData {
   globalRecommendations: string;
 }
 
+export interface CachedChart {
+  key: string;
+  title: string;
+  type: string;
+  data: Record<string, unknown>[];
+}
+
 export type ChatMessage = { role: "assistant" | "user"; content: string; type?: string };
 export type ChatPhase = "confirm" | "upload" | "software" | "analysis" | "variables" | "ready";
 
@@ -76,6 +83,8 @@ interface DatasetContextType {
   analysisResults: AnalysisResultItem[];
   interpretationData: InterpretationData | null;
   setInterpretationData: (data: InterpretationData | null) => void;
+  cachedCharts: CachedChart[] | null;
+  setCachedCharts: (charts: CachedChart[] | null) => void;
   processFile: (file: File) => Promise<DatasetSummary>;
   runCleaning: () => void;
   runAnalyses: (analysisKeys: string[], software: string, depVar?: string, indVars?: string[]) => void;
@@ -228,6 +237,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   const [cleanedData, setCleanedData] = useState<Record<string, unknown>[] | null>(null);
   const [analysisResults, setAnalysisResults] = useState<AnalysisResultItem[]>([]);
   const [interpretationData, setInterpretationData] = useState<InterpretationData | null>(null);
+  const [cachedCharts, setCachedCharts] = useState<CachedChart[] | null>(null);
   const [chatState, setChatState] = useState<ChatState>(DEFAULT_CHAT_STATE);
 
   const processFile = useCallback(async (file: File): Promise<DatasetSummary> => {
@@ -403,6 +413,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     setCleanedData(null);
     setAnalysisResults([]);
     setInterpretationData(null);
+    setCachedCharts(null);
   }, []);
 
   const restoreState = useCallback((results: AnalysisResultItem[], interpretation: InterpretationData | null) => {
@@ -416,7 +427,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, interpretationData, setInterpretationData, processFile, runCleaning, runAnalyses, reset, restoreState, restoreDatasetSummary, chatState, setChatState }}>
+    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, interpretationData, setInterpretationData, cachedCharts, setCachedCharts, processFile, runCleaning, runAnalyses, reset, restoreState, restoreDatasetSummary, chatState, setChatState }}>
       {children}
     </DatasetContext.Provider>
   );
