@@ -420,7 +420,7 @@ export default function AnalysisWorkspace() {
               </PanelBoundary>
             </TabsContent>
 
-            <TabsContent value="interpretation" className="mt-0 animate-fade-in">
+            <TabsContent value="interpretation" className={cn("mt-0 animate-fade-in", activeTab !== "interpretation" && "hidden")} forceMount>
               <PanelBoundary fallback={<PanelLoading />}>
                 <WorkspaceInterpretation level={level} projectTitle={projectTitle} projectType={currentType} projectDomain={currentDomain} projectContext={{ ...projectContext, title: projectTitle }} />
               </PanelBoundary>
