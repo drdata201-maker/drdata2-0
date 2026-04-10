@@ -1,14 +1,21 @@
+import { useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset } from "@/contexts/DatasetContext";
+import { isIdentifierVariable } from "@/lib/academicFormatter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Database, AlertTriangle, CheckCircle, Sparkles, ArrowRight, Settings2, Upload, Loader2, FileSpreadsheet } from "lucide-react";
+import { Database, AlertTriangle, CheckCircle, Sparkles, ArrowRight, Settings2, Upload, Loader2, FileSpreadsheet, ShieldOff } from "lucide-react";
 
 export function WorkspaceDataPrep() {
   const { t } = useLanguage();
   const { dataset, prepStatus, prepError, runCleaning } = useDataset();
+
+  const excludedVars = useMemo(
+    () => dataset ? dataset.variables.filter(v => isIdentifierVariable(v.name, dataset.rawData)) : [],
+    [dataset]
+  );
 
   // No dataset yet
   if (!dataset && prepStatus === "idle") {
@@ -66,8 +73,10 @@ export function WorkspaceDataPrep() {
 
   if (!dataset) return null;
 
-  const numericCount = dataset.variables.filter(v => v.type === "numeric").length;
-  const catCount = dataset.variables.filter(v => v.type === "categorical" || v.type === "ordinal").length;
+  const rows = dataset.rawData;
+  const analyticalVars = dataset.variables.length - excludedVars.length;
+  const numericCount = dataset.variables.filter(v => v.type === "numeric" && !isIdentifierVariable(v.name, rows)).length;
+  const catCount = dataset.variables.filter(v => (v.type === "categorical" || v.type === "ordinal") && !isIdentifierVariable(v.name, rows)).length;
   const dateCount = dataset.variables.filter(v => v.type === "date").length;
   const hasMissing = dataset.totalMissing > 0;
   const hasOutliers = dataset.variables.some(v => v.outliers > 0);
@@ -117,26 +126,58 @@ export function WorkspaceDataPrep() {
             </div>
           </div>
 
+          {/* Excluded identifier variables indicator */}
+          {excludedVars.length > 0 && (
+            <div className="mt-4 rounded-lg border border-dashed border-destructive/30 bg-destructive/5 px-3 py-2.5">
+              <div className="flex items-center gap-2 mb-1.5">
+                <ShieldOff className="h-4 w-4 text-destructive/70" />
+                <span className="text-sm font-medium text-destructive/80">
+                  {excludedVars.length} variable{excludedVars.length > 1 ? "s" : ""} {t("dataPrep.excludedIdentifiers") || "exclue(s) automatiquement (identifiants techniques)"}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {excludedVars.map(v => (
+                  <Badge key={v.name} variant="outline" className="text-xs border-destructive/30 text-destructive/70 line-through">
+                    {v.name}
+                  </Badge>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1.5">
+                {t("dataPrep.excludedDesc") || "Ces variables ne seront pas incluses dans les analyses, graphiques ni interprétations."}
+              </p>
+            </div>
+          )}
+
           <div className="mt-4">
             <p className="mb-2 text-sm font-medium text-foreground">{t("dataPrep.variableList")}</p>
             <div className="space-y-1.5 max-h-64 overflow-y-auto">
-              {dataset.variables.map(v => (
-                <div key={v.name} className="flex items-center justify-between rounded border border-border/50 px-3 py-1.5 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-foreground">{v.name}</span>
-                    <Badge variant="outline" className="text-xs">{t(`dataPrep.type.${v.type}`)}</Badge>
-                    <span className="text-xs text-muted-foreground">{v.uniqueValues} unique</span>
+              {dataset.variables.map(v => {
+                const isExcluded = excludedVars.some(e => e.name === v.name);
+                return (
+                  <div key={v.name} className={`flex items-center justify-between rounded border px-3 py-1.5 text-sm ${isExcluded ? "border-destructive/20 bg-destructive/5 opacity-60" : "border-border/50"}`}>
+                    <div className="flex items-center gap-2">
+                      <span className={`font-medium ${isExcluded ? "line-through text-muted-foreground" : "text-foreground"}`}>{v.name}</span>
+                      <Badge variant="outline" className="text-xs">{t(`dataPrep.type.${v.type}`)}</Badge>
+                      {isExcluded ? (
+                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                          <ShieldOff className="h-2.5 w-2.5 mr-0.5" />
+                          {t("dataPrep.identifier") || "Identifiant"}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">{v.uniqueValues} unique</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {!isExcluded && v.missing > 0 && (
+                        <span className="text-xs text-amber-600">{v.missingPct}% {t("dataPrep.missing")}</span>
+                      )}
+                      {!isExcluded && v.outliers > 0 && (
+                        <span className="text-xs text-orange-600">{v.outliers} outliers</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {v.missing > 0 && (
-                      <span className="text-xs text-amber-600">{v.missingPct}% {t("dataPrep.missing")}</span>
-                    )}
-                    {v.outliers > 0 && (
-                      <span className="text-xs text-orange-600">{v.outliers} outliers</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </CardContent>
