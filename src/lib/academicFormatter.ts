@@ -284,14 +284,16 @@ export function generateTableInterpretation(
   return interps.join(" ");
 }
 
-// Use full academic terms: Moyenne, Écart type (not M, ET, SD)
-function interpDescriptive(d: { variable: string; mean: number; std: number; n: number }, lang: string) {
+// Use full academic terms: Moyenne, Écart type (not M, ET, SD) — multi-sentence interpretations
+function interpDescriptive(d: { variable: string; mean: number; std: number; n: number; min?: number; max?: number; median?: number }, lang: string) {
+  const rangeInfo = (d.min != null && d.max != null) ? ` [${d.min} – ${d.max}]` : "";
+  const medianInfo = d.median != null ? d.median : d.mean;
   const t: Record<string, string> = {
-    fr: `La variable « ${d.variable} » présente une moyenne de ${d.mean} (écart type = ${d.std}, N = ${d.n}).`,
-    en: `The variable "${d.variable}" has a mean of ${d.mean} (standard deviation = ${d.std}, N = ${d.n}).`,
-    es: `La variable "${d.variable}" presenta una media de ${d.mean} (desviación estándar = ${d.std}, N = ${d.n}).`,
-    de: `Die Variable „${d.variable}" hat einen Mittelwert von ${d.mean} (Standardabweichung = ${d.std}, N = ${d.n}).`,
-    pt: `A variável "${d.variable}" apresenta uma média de ${d.mean} (desvio padrão = ${d.std}, N = ${d.n}).`,
+    fr: `La variable « ${d.variable} » présente une moyenne de ${d.mean} (écart type = ${d.std}, N = ${d.n})${rangeInfo}. La valeur médiane est de ${medianInfo}, ce qui indique une distribution ${Math.abs(d.mean - medianInfo) < d.std * 0.1 ? "relativement symétrique" : "asymétrique"} des données. Ces résultats permettent de caractériser la tendance centrale et la dispersion de cette variable dans l'échantillon étudié.`,
+    en: `The variable "${d.variable}" has a mean of ${d.mean} (standard deviation = ${d.std}, N = ${d.n})${rangeInfo}. The median value is ${medianInfo}, indicating a ${Math.abs(d.mean - medianInfo) < d.std * 0.1 ? "relatively symmetric" : "skewed"} distribution. These results characterize the central tendency and dispersion of this variable in the study sample.`,
+    es: `La variable "${d.variable}" presenta una media de ${d.mean} (desviación estándar = ${d.std}, N = ${d.n})${rangeInfo}. El valor mediano es ${medianInfo}, lo que indica una distribución ${Math.abs(d.mean - medianInfo) < d.std * 0.1 ? "relativamente simétrica" : "asimétrica"}. Estos resultados permiten caracterizar la tendencia central y la dispersión de esta variable en la muestra estudiada.`,
+    de: `Die Variable „${d.variable}" hat einen Mittelwert von ${d.mean} (Standardabweichung = ${d.std}, N = ${d.n})${rangeInfo}. Der Median beträgt ${medianInfo}, was auf eine ${Math.abs(d.mean - medianInfo) < d.std * 0.1 ? "relativ symmetrische" : "schiefe"} Verteilung hinweist. Diese Ergebnisse charakterisieren die zentrale Tendenz und Streuung dieser Variable in der untersuchten Stichprobe.`,
+    pt: `A variável "${d.variable}" apresenta uma média de ${d.mean} (desvio padrão = ${d.std}, N = ${d.n})${rangeInfo}. O valor mediano é ${medianInfo}, indicando uma distribuição ${Math.abs(d.mean - medianInfo) < d.std * 0.1 ? "relativamente simétrica" : "assimétrica"}. Estes resultados permitem caracterizar a tendência central e a dispersão desta variável na amostra estudada.`,
   };
   return t[lang] || t.en;
 }
@@ -363,24 +365,29 @@ function interpRegression(r: { dependent: string; rSquared: number; fStat: numbe
 
 function interpTTest(tt: { variable: string; groupVar: string; groups: string[]; means: number[]; pValue: number }, lang: string) {
   const sig = tt.pValue < 0.05;
+  const diff = Math.abs(tt.means[0] - tt.means[1]).toFixed(2);
+  const higher = tt.means[0] >= tt.means[1] ? tt.groups[0] : tt.groups[1];
   const templates: Record<string, string> = {
-    fr: `${sig ? "Il existe une différence significative" : "Aucune différence significative n'a été observée"} entre ${tt.groups[0]} (moyenne = ${tt.means[0]}) et ${tt.groups[1]} (moyenne = ${tt.means[1]}) pour ${tt.variable} (p = ${tt.pValue}).`,
-    en: `${sig ? "There is a significant difference" : "No significant difference was observed"} between ${tt.groups[0]} (mean = ${tt.means[0]}) and ${tt.groups[1]} (mean = ${tt.means[1]}) for ${tt.variable} (p = ${tt.pValue}).`,
-    es: `${sig ? "Existe una diferencia significativa" : "No se observó diferencia significativa"} entre ${tt.groups[0]} (media = ${tt.means[0]}) y ${tt.groups[1]} (media = ${tt.means[1]}) para ${tt.variable} (p = ${tt.pValue}).`,
-    de: `${sig ? "Es gibt einen signifikanten Unterschied" : "Kein signifikanter Unterschied wurde beobachtet"} zwischen ${tt.groups[0]} (Mittelwert = ${tt.means[0]}) und ${tt.groups[1]} (Mittelwert = ${tt.means[1]}) für ${tt.variable} (p = ${tt.pValue}).`,
-    pt: `${sig ? "Existe uma diferença significativa" : "Nenhuma diferença significativa foi observada"} entre ${tt.groups[0]} (média = ${tt.means[0]}) e ${tt.groups[1]} (média = ${tt.means[1]}) para ${tt.variable} (p = ${tt.pValue}).`,
+    fr: `${sig ? "Il existe une différence significative" : "Aucune différence significative n'a été observée"} entre ${tt.groups[0]} (moyenne = ${tt.means[0]}) et ${tt.groups[1]} (moyenne = ${tt.means[1]}) pour ${tt.variable} (p = ${tt.pValue}). La différence absolue entre les deux groupes est de ${diff}. ${sig ? `Le groupe « ${higher} » présente une moyenne significativement plus élevée.` : "Ces résultats ne permettent pas de conclure à une différence statistiquement significative entre les groupes."}`,
+    en: `${sig ? "There is a significant difference" : "No significant difference was observed"} between ${tt.groups[0]} (mean = ${tt.means[0]}) and ${tt.groups[1]} (mean = ${tt.means[1]}) for ${tt.variable} (p = ${tt.pValue}). The absolute difference between the two groups is ${diff}. ${sig ? `The group "${higher}" shows a significantly higher mean.` : "These results do not support a statistically significant difference between groups."}`,
+    es: `${sig ? "Existe una diferencia significativa" : "No se observó diferencia significativa"} entre ${tt.groups[0]} (media = ${tt.means[0]}) y ${tt.groups[1]} (media = ${tt.means[1]}) para ${tt.variable} (p = ${tt.pValue}). La diferencia absoluta entre los dos grupos es de ${diff}. ${sig ? `El grupo "${higher}" presenta una media significativamente más alta.` : "Estos resultados no permiten concluir una diferencia estadísticamente significativa entre los grupos."}`,
+    de: `${sig ? "Es gibt einen signifikanten Unterschied" : "Kein signifikanter Unterschied wurde beobachtet"} zwischen ${tt.groups[0]} (Mittelwert = ${tt.means[0]}) und ${tt.groups[1]} (Mittelwert = ${tt.means[1]}) für ${tt.variable} (p = ${tt.pValue}). Der absolute Unterschied beträgt ${diff}. ${sig ? `Die Gruppe „${higher}" weist einen signifikant höheren Mittelwert auf.` : "Diese Ergebnisse lassen keinen statistisch signifikanten Unterschied erkennen."}`,
+    pt: `${sig ? "Existe uma diferença significativa" : "Nenhuma diferença significativa foi observada"} entre ${tt.groups[0]} (média = ${tt.means[0]}) e ${tt.groups[1]} (média = ${tt.means[1]}) para ${tt.variable} (p = ${tt.pValue}). A diferença absoluta entre os dois grupos é de ${diff}. ${sig ? `O grupo "${higher}" apresenta uma média significativamente mais elevada.` : "Estes resultados não permitem concluir uma diferença estatisticamente significativa entre os grupos."}`,
   };
   return templates[lang] || templates.en;
 }
 
-function interpAnova(a: { dependent: string; factor: string; fStat: number; pValue: number; groups: { name: string; mean: number }[] }, lang: string) {
+function interpAnova(a: { dependent: string; factor: string; fStat: number; pValue: number; groups: { name: string; mean: number; std?: number }[] }, lang: string) {
   const sig = a.pValue < 0.05;
+  const sorted = [...a.groups].sort((x, y) => y.mean - x.mean);
+  const highest = sorted[0];
+  const lowest = sorted[sorted.length - 1];
   const templates: Record<string, string> = {
-    fr: `L'ANOVA révèle ${sig ? "un effet significatif" : "aucun effet significatif"} de ${a.factor} sur ${a.dependent} (F = ${a.fStat}, p = ${a.pValue}).`,
-    en: `ANOVA reveals ${sig ? "a significant effect" : "no significant effect"} of ${a.factor} on ${a.dependent} (F = ${a.fStat}, p = ${a.pValue}).`,
-    es: `El ANOVA revela ${sig ? "un efecto significativo" : "ningún efecto significativo"} de ${a.factor} sobre ${a.dependent} (F = ${a.fStat}, p = ${a.pValue}).`,
-    de: `Die ANOVA zeigt ${sig ? "einen signifikanten Effekt" : "keinen signifikanten Effekt"} von ${a.factor} auf ${a.dependent} (F = ${a.fStat}, p = ${a.pValue}).`,
-    pt: `A ANOVA revela ${sig ? "um efeito significativo" : "nenhum efeito significativo"} de ${a.factor} sobre ${a.dependent} (F = ${a.fStat}, p = ${a.pValue}).`,
+    fr: `L'ANOVA révèle ${sig ? "un effet significatif" : "aucun effet significatif"} de ${a.factor} sur ${a.dependent} (F = ${a.fStat}, p = ${a.pValue}). Le groupe « ${highest.name} » présente la moyenne la plus élevée (${highest.mean}), tandis que le groupe « ${lowest.name} » affiche la moyenne la plus faible (${lowest.mean}). ${sig ? "Ces différences sont statistiquement significatives au seuil de 5%." : "Ces différences ne sont pas statistiquement significatives au seuil conventionnel."}`,
+    en: `ANOVA reveals ${sig ? "a significant effect" : "no significant effect"} of ${a.factor} on ${a.dependent} (F = ${a.fStat}, p = ${a.pValue}). The group "${highest.name}" has the highest mean (${highest.mean}), while "${lowest.name}" shows the lowest mean (${lowest.mean}). ${sig ? "These differences are statistically significant at the 5% level." : "These differences are not statistically significant at the conventional threshold."}`,
+    es: `El ANOVA revela ${sig ? "un efecto significativo" : "ningún efecto significativo"} de ${a.factor} sobre ${a.dependent} (F = ${a.fStat}, p = ${a.pValue}). El grupo "${highest.name}" presenta la media más alta (${highest.mean}), mientras que "${lowest.name}" muestra la media más baja (${lowest.mean}). ${sig ? "Estas diferencias son estadísticamente significativas al nivel del 5%." : "Estas diferencias no son estadísticamente significativas al umbral convencional."}`,
+    de: `Die ANOVA zeigt ${sig ? "einen signifikanten Effekt" : "keinen signifikanten Effekt"} von ${a.factor} auf ${a.dependent} (F = ${a.fStat}, p = ${a.pValue}). Die Gruppe „${highest.name}" hat den höchsten Mittelwert (${highest.mean}), während „${lowest.name}" den niedrigsten Mittelwert aufweist (${lowest.mean}). ${sig ? "Diese Unterschiede sind auf dem 5%-Niveau statistisch signifikant." : "Diese Unterschiede sind auf dem konventionellen Niveau nicht statistisch signifikant."}`,
+    pt: `A ANOVA revela ${sig ? "um efeito significativo" : "nenhum efeito significativo"} de ${a.factor} sobre ${a.dependent} (F = ${a.fStat}, p = ${a.pValue}). O grupo "${highest.name}" apresenta a média mais alta (${highest.mean}), enquanto "${lowest.name}" mostra a média mais baixa (${lowest.mean}). ${sig ? "Estas diferenças são estatisticamente significativas ao nível de 5%." : "Estas diferenças não são estatisticamente significativas ao limiar convencional."}`,
   };
   return templates[lang] || templates.en;
 }
@@ -497,51 +504,59 @@ export function generateFigureTitle(
   return chartTitle;
 }
 
-// Generate figure interpretation
+// Generate figure interpretation — multi-sentence academic paragraphs
 export function generateFigureInterpretation(
   chartType: string,
   chartTitle: string,
   data: { name?: string; value?: number; x?: number; y?: number }[],
   lang: string,
+  level?: string,
 ): string {
   if (!data || data.length === 0) return "";
 
   if (chartType === "histogram" || chartType === "bar") {
     const sorted = [...data].filter(d => d.value != null).sort((a, b) => (b.value || 0) - (a.value || 0));
     const top = sorted[0];
+    const bottom = sorted[sorted.length - 1];
     if (!top) return "";
+    const total = sorted.reduce((s, d) => s + (d.value || 0), 0);
+    const topPct = total > 0 ? ((top.value || 0) / total * 100).toFixed(1) : "0";
     const templates: Record<string, string> = {
-      fr: `Le graphique montre que la modalité « ${top.name} » est la plus fréquente avec ${top.value} occurrences.`,
-      en: `The chart shows that "${top.name}" is the most frequent category with ${top.value} occurrences.`,
-      es: `El gráfico muestra que "${top.name}" es la categoría más frecuente con ${top.value} ocurrencias.`,
-      de: `Das Diagramm zeigt, dass „${top.name}" mit ${top.value} Vorkommen die häufigste Kategorie ist.`,
-      pt: `O gráfico mostra que "${top.name}" é a categoria mais frequente com ${top.value} ocorrências.`,
+      fr: `Les résultats indiquent que la modalité « ${top.name} » est la plus fréquente avec ${top.value} occurrences, représentant ${topPct}% de l'ensemble. ${sorted.length > 1 ? `La modalité « ${bottom?.name} » est la moins représentée avec ${bottom?.value} occurrences.` : ""} Cette distribution met en évidence une tendance marquée dans la répartition des observations.`,
+      en: `The results indicate that "${top.name}" is the most frequent category with ${top.value} occurrences, representing ${topPct}% of the total. ${sorted.length > 1 ? `The category "${bottom?.name}" is the least represented with ${bottom?.value} occurrences.` : ""} This distribution highlights a notable trend in the data.`,
+      es: `Los resultados indican que "${top.name}" es la categoría más frecuente con ${top.value} ocurrencias, representando ${topPct}% del total. ${sorted.length > 1 ? `La categoría "${bottom?.name}" es la menos representada con ${bottom?.value} ocurrencias.` : ""} Esta distribución destaca una tendencia notable en los datos.`,
+      de: `Die Ergebnisse zeigen, dass „${top.name}" mit ${top.value} Vorkommen die häufigste Kategorie ist und ${topPct}% der Gesamtheit ausmacht. ${sorted.length > 1 ? `Die Kategorie „${bottom?.name}" ist mit ${bottom?.value} Vorkommen am wenigsten vertreten.` : ""} Diese Verteilung verdeutlicht einen bemerkenswerten Trend in den Daten.`,
+      pt: `Os resultados indicam que "${top.name}" é a categoria mais frequente com ${top.value} ocorrências, representando ${topPct}% do total. ${sorted.length > 1 ? `A categoria "${bottom?.name}" é a menos representada com ${bottom?.value} ocorrências.` : ""} Esta distribuição evidencia uma tendência notável nos dados.`,
     };
     return templates[lang] || templates.en;
   }
 
   if (chartType === "pie") {
     const total = data.reduce((s, d) => s + (d.value || 0), 0);
-    const top = [...data].sort((a, b) => (b.value || 0) - (a.value || 0))[0];
+    const sorted = [...data].sort((a, b) => (b.value || 0) - (a.value || 0));
+    const top = sorted[0];
+    const second = sorted[1];
     if (!top || !total) return "";
     const pct = ((top.value || 0) / total * 100).toFixed(1);
+    const secondPct = second ? ((second.value || 0) / total * 100).toFixed(1) : null;
     const templates: Record<string, string> = {
-      fr: `La catégorie « ${top.name} » représente ${pct}% de l'ensemble des observations.`,
-      en: `The category "${top.name}" accounts for ${pct}% of all observations.`,
-      es: `La categoría "${top.name}" representa ${pct}% de todas las observaciones.`,
-      de: `Die Kategorie „${top.name}" macht ${pct}% aller Beobachtungen aus.`,
-      pt: `A categoria "${top.name}" representa ${pct}% de todas as observações.`,
+      fr: `Les résultats montrent que la catégorie « ${top.name} » représente ${pct}% de l'ensemble des observations, constituant ainsi la modalité dominante. ${secondPct ? `La catégorie « ${second.name} » occupe la deuxième position avec ${secondPct}% des observations.` : ""} Cette répartition suggère une prédominance de la modalité « ${top.name} » dans la population étudiée.`,
+      en: `The results show that the category "${top.name}" accounts for ${pct}% of all observations, making it the dominant category. ${secondPct ? `The category "${second.name}" ranks second with ${secondPct}% of observations.` : ""} This distribution suggests a predominance of "${top.name}" in the study population.`,
+      es: `Los resultados muestran que la categoría "${top.name}" representa ${pct}% de todas las observaciones, constituyendo la modalidad dominante. ${secondPct ? `La categoría "${second.name}" ocupa el segundo lugar con ${secondPct}% de las observaciones.` : ""} Esta distribución sugiere una predominancia de "${top.name}" en la población estudiada.`,
+      de: `Die Ergebnisse zeigen, dass die Kategorie „${top.name}" ${pct}% aller Beobachtungen ausmacht und damit die dominierende Kategorie darstellt. ${secondPct ? `Die Kategorie „${second.name}" belegt den zweiten Platz mit ${secondPct}% der Beobachtungen.` : ""} Diese Verteilung deutet auf eine Vorherrschaft von „${top.name}" in der untersuchten Population hin.`,
+      pt: `Os resultados mostram que a categoria "${top.name}" representa ${pct}% de todas as observações, constituindo a modalidade dominante. ${secondPct ? `A categoria "${second.name}" ocupa a segunda posição com ${secondPct}% das observações.` : ""} Esta distribuição sugere uma predominância de "${top.name}" na população estudada.`,
     };
     return templates[lang] || templates.en;
   }
 
   if (chartType === "scatter") {
+    const n = data.length;
     const templates: Record<string, string> = {
-      fr: `Le nuage de points illustre la relation entre les deux variables analysées.`,
-      en: `The scatter plot illustrates the relationship between the two analyzed variables.`,
-      es: `El diagrama de dispersión ilustra la relación entre las dos variables analizadas.`,
-      de: `Das Streudiagramm veranschaulicht die Beziehung zwischen den beiden analysierten Variablen.`,
-      pt: `O diagrama de dispersão ilustra a relação entre as duas variáveis analisadas.`,
+      fr: `Le nuage de points illustre la relation entre les deux variables analysées sur ${n} observations. La dispersion des points permet de visualiser la nature et l'intensité de cette relation. L'examen de la tendance générale permet d'évaluer le degré d'association entre les variables.`,
+      en: `The scatter plot illustrates the relationship between the two analyzed variables across ${n} observations. The distribution of data points reveals the nature and strength of this relationship. The overall trend allows for an assessment of the degree of association between the variables.`,
+      es: `El diagrama de dispersión ilustra la relación entre las dos variables analizadas en ${n} observaciones. La distribución de los puntos revela la naturaleza e intensidad de esta relación. La tendencia general permite evaluar el grado de asociación entre las variables.`,
+      de: `Das Streudiagramm veranschaulicht die Beziehung zwischen den beiden analysierten Variablen über ${n} Beobachtungen. Die Verteilung der Datenpunkte zeigt Art und Stärke dieser Beziehung. Der allgemeine Trend ermöglicht eine Bewertung des Assoziationsgrads zwischen den Variablen.`,
+      pt: `O diagrama de dispersão ilustra a relação entre as duas variáveis analisadas em ${n} observações. A distribuição dos pontos revela a natureza e a intensidade desta relação. A tendência geral permite avaliar o grau de associação entre as variáveis.`,
     };
     return templates[lang] || templates.en;
   }
@@ -552,11 +567,11 @@ export function generateFigureInterpretation(
     const lastCum = components[components.length - 1] as { cumulative?: number } | undefined;
     const totalVar = (lastCum as any)?.cumulative || 0;
     const templates: Record<string, string> = {
-      fr: `Le scree plot révèle ${retained} composante(s) avec une valeur propre ≥ 1, expliquant ${totalVar.toFixed(1)}% de la variance totale.`,
-      en: `The scree plot reveals ${retained} component(s) with eigenvalue ≥ 1, explaining ${totalVar.toFixed(1)}% of total variance.`,
-      es: `El gráfico de sedimentación revela ${retained} componente(s) con autovalor ≥ 1, explicando ${totalVar.toFixed(1)}% de la varianza total.`,
-      de: `Das Scree-Plot zeigt ${retained} Komponente(n) mit Eigenwert ≥ 1, die ${totalVar.toFixed(1)}% der Gesamtvarianz erklären.`,
-      pt: `O scree plot revela ${retained} componente(s) com autovalor ≥ 1, explicando ${totalVar.toFixed(1)}% da variância total.`,
+      fr: `Le scree plot révèle ${retained} composante(s) principale(s) avec une valeur propre supérieure ou égale à 1, conformément au critère de Kaiser. Ces composantes expliquent ${totalVar.toFixed(1)}% de la variance totale. La rupture observée dans la courbe de sédimentation confirme la pertinence du nombre de composantes retenues.`,
+      en: `The scree plot reveals ${retained} principal component(s) with eigenvalue ≥ 1, in accordance with Kaiser's criterion. These components explain ${totalVar.toFixed(1)}% of the total variance. The observed break in the scree curve confirms the appropriateness of the number of retained components.`,
+      es: `El gráfico de sedimentación revela ${retained} componente(s) principal(es) con autovalor ≥ 1, según el criterio de Kaiser. Estos componentes explican ${totalVar.toFixed(1)}% de la varianza total. La ruptura observada en la curva confirma la pertinencia del número de componentes retenidos.`,
+      de: `Das Scree-Plot zeigt ${retained} Hauptkomponente(n) mit Eigenwert ≥ 1 gemäß dem Kaiser-Kriterium. Diese Komponenten erklären ${totalVar.toFixed(1)}% der Gesamtvarianz. Der beobachtete Knick in der Kurve bestätigt die Angemessenheit der Anzahl der beibehaltenen Komponenten.`,
+      pt: `O scree plot revela ${retained} componente(s) principal(is) com autovalor ≥ 1, de acordo com o critério de Kaiser. Estes componentes explicam ${totalVar.toFixed(1)}% da variância total. A ruptura observada na curva de sedimentação confirma a pertinência do número de componentes retidos.`,
     };
     return templates[lang] || templates.en;
   }
@@ -565,11 +580,11 @@ export function generateFigureInterpretation(
     const clusters = new Set(data.map(d => (d as any).cluster));
     const n = data.length;
     const templates: Record<string, string> = {
-      fr: `Le diagramme de dispersion montre ${clusters.size} clusters distincts sur ${n} observations.`,
-      en: `The scatter plot shows ${clusters.size} distinct clusters across ${n} observations.`,
-      es: `El diagrama de dispersión muestra ${clusters.size} clusters distintos en ${n} observaciones.`,
-      de: `Das Streudiagramm zeigt ${clusters.size} verschiedene Cluster über ${n} Beobachtungen.`,
-      pt: `O diagrama de dispersão mostra ${clusters.size} clusters distintos em ${n} observações.`,
+      fr: `Le diagramme de dispersion montre ${clusters.size} clusters distincts identifiés parmi ${n} observations. La séparation visuelle des groupes suggère une structure naturelle dans les données. Cette segmentation permet de distinguer des profils différenciés au sein de la population étudiée.`,
+      en: `The scatter plot shows ${clusters.size} distinct clusters identified across ${n} observations. The visual separation of groups suggests a natural structure in the data. This segmentation reveals differentiated profiles within the study population.`,
+      es: `El diagrama de dispersión muestra ${clusters.size} clusters distintos identificados entre ${n} observaciones. La separación visual de los grupos sugiere una estructura natural en los datos. Esta segmentación revela perfiles diferenciados dentro de la población estudiada.`,
+      de: `Das Streudiagramm zeigt ${clusters.size} verschiedene Cluster über ${n} Beobachtungen. Die visuelle Trennung der Gruppen deutet auf eine natürliche Struktur in den Daten hin. Diese Segmentierung zeigt differenzierte Profile innerhalb der untersuchten Population.`,
+      pt: `O diagrama de dispersão mostra ${clusters.size} clusters distintos identificados em ${n} observações. A separação visual dos grupos sugere uma estrutura natural nos dados. Esta segmentação revela perfis diferenciados na população estudada.`,
     };
     return templates[lang] || templates.en;
   }
