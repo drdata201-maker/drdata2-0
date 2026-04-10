@@ -1,51 +1,75 @@
-type MetadataKind = "studyType" | "studyDesign";
+type MetadataKind = "studyType" | "studyDesign" | "projectType" | "domain" | "analysis";
 type TranslateFn = (key: string) => string;
 
-const METADATA_PREFIXES: Record<MetadataKind, RegExp[]> = {
+const STRIP_PREFIXES: Partial<Record<MetadataKind, RegExp[]>> = {
   studyType: [/^student\.studyType\./i, /^studyType\./i],
   studyDesign: [/^student\.studyDesign\./i, /^studyDesign\./i],
+  projectType: [/^student\.type\./i],
+  domain: [/^domain\./i],
+  analysis: [/^student\.analysis\./i],
 };
 
-function normalizeMetadataToken(value: string, kind: MetadataKind) {
+const TRANSLATION_KEYS: Record<MetadataKind, (token: string) => string[]> = {
+  studyType: (t) => [`student.studyType.${t}`, `studyType.${t}`],
+  studyDesign: (t) => [`student.studyDesign.${t}`, `studyDesign.${t}`],
+  projectType: (t) => [`student.type.${t}`],
+  domain: (t) => [`domain.${t}`],
+  analysis: (t) => [`student.analysis.${t}`],
+};
+
+function normalizeToken(value: string, kind: MetadataKind): string {
   const trimmed = value.trim();
-  return METADATA_PREFIXES[kind].reduce((token, pattern) => token.replace(pattern, ""), trimmed);
+  const prefixes = STRIP_PREFIXES[kind] || [];
+  return prefixes.reduce((token, pattern) => token.replace(pattern, ""), trimmed);
 }
 
-export function formatProjectMetadataValue(
+/**
+ * Translate a raw metadata value (possibly comma-separated) into
+ * human-readable labels using the i18n function `t`.
+ * Returns the original token if no translation is found.
+ */
+export function formatMetadataLabel(
   value: string | null | undefined,
   kind: MetadataKind,
   t: TranslateFn,
-) {
+): string {
   if (!value) return "";
 
   return value
     .split(",")
-    .map((item) => normalizeMetadataToken(item, kind))
+    .map((item) => normalizeToken(item, kind))
     .filter(Boolean)
     .map((item) => {
-      const translationKeys = kind === "studyType"
-        ? [`student.studyType.${item}`, `studyType.${item}`]
-        : [`student.studyDesign.${item}`, `studyDesign.${item}`];
-
-      for (const key of translationKeys) {
+      for (const key of TRANSLATION_KEYS[kind](item)) {
         const translated = t(key);
         if (translated && translated !== key) return translated;
       }
-
       return item;
     })
     .join(", ");
 }
 
-export function getLocalizedProjectContext<T extends { studyType?: string; studyDesign?: string }>(
-  projectContext: T | undefined,
+/** @deprecated Use formatMetadataLabel directly — kept for backward compat */
+export const formatProjectMetadataValue = (
+  value: string | null | undefined,
+  kind: "studyType" | "studyDesign",
   t: TranslateFn,
-): T | undefined {
+) => formatMetadataLabel(value, kind, t);
+
+/**
+ * Return a copy of projectContext with studyType, studyDesign,
+ * type, and domain translated to human-readable labels.
+ */
+export function getLocalizedProjectContext<
+  T extends { studyType?: string; studyDesign?: string; type?: string; domain?: string },
+>(projectContext: T | undefined, t: TranslateFn): T | undefined {
   if (!projectContext) return projectContext;
 
   return {
     ...projectContext,
-    studyType: formatProjectMetadataValue(projectContext.studyType, "studyType", t),
-    studyDesign: formatProjectMetadataValue(projectContext.studyDesign, "studyDesign", t),
+    studyType: formatMetadataLabel(projectContext.studyType, "studyType", t),
+    studyDesign: formatMetadataLabel(projectContext.studyDesign, "studyDesign", t),
+    type: formatMetadataLabel(projectContext.type, "projectType", t),
+    domain: formatMetadataLabel(projectContext.domain, "domain", t),
   } as T;
 }
