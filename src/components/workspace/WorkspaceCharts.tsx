@@ -1,4 +1,4 @@
-import { useMemo, useState, Component, type ReactNode } from "react";
+import { useMemo, useState, useEffect, useRef, Component, type ReactNode } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset } from "@/contexts/DatasetContext";
 import { useChartStyle } from "@/contexts/ChartStyleContext";
@@ -163,18 +163,28 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
   const barRadius: [number, number, number, number] = settings.style === "rounded" ? [4, 4, 0, 0] : settings.style === "flat" ? [0, 0, 0, 0] : [2, 2, 0, 0];
 
   const charts = useMemo(() => {
-    if (!dataset) return cachedCharts as ChartItem[] || [];
+    if (!dataset) return [];
     // Only build from rawData if we have actual data rows
     if (!dataset.rawData || dataset.rawData.length === 0) {
-      return cachedCharts as ChartItem[] || [];
+      return [];
     }
-    const built = buildChartData(dataset.rawData, dataset.variables, analysisResults, t);
-    // Cache the built charts for persistence
-    if (built.length > 0) {
-      setCachedCharts(built as any);
+    return buildChartData(dataset.rawData, dataset.variables, analysisResults, t);
+  }, [dataset, analysisResults, t]);
+
+  // Use cached charts as fallback when rawData is unavailable
+  const displayCharts = charts.length > 0 ? charts : (cachedCharts as ChartItem[] || []);
+
+  // Cache newly built charts for persistence (outside useMemo to avoid loops)
+  const prevChartsRef = useRef<string>("");
+  useEffect(() => {
+    if (charts.length > 0) {
+      const serialized = JSON.stringify(charts.map(c => c.key));
+      if (serialized !== prevChartsRef.current) {
+        prevChartsRef.current = serialized;
+        setCachedCharts(charts as any);
+      }
     }
-    return built;
-  }, [dataset, analysisResults, t, cachedCharts, setCachedCharts]);
+  }, [charts, setCachedCharts]);
 
   const [overrides, setOverrides] = useState<Record<string, { title?: string; interpretation?: string }>>({});
 
