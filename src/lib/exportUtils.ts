@@ -370,7 +370,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
 
       const cellBorder = { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" };
       const borders = { top: cellBorder, bottom: cellBorder, left: cellBorder, right: cellBorder };
-      const headers = [t.variable, "N", t.mean, t.std, "Min", "Max"];
+      const headers = getDescriptiveHeaders(data.lang);
       const headerRow = new TableRow({
         children: headers.map(h => new TableCell({
           borders,
