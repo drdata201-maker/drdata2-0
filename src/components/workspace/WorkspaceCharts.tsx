@@ -196,7 +196,7 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
     setRetryKeys(prev => ({ ...prev, [key]: (prev[key] || 0) + 1 }));
   };
 
-  if (!dataset) {
+  if (!dataset && displayCharts.length === 0) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center gap-4 py-12">
@@ -207,7 +207,7 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
     );
   }
 
-  if (charts.length === 0) {
+  if (displayCharts.length === 0) {
     return (
       <div className="space-y-4">
         <ChartStyleSettingsPanel />
