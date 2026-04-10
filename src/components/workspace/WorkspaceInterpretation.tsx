@@ -12,6 +12,7 @@ import { BookOpen, GraduationCap, Target, Lightbulb, Loader2, RefreshCw, AlertCi
 import { toast } from "sonner";
 
 import type { ProjectContext } from "@/lib/academicFormatter";
+import { getLocalizedProjectContext } from "@/lib/projectMetadataLabels";
 
 interface WorkspaceInterpretationProps {
   level: string;
