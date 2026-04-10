@@ -222,30 +222,6 @@ export function EditProjectDialog({ projectId, title, domain, objective, descrip
               )}
             </div>
 
-            {/* Objective */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">{t("student.newProject.objective")} *</label>
-              <Textarea value={editObjective} onChange={e => setEditObjective(e.target.value)} rows={2} className="min-h-[70px] resize-none" />
-            </div>
-
-            {/* Specific Objectives */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">{t("student.newProject.specificObjectives")}</label>
-                <Button type="button" variant="ghost" size="sm" onClick={addSpecificObjective} className="h-7 text-xs gap-1">
-                  <Plus className="h-3 w-3" /> {t("student.newProject.addObjective")}
-                </Button>
-              </div>
-              {specificObjectives.map((obj, i) => (
-                <div key={i} className="flex gap-1.5">
-                  <Input value={obj} onChange={e => updateSpecificObjective(i, e.target.value)} className="h-9 text-sm" placeholder={`${t("student.newProject.specificObjective")} ${i + 1}`} />
-                  <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => removeSpecificObjective(i)}>
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-
             {/* Study Type */}
             <div className="space-y-1.5">
               <label className="text-sm font-medium">{t("student.newProject.studyType")}</label>
@@ -273,6 +249,42 @@ export function EditProjectDialog({ projectId, title, domain, objective, descrip
               </Popover>
             </div>
 
+            {/* Population */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">{t("student.newProject.population")}</label>
+              <Input value={population} onChange={e => setPopulation(e.target.value)} className="h-10" placeholder={t("student.newProject.populationPlaceholder")} />
+            </div>
+
+            {/* Primary Variable */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">{t("student.newProject.primaryVariable")}</label>
+              <Input value={primaryVariable} onChange={e => setPrimaryVariable(e.target.value)} className="h-10" placeholder={t("student.newProject.primaryVariablePlaceholder")} />
+            </div>
+
+            {/* Objective */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">{t("student.newProject.objective")} *</label>
+              <Textarea value={editObjective} onChange={e => setEditObjective(e.target.value)} rows={2} className="min-h-[70px] resize-none" />
+            </div>
+
+            {/* Specific Objectives */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">{t("student.newProject.specificObjectives")}</label>
+                <Button type="button" variant="ghost" size="sm" onClick={addSpecificObjective} className="h-7 text-xs gap-1">
+                  <Plus className="h-3 w-3" /> {t("student.newProject.addObjective")}
+                </Button>
+              </div>
+              {specificObjectives.map((obj, i) => (
+                <div key={i} className="flex gap-1.5">
+                  <Input value={obj} onChange={e => updateSpecificObjective(i, e.target.value)} className="h-9 text-sm" placeholder={`${t("student.newProject.specificObjective")} ${i + 1}`} />
+                  <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => removeSpecificObjective(i)}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+
             {/* Study Design */}
             <div className="space-y-1.5">
               <label className="text-sm font-medium">{t("student.newProject.studyDesign")}</label>
@@ -298,18 +310,6 @@ export function EditProjectDialog({ projectId, title, domain, objective, descrip
                   </Command>
                 </PopoverContent>
               </Popover>
-            </div>
-
-            {/* Population */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">{t("student.newProject.population")}</label>
-              <Input value={population} onChange={e => setPopulation(e.target.value)} className="h-10" placeholder={t("student.newProject.populationPlaceholder")} />
-            </div>
-
-            {/* Primary Variable */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">{t("student.newProject.primaryVariable")}</label>
-              <Input value={primaryVariable} onChange={e => setPrimaryVariable(e.target.value)} className="h-10" placeholder={t("student.newProject.primaryVariablePlaceholder")} />
             </div>
 
             {/* Master+ fields */}
