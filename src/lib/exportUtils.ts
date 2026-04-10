@@ -352,7 +352,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
   // Stats tables with academic formatting
   if (content === "full" || content === "results") {
     const tableLabel = getTableLabel(data.lang);
-    const sourceText = getSource(data.lang);
+    
     let tableNum = 1;
 
     addHeading(t.statsResults);
@@ -398,7 +398,6 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
       // Source
       sections.push(new Paragraph({
         spacing: { before: 60, after: 40 },
-        children: [new TextRun({ text: sourceText, italics: true, size: 18, color: "666666" })],
       }));
 
       // Interpretation for descriptive stats
@@ -459,7 +458,6 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
       // Source
       sections.push(new Paragraph({
         spacing: { before: 60, after: 120 },
-        children: [new TextRun({ text: sourceText, italics: true, size: 18, color: "666666" })],
       }));
 
       tableNum++;
@@ -470,7 +468,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
   // Charts with academic formatting
   if ((content === "full" || content === "results") && data.chartImages && data.chartImages.length > 0) {
     const figLabel = getFigureLabel(data.lang);
-    const sourceText = getSource(data.lang);
+    
     addHeading(t.charts, HeadingLevel.HEADING_2);
 
     for (let i = 0; i < data.chartImages.length; i++) {
@@ -505,7 +503,6 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
       // Source
       sections.push(new Paragraph({
         spacing: { before: 60, after: 40 },
-        children: [new TextRun({ text: sourceText, italics: true, size: 18, color: "666666" })],
       }));
 
       // Figure interpretation
@@ -660,7 +657,7 @@ export function exportPdf(data: ExportData, content: ExportContent) {
     addH2(t.descriptiveStats);
 
     const tableLabel = getTableLabel(data.lang);
-    const sourceText = getSource(data.lang);
+    
     let tableNum = 1;
 
     // Academic table title
@@ -683,7 +680,6 @@ export function exportPdf(data: ExportData, content: ExportContent) {
     doc.setFontSize(8);
     doc.setFont("helvetica", "italic");
     doc.setTextColor(100);
-    doc.text(sourceText, 14, y);
     doc.setTextColor(0);
     y += 5;
 
@@ -728,7 +724,6 @@ export function exportPdf(data: ExportData, content: ExportContent) {
     doc.setFontSize(8);
     doc.setFont("helvetica", "italic");
     doc.setTextColor(100);
-    doc.text(sourceText, 14, y);
     doc.setTextColor(0);
     y += 8;
     doc.setFont("helvetica", "normal");
@@ -737,7 +732,7 @@ export function exportPdf(data: ExportData, content: ExportContent) {
   // Charts in PDF with academic formatting
   if ((content === "full" || content === "results") && data.chartImages && data.chartImages.length > 0) {
     const figLabel = getFigureLabel(data.lang);
-    const sourceText = getSource(data.lang);
+    
     addH2(t.charts);
 
     for (let i = 0; i < data.chartImages.length; i++) {
@@ -768,7 +763,6 @@ export function exportPdf(data: ExportData, content: ExportContent) {
       doc.setFontSize(8);
       doc.setFont("helvetica", "italic");
       doc.setTextColor(100);
-      doc.text(sourceText, 14, y);
       doc.setTextColor(0);
       y += 5;
 
