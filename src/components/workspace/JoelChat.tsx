@@ -7,6 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Send, Upload, Sparkles, Bot, Loader2, CheckCircle, Edit3, RotateCcw, CheckCheck, Variable } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import joelLicence from "@/assets/assistant_joel_license.png";
+import joelMaster from "@/assets/assistant_joel_master.png";
+import joelPhd from "@/assets/assistant_joel_phd.png";
+
+const JOEL_AVATARS: Record<string, string> = {
+  student_license: joelLicence,
+  student_master: joelMaster,
+  student_doctorate: joelPhd,
+};
 import ReactMarkdown from "react-markdown";
 import { stripLatex } from "@/lib/latexSanitizer";
 import { formatMetadataLabel, getLocalizedProjectContext } from "@/lib/projectMetadataLabels";
