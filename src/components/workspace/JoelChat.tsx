@@ -18,6 +18,7 @@ const JOEL_AVATARS: Record<string, string> = {
   student_doctorate: joelPhd,
 };
 import ReactMarkdown from "react-markdown";
+import { motion } from "framer-motion";
 import { stripLatex } from "@/lib/latexSanitizer";
 import { formatMetadataLabel, getLocalizedProjectContext } from "@/lib/projectMetadataLabels";
 import { toast } from "sonner";
