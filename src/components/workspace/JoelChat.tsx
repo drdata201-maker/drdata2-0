@@ -18,25 +18,48 @@ interface AnalysisCategory {
   analyses: string[];
 }
 
-const ANALYSIS_CATEGORIES_BY_LEVEL: Record<string, AnalysisCategory[]> = {
+interface AnalysisCategoryGroup {
+  groupKey?: "recommended" | "advanced_optional";
+  categories: AnalysisCategory[];
+}
+
+const ANALYSIS_GROUPS_BY_LEVEL: Record<string, AnalysisCategoryGroup[]> = {
   student_license: [
-    { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
-    { key: "comparative", analyses: ["t_test", "chi_square", "anova_basic"] },
-    { key: "relationship", analyses: ["correlation"] },
+    {
+      groupKey: "recommended",
+      categories: [
+        { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab", "chi_square"] },
+      ],
+    },
+    {
+      groupKey: "advanced_optional",
+      categories: [
+        { key: "comparative", analyses: ["t_test", "anova_basic"] },
+        { key: "relationship", analyses: ["correlation"] },
+      ],
+    },
   ],
   student_master: [
-    { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
-    { key: "comparative", analyses: ["t_test", "chi_square", "anova", "nonparametric"] },
-    { key: "relationship", analyses: ["correlation", "simple_regression", "multiple_regression"] },
-    { key: "predictive", analyses: ["logistic_regression", "factor_analysis"] },
-    { key: "reliability", analyses: ["cronbach_alpha", "pca"] },
+    {
+      categories: [
+        { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
+        { key: "comparative", analyses: ["t_test", "chi_square", "anova", "nonparametric"] },
+        { key: "relationship", analyses: ["correlation", "simple_regression", "multiple_regression"] },
+        { key: "predictive", analyses: ["logistic_regression", "factor_analysis"] },
+        { key: "reliability", analyses: ["cronbach_alpha", "pca"] },
+      ],
+    },
   ],
   student_doctorate: [
-    { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
-    { key: "comparative", analyses: ["t_test", "chi_square", "anova", "nonparametric"] },
-    { key: "relationship", analyses: ["correlation", "simple_regression", "multiple_regression"] },
-    { key: "predictive", analyses: ["logistic_regression", "factor_analysis", "sem"] },
-    { key: "advanced", analyses: ["pca", "cluster_analysis", "panel_data", "time_series", "survival_analysis", "multilevel_modeling", "multivariate"] },
+    {
+      categories: [
+        { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
+        { key: "comparative", analyses: ["t_test", "chi_square", "anova", "nonparametric"] },
+        { key: "relationship", analyses: ["correlation", "simple_regression", "multiple_regression"] },
+        { key: "predictive", analyses: ["logistic_regression", "factor_analysis", "sem"] },
+        { key: "advanced", analyses: ["pca", "cluster_analysis", "panel_data", "time_series", "survival_analysis", "multilevel_modeling", "multivariate"] },
+      ],
+    },
   ],
 };
 
