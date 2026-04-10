@@ -237,6 +237,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   const [cleanedData, setCleanedData] = useState<Record<string, unknown>[] | null>(null);
   const [analysisResults, setAnalysisResults] = useState<AnalysisResultItem[]>([]);
   const [interpretationData, setInterpretationData] = useState<InterpretationData | null>(null);
+  const [cachedCharts, setCachedCharts] = useState<CachedChart[] | null>(null);
   const [chatState, setChatState] = useState<ChatState>(DEFAULT_CHAT_STATE);
 
   const processFile = useCallback(async (file: File): Promise<DatasetSummary> => {
@@ -412,6 +413,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     setCleanedData(null);
     setAnalysisResults([]);
     setInterpretationData(null);
+    setCachedCharts(null);
   }, []);
 
   const restoreState = useCallback((results: AnalysisResultItem[], interpretation: InterpretationData | null) => {
