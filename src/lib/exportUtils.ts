@@ -4,7 +4,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { dataUrlToUint8Array } from "./chartImageRenderer";
-import { getTableLabel, getFigureLabel, getSource, generateTableInterpretation, generateFigureInterpretation } from "./academicFormatter";
+import { getTableLabel, getFigureLabel, generateTableInterpretation, generateFigureInterpretation, getDescriptiveHeaders } from "./academicFormatter";
 import type { AnalysisResultItem } from "./statsEngine";
 import { stripLatex } from "./latexSanitizer";
 
