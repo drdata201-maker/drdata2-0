@@ -15,7 +15,7 @@ import {
 import { BarChart3, Upload, Pencil, Check, X } from "lucide-react";
 import { buildChartData } from "@/lib/chartDataBuilder";
 import { ChartStyleSettingsPanel } from "./ChartStyleSettings";
-import { getFigureLabel, getSource, generateFigureInterpretation, type ProjectContext } from "@/lib/academicFormatter";
+import { getFigureLabel, generateFigureInterpretation, type ProjectContext } from "@/lib/academicFormatter";
 
 function EditableText({ value, onChange, variant = "text" }: { value: string; onChange: (v: string) => void; variant?: "title" | "text" }) {
   const [editing, setEditing] = useState(false);
@@ -67,9 +67,9 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
     return buildChartData(dataset.rawData, dataset.variables, analysisResults, t);
   }, [dataset, analysisResults, t]);
 
-  const [overrides, setOverrides] = useState<Record<string, { title?: string; interpretation?: string; source?: string }>>({});
+  const [overrides, setOverrides] = useState<Record<string, { title?: string; interpretation?: string }>>({});
 
-  const updateOverride = (key: string, field: "title" | "interpretation" | "source", value: string) => {
+  const updateOverride = (key: string, field: "title" | "interpretation", value: string) => {
     setOverrides(prev => ({ ...prev, [key]: { ...prev[key], [field]: value } }));
   };
 
@@ -100,7 +100,6 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
   }
 
   const figLabel = getFigureLabel(lang);
-  const defaultSource = getSource(lang);
 
   return (
     <div className="space-y-4">
@@ -112,7 +111,6 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
           const title = ov.title || chart.title;
           const autoInterp = generateFigureInterpretation(chart.type, chart.title, chart.data, lang);
           const interpretation = ov.interpretation || autoInterp;
-          const source = ov.source || defaultSource;
 
           return (
             <Card key={chart.key}>
@@ -199,12 +197,7 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
                   )}
                 </ResponsiveContainer>
 
-                {/* Source */}
-                <div className="pl-1">
-                  <EditableText value={source} onChange={v => updateOverride(chart.key, "source", v)} />
-                </div>
-
-                {/* Inline interpretation */}
+                {/* Inline interpretation (no Source text) */}
                 {interpretation && (
                   <div className="bg-muted/30 border border-dashed border-border rounded-md py-2 px-3">
                     <div className="flex items-start gap-2">

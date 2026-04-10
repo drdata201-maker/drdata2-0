@@ -26,14 +26,12 @@ export interface ProjectContext {
 export interface AcademicTableMeta {
   number: number;
   title: string;
-  source: string;
   interpretation: string;
 }
 
 export interface AcademicFigureMeta {
   number: number;
   title: string;
-  source: string;
   interpretation: string;
 }
 
@@ -45,17 +43,68 @@ const TABLE_LABEL: Record<string, string> = {
 const FIGURE_LABEL: Record<string, string> = {
   fr: "Figure", en: "Figure", es: "Figura", de: "Abbildung", pt: "Figura",
 };
-const SOURCE_LABEL: Record<string, string> = {
-  fr: "Source : Données collectées par l'auteur, traitées avec Dr Data 2.0",
-  en: "Source: Data collected by the author, processed with Dr Data 2.0",
-  es: "Fuente: Datos recopilados por el autor, procesados con Dr Data 2.0",
-  de: "Quelle: Vom Autor erhobene Daten, verarbeitet mit Dr Data 2.0",
-  pt: "Fonte: Dados coletados pelo autor, processados com Dr Data 2.0",
-};
+
+// Identifier variable patterns to exclude from tables/charts
+const ID_PATTERNS = [
+  /^id$/i, /^identifier$/i, /^identifiant$/i, /^index$/i, /^code$/i,
+  /^record[_ ]?id$/i, /^numéro$/i, /^numero$/i, /^num$/i, /^no$/i,
+  /^row[_ ]?id$/i, /^entry$/i, /^_id$/i, /^record$/i,
+];
+
+export function isIdentifierVariable(name: string): boolean {
+  return ID_PATTERNS.some(p => p.test(name.trim()));
+}
+
+// Full academic column headers (no abbreviations)
+export function getDescriptiveHeaders(lang: string): string[] {
+  const headers: Record<string, string[]> = {
+    fr: ["Variable", "Effectif", "Moyenne", "Écart type", "Minimum", "Premier quartile", "Médiane", "Troisième quartile", "Maximum"],
+    en: ["Variable", "Sample size", "Mean", "Standard deviation", "Minimum", "First quartile", "Median", "Third quartile", "Maximum"],
+    es: ["Variable", "Tamaño de muestra", "Media", "Desviación estándar", "Mínimo", "Primer cuartil", "Mediana", "Tercer cuartil", "Máximo"],
+    de: ["Variable", "Stichprobengröße", "Mittelwert", "Standardabweichung", "Minimum", "Erstes Quartil", "Median", "Drittes Quartil", "Maximum"],
+    pt: ["Variable", "Tamanho da amostra", "Média", "Desvio padrão", "Mínimo", "Primeiro quartil", "Mediana", "Terceiro quartil", "Máximo"],
+  };
+  return headers[lang] || headers.en;
+}
+
+// Short headers for compact display (UI tables)
+export function getDescriptiveHeadersShort(lang: string): string[] {
+  const headers: Record<string, string[]> = {
+    fr: ["Variable", "N", "Moyenne", "Écart type", "Min", "Q1", "Médiane", "Q3", "Max"],
+    en: ["Variable", "N", "Mean", "Std. Dev.", "Min", "Q1", "Median", "Q3", "Max"],
+    es: ["Variable", "N", "Media", "Desv. Est.", "Mín", "Q1", "Mediana", "Q3", "Máx"],
+    de: ["Variable", "N", "Mittelwert", "Std. Abw.", "Min", "Q1", "Median", "Q3", "Max"],
+    pt: ["Variable", "N", "Média", "Desvio Pad.", "Mín", "Q1", "Mediana", "Q3", "Máx"],
+  };
+  return headers[lang] || headers.en;
+}
+
+// Frequency table headers
+export function getFrequencyHeaders(lang: string): { value: string; count: string; pct: string } {
+  const h: Record<string, { value: string; count: string; pct: string }> = {
+    fr: { value: "Modalité", count: "Effectif", pct: "Pourcentage" },
+    en: { value: "Category", count: "Count", pct: "Percentage" },
+    es: { value: "Categoría", count: "Frecuencia", pct: "Porcentaje" },
+    de: { value: "Kategorie", count: "Häufigkeit", pct: "Prozent" },
+    pt: { value: "Categoria", count: "Frequência", pct: "Porcentagem" },
+  };
+  return h[lang] || h.en;
+}
+
+// Correlation table headers
+export function getCorrelationHeaders(lang: string): { var1: string; var2: string; r: string; p: string; n: string; sig: string } {
+  const h: Record<string, any> = {
+    fr: { var1: "Variable 1", var2: "Variable 2", r: "r", p: "p", n: "N", sig: "Signification" },
+    en: { var1: "Variable 1", var2: "Variable 2", r: "r", p: "p", n: "N", sig: "Significance" },
+    es: { var1: "Variable 1", var2: "Variable 2", r: "r", p: "p", n: "N", sig: "Significación" },
+    de: { var1: "Variable 1", var2: "Variable 2", r: "r", p: "p", n: "N", sig: "Signifikanz" },
+    pt: { var1: "Variável 1", var2: "Variável 2", r: "r", p: "p", n: "N", sig: "Significância" },
+  };
+  return h[lang] || h.en;
+}
 
 function getTableLabel(lang: string) { return TABLE_LABEL[lang] || TABLE_LABEL.en; }
 function getFigureLabel(lang: string) { return FIGURE_LABEL[lang] || FIGURE_LABEL.en; }
-function getSource(lang: string) { return SOURCE_LABEL[lang] || SOURCE_LABEL.en; }
 
 // Generate academic title for a table based on analysis type and variables
 export function generateTableTitle(
@@ -67,11 +116,11 @@ export function generateTableTitle(
   const analysisLabel = formatMetadataLabel(result.type, "analysis", t) || result.title;
 
   if (result.descriptive && result.descriptive.length > 0) {
-    const vars = result.descriptive.map(d => d.variable).join(", ");
+    const vars = result.descriptive.filter(d => !isIdentifierVariable(d.variable)).map(d => d.variable).join(", ");
     return enrichTitle(titleByLang(lang, "descriptive", analysisLabel, vars), ctx, lang);
   }
   if (result.frequencies && result.frequencies.length > 0) {
-    const vars = result.frequencies.map(f => f.variable).join(", ");
+    const vars = result.frequencies.filter(f => !isIdentifierVariable(f.variable)).map(f => f.variable).join(", ");
     return enrichTitle(titleByLang(lang, "frequency", analysisLabel, vars), ctx, lang);
   }
   if (result.correlations && result.correlations.length > 0) {
@@ -182,7 +231,7 @@ function titleByLang(lang: string, type: string, label: string, vars: string): s
   return (templates[lang] || templates.en)[type] || label;
 }
 
-// Generate short inline interpretation for a table
+// Generate short inline interpretation for a table (uses full academic terms, no abbreviations)
 export function generateTableInterpretation(
   result: AnalysisResultItem,
   lang: string,
@@ -193,7 +242,7 @@ export function generateTableInterpretation(
     : level.includes("master") ? "master" : "licence";
 
   if (result.descriptive) {
-    for (const d of result.descriptive.slice(0, 3)) {
+    for (const d of result.descriptive.filter(d => !isIdentifierVariable(d.variable)).slice(0, 3)) {
       interps.push(interpDescriptive(d, lang));
     }
   }
@@ -235,13 +284,14 @@ export function generateTableInterpretation(
   return interps.join(" ");
 }
 
+// Use full academic terms: Moyenne, Écart type (not M, ET, SD)
 function interpDescriptive(d: { variable: string; mean: number; std: number; n: number }, lang: string) {
   const t: Record<string, string> = {
-    fr: `La variable ${d.variable} présente une moyenne de ${d.mean} (ET = ${d.std}, N = ${d.n}).`,
-    en: `The variable ${d.variable} has a mean of ${d.mean} (SD = ${d.std}, N = ${d.n}).`,
-    es: `La variable ${d.variable} presenta una media de ${d.mean} (DE = ${d.std}, N = ${d.n}).`,
-    de: `Die Variable ${d.variable} hat einen Mittelwert von ${d.mean} (SD = ${d.std}, N = ${d.n}).`,
-    pt: `A variável ${d.variable} apresenta uma média de ${d.mean} (DP = ${d.std}, N = ${d.n}).`,
+    fr: `La variable « ${d.variable} » présente une moyenne de ${d.mean} (écart type = ${d.std}, N = ${d.n}).`,
+    en: `The variable "${d.variable}" has a mean of ${d.mean} (standard deviation = ${d.std}, N = ${d.n}).`,
+    es: `La variable "${d.variable}" presenta una media de ${d.mean} (desviación estándar = ${d.std}, N = ${d.n}).`,
+    de: `Die Variable „${d.variable}" hat einen Mittelwert von ${d.mean} (Standardabweichung = ${d.std}, N = ${d.n}).`,
+    pt: `A variável "${d.variable}" apresenta uma média de ${d.mean} (desvio padrão = ${d.std}, N = ${d.n}).`,
   };
   return t[lang] || t.en;
 }
@@ -314,11 +364,11 @@ function interpRegression(r: { dependent: string; rSquared: number; fStat: numbe
 function interpTTest(tt: { variable: string; groupVar: string; groups: string[]; means: number[]; pValue: number }, lang: string) {
   const sig = tt.pValue < 0.05;
   const templates: Record<string, string> = {
-    fr: `${sig ? "Il existe une différence significative" : "Aucune différence significative n'a été observée"} entre ${tt.groups[0]} (M = ${tt.means[0]}) et ${tt.groups[1]} (M = ${tt.means[1]}) pour ${tt.variable} (p = ${tt.pValue}).`,
-    en: `${sig ? "There is a significant difference" : "No significant difference was observed"} between ${tt.groups[0]} (M = ${tt.means[0]}) and ${tt.groups[1]} (M = ${tt.means[1]}) for ${tt.variable} (p = ${tt.pValue}).`,
-    es: `${sig ? "Existe una diferencia significativa" : "No se observó diferencia significativa"} entre ${tt.groups[0]} (M = ${tt.means[0]}) y ${tt.groups[1]} (M = ${tt.means[1]}) para ${tt.variable} (p = ${tt.pValue}).`,
-    de: `${sig ? "Es gibt einen signifikanten Unterschied" : "Kein signifikanter Unterschied wurde beobachtet"} zwischen ${tt.groups[0]} (M = ${tt.means[0]}) und ${tt.groups[1]} (M = ${tt.means[1]}) für ${tt.variable} (p = ${tt.pValue}).`,
-    pt: `${sig ? "Existe uma diferença significativa" : "Nenhuma diferença significativa foi observada"} entre ${tt.groups[0]} (M = ${tt.means[0]}) e ${tt.groups[1]} (M = ${tt.means[1]}) para ${tt.variable} (p = ${tt.pValue}).`,
+    fr: `${sig ? "Il existe une différence significative" : "Aucune différence significative n'a été observée"} entre ${tt.groups[0]} (moyenne = ${tt.means[0]}) et ${tt.groups[1]} (moyenne = ${tt.means[1]}) pour ${tt.variable} (p = ${tt.pValue}).`,
+    en: `${sig ? "There is a significant difference" : "No significant difference was observed"} between ${tt.groups[0]} (mean = ${tt.means[0]}) and ${tt.groups[1]} (mean = ${tt.means[1]}) for ${tt.variable} (p = ${tt.pValue}).`,
+    es: `${sig ? "Existe una diferencia significativa" : "No se observó diferencia significativa"} entre ${tt.groups[0]} (media = ${tt.means[0]}) y ${tt.groups[1]} (media = ${tt.means[1]}) para ${tt.variable} (p = ${tt.pValue}).`,
+    de: `${sig ? "Es gibt einen signifikanten Unterschied" : "Kein signifikanter Unterschied wurde beobachtet"} zwischen ${tt.groups[0]} (Mittelwert = ${tt.means[0]}) und ${tt.groups[1]} (Mittelwert = ${tt.means[1]}) für ${tt.variable} (p = ${tt.pValue}).`,
+    pt: `${sig ? "Existe uma diferença significativa" : "Nenhuma diferença significativa foi observada"} entre ${tt.groups[0]} (média = ${tt.means[0]}) e ${tt.groups[1]} (média = ${tt.means[1]}) para ${tt.variable} (p = ${tt.pValue}).`,
   };
   return templates[lang] || templates.en;
 }
@@ -444,7 +494,6 @@ export function generateFigureTitle(
   analysisType: string,
   lang: string,
 ): string {
-  // If chart title already has a meaningful name, use it cleaned up
   return chartTitle;
 }
 
@@ -462,10 +511,10 @@ export function generateFigureInterpretation(
     const top = sorted[0];
     if (!top) return "";
     const templates: Record<string, string> = {
-      fr: `Le graphique montre que la modalité "${top.name}" est la plus fréquente avec ${top.value} occurrences.`,
+      fr: `Le graphique montre que la modalité « ${top.name} » est la plus fréquente avec ${top.value} occurrences.`,
       en: `The chart shows that "${top.name}" is the most frequent category with ${top.value} occurrences.`,
       es: `El gráfico muestra que "${top.name}" es la categoría más frecuente con ${top.value} ocurrencias.`,
-      de: `Das Diagramm zeigt, dass "${top.name}" mit ${top.value} Vorkommen die häufigste Kategorie ist.`,
+      de: `Das Diagramm zeigt, dass „${top.name}" mit ${top.value} Vorkommen die häufigste Kategorie ist.`,
       pt: `O gráfico mostra que "${top.name}" é a categoria mais frequente com ${top.value} ocorrências.`,
     };
     return templates[lang] || templates.en;
@@ -477,10 +526,10 @@ export function generateFigureInterpretation(
     if (!top || !total) return "";
     const pct = ((top.value || 0) / total * 100).toFixed(1);
     const templates: Record<string, string> = {
-      fr: `La catégorie "${top.name}" représente ${pct}% de l'ensemble des observations.`,
+      fr: `La catégorie « ${top.name} » représente ${pct}% de l'ensemble des observations.`,
       en: `The category "${top.name}" accounts for ${pct}% of all observations.`,
       es: `La categoría "${top.name}" representa ${pct}% de todas las observaciones.`,
-      de: `Die Kategorie "${top.name}" macht ${pct}% aller Beobachtungen aus.`,
+      de: `Die Kategorie „${top.name}" macht ${pct}% aller Beobachtungen aus.`,
       pt: `A categoria "${top.name}" representa ${pct}% de todas as observações.`,
     };
     return templates[lang] || templates.en;
@@ -528,4 +577,4 @@ export function generateFigureInterpretation(
   return "";
 }
 
-export { getTableLabel, getFigureLabel, getSource };
+export { getTableLabel, getFigureLabel };
