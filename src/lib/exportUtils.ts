@@ -541,7 +541,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
 
   const doc = new Document({
     styles: {
-      default: { document: { run: { font: "Arial", size: 24 } } },
+      default: { document: { run: { font: "Times New Roman", size: 24 }, paragraph: { spacing: { line: 360 } } } },
     },
     sections: [{ children: sections }],
   });
