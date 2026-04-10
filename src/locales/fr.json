@@ -933,8 +933,14 @@
   "joel.summary.advancedHypothesis": "Hypothèse avancée",
   "joel.summary.conceptualModel": "Modèle conceptuel",
   "student.newProject.studyDesignPlaceholder": "Sélectionner un design...",
-  "student.studyDesign.cross_sectional": "Transversal",
-  "student.studyDesign.longitudinal": "Longitudinal",
-  "student.studyDesign.prospective": "Prospectif",
-  "student.studyDesign.retrospective": "Rétrospectif"
+  "student.studyType.descriptive": "Descriptive",
+  "student.studyType.analytical": "Analytique",
+  "student.studyType.comparative": "Comparative",
+  "student.studyType.experimental": "Expérimentale",
+  "student.studyType.cross_sectional": "Transversale",
+  "student.studyType.longitudinal": "Longitudinale",
+  "student.studyDesign.cross_sectional": "Transversale",
+  "student.studyDesign.longitudinal": "Longitudinale",
+  "student.studyDesign.prospective": "Prospective",
+  "student.studyDesign.retrospective": "Rétrospective"
 }
