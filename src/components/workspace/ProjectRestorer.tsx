@@ -84,7 +84,7 @@ export function ProjectRestorer({ projectId, onRestored }: ProjectRestorerProps)
         onRestored(false);
       }
     })();
-  }, [projectId, restored, restoreState, restoreDatasetSummary, onRestored, analysisResults.length, setChatState]);
+  }, [projectId, restored, restoreState, restoreDatasetSummary, onRestored, analysisResults.length, setChatState, setCachedCharts]);
 
   // Auto-save chat state to DB with debounce
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
