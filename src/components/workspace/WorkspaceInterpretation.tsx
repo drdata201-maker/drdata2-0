@@ -26,6 +26,7 @@ type EditingField = { section: number; field: "interpretation" | "conclusion" | 
 
 export function WorkspaceInterpretation({ level, projectTitle, projectType, projectDomain, projectContext }: WorkspaceInterpretationProps) {
   const { t, lang: language } = useLanguage();
+  const localizedProjectContext = getLocalizedProjectContext(projectContext, t);
   const { analysisResults, interpretationData, setInterpretationData } = useDataset();
   const data = interpretationData;
   const [loading, setLoading] = useState(false);
@@ -50,20 +51,20 @@ export function WorkspaceInterpretation({ level, projectTitle, projectType, proj
           title: projectTitle,
           type: projectType,
           domain: projectDomain,
-          objective: projectContext?.objective,
-          specificObjectives: projectContext?.specificObjectives,
-          studyType: projectContext?.studyType,
-          studyDesign: projectContext?.studyDesign,
-          population: projectContext?.population,
-          primaryVariable: projectContext?.primaryVariable,
-          hypothesis: projectContext?.hypothesis,
-          advancedHypothesis: projectContext?.advancedHypothesis,
-          independentVars: projectContext?.independentVars,
-          dependentVar: projectContext?.dependentVar,
-          controlVars: projectContext?.controlVars,
-          mediatorVars: projectContext?.mediatorVars,
-          moderatorVars: projectContext?.moderatorVars,
-          conceptualModel: projectContext?.conceptualModel,
+          objective: localizedProjectContext?.objective,
+          specificObjectives: localizedProjectContext?.specificObjectives,
+          studyType: localizedProjectContext?.studyType,
+          studyDesign: localizedProjectContext?.studyDesign,
+          population: localizedProjectContext?.population,
+          primaryVariable: localizedProjectContext?.primaryVariable,
+          hypothesis: localizedProjectContext?.hypothesis,
+          advancedHypothesis: localizedProjectContext?.advancedHypothesis,
+          independentVars: localizedProjectContext?.independentVars,
+          dependentVar: localizedProjectContext?.dependentVar,
+          controlVars: localizedProjectContext?.controlVars,
+          mediatorVars: localizedProjectContext?.mediatorVars,
+          moderatorVars: localizedProjectContext?.moderatorVars,
+          conceptualModel: localizedProjectContext?.conceptualModel,
         },
       },
     });

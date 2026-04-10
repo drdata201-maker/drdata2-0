@@ -256,7 +256,7 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     return t("auth.level.licence");
   };
 
-  const projectContext = {
+  const localizedProjectContext = useMemo(() => getLocalizedProjectContext({
     title: projectTitle,
     type: projectType,
     domain: projectDomain,
@@ -276,8 +276,7 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
     mediatorVars: projectMetadata?.mediatorVars || "",
     moderatorVars: projectMetadata?.moderatorVars || "",
     conceptualModel: projectMetadata?.conceptualModel || "",
-  };
-
+  }, t), [projectTitle, projectType, projectDomain, projectDescription, projectObjective, projectMetadata, t]);
   // Scroll to bottom on mount (when returning to tab)
   useEffect(() => {
     scrollToBottom();
@@ -371,7 +370,7 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
         setIsStreaming(false);
       },
     });
-  }, [lang, projectContext, scrollToBottom, t, syncChatHistory, setMessages]);
+  }, [lang, localizedProjectContext, scrollToBottom, t, syncChatHistory, setMessages]);
 
   const handleConfirm = () => {
     setMessages(prev => [...prev, { role: "user", content: t("joel.confirmContinue") }]);
