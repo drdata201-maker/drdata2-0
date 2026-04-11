@@ -62,6 +62,9 @@ export interface CachedChart {
   data: Record<string, unknown>[];
 }
 
+export type ContentOverride = { title?: string; interpretation?: string };
+export type ContentOverrides = Record<string, ContentOverride>;
+
 export type ChatMessage = { role: "assistant" | "user"; content: string; type?: string };
 export type ChatPhase = "confirm" | "upload" | "software" | "analysis" | "variables" | "ready";
 
