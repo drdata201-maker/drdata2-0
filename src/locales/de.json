@@ -811,6 +811,7 @@
   "charts.regression": "Regression",
   "charts.varianceExplained": "Erklärte Varianz",
   "charts.clusterScatter": "Cluster-Streudiagramm",
+  "charts.regenerateAll": "Alle Diagramme neu generieren",
   "notifications.title": "Benachrichtigungen",
   "notifications.empty": "Keine Benachrichtigungen",
   "notifications.loading": "Laden...",
