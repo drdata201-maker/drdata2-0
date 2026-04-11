@@ -444,7 +444,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, interpretationData, setInterpretationData, cachedCharts, setCachedCharts, processFile, runCleaning, runAnalyses, reset, restoreState, restoreDatasetSummary, chatState, setChatState }}>
+    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, interpretationData, setInterpretationData, cachedCharts, setCachedCharts, tableOverrides, chartOverrides, updateTableOverride, updateChartOverride, processFile, runCleaning, runAnalyses, reset, restoreState, restoreDatasetSummary, chatState, setChatState }}>
       {children}
     </DatasetContext.Provider>
   );
