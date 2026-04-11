@@ -811,6 +811,7 @@
   "charts.regression": "Régression",
   "charts.varianceExplained": "Variance expliquée",
   "charts.clusterScatter": "Dispersion par clusters",
+  "charts.regenerateAll": "Régénérer tous les graphiques",
   "notifications.title": "Notifications",
   "notifications.empty": "Aucune notification",
   "notifications.loading": "Chargement...",

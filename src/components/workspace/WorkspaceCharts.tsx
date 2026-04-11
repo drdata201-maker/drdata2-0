@@ -207,6 +207,14 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
     );
   }
 
+  const regenerateAllCharts = () => {
+    setRetryKeys(prev => {
+      const next: Record<string, number> = {};
+      displayCharts.forEach(c => { next[c.key] = (prev[c.key] || 0) + 1; });
+      return next;
+    });
+  };
+
   if (displayCharts.length === 0) {
     return (
       <div className="space-y-4">
@@ -226,7 +234,13 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
 
   return (
     <div className="space-y-4">
-      <ChartStyleSettingsPanel />
+      <div className="flex items-center justify-between">
+        <ChartStyleSettingsPanel />
+        <Button variant="outline" size="sm" onClick={regenerateAllCharts}>
+          <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+          {t("charts.regenerateAll") || "Regenerate All"}
+        </Button>
+      </div>
       <div className="space-y-6">
         {displayCharts.map((chart, idx) => {
           const figNum = idx + 1;
