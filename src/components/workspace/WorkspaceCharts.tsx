@@ -155,7 +155,7 @@ function SingleChart({ chart, colors, barRadius, showGrid, showLabels }: {
 
 export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectContext } = {}) {
   const { t, lang } = useLanguage();
-  const { dataset, analysisResults, cachedCharts, setCachedCharts } = useDataset();
+  const { dataset, analysisResults, cachedCharts, setCachedCharts, chartOverrides, updateChartOverride } = useDataset();
   const { settings } = useChartStyle();
   const [retryKeys, setRetryKeys] = useState<Record<string, number>>({});
 
@@ -185,12 +185,6 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
       }
     }
   }, [charts, setCachedCharts]);
-
-  const [overrides, setOverrides] = useState<Record<string, { title?: string; interpretation?: string }>>({});
-
-  const updateOverride = (key: string, field: "title" | "interpretation", value: string) => {
-    setOverrides(prev => ({ ...prev, [key]: { ...prev[key], [field]: value } }));
-  };
 
   const retryChart = (key: string) => {
     setRetryKeys(prev => ({ ...prev, [key]: (prev[key] || 0) + 1 }));
@@ -244,7 +238,7 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
       <div className="space-y-6">
         {displayCharts.map((chart, idx) => {
           const figNum = idx + 1;
-          const ov = overrides[chart.key] || {};
+          const ov = chartOverrides[chart.key] || {};
           const title = ov.title || chart.title;
           const autoInterp = generateFigureInterpretation(chart.type, chart.title, chart.data, lang);
           const interpretation = ov.interpretation || autoInterp;
@@ -258,7 +252,7 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
                   <Badge variant="secondary" className="text-xs font-bold shrink-0">
                     {figLabel} {figNum}
                   </Badge>
-                  <EditableText value={title} onChange={v => updateOverride(chart.key, "title", v)} variant="title" />
+                  <EditableText value={title} onChange={v => updateChartOverride(chart.key, "title", v)} variant="title" />
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -278,7 +272,7 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
                   <div className="bg-muted/30 border border-dashed border-border rounded-md py-2 px-3">
                     <div className="flex items-start gap-2">
                       <Badge variant="outline" className="text-[10px] shrink-0 mt-0.5">{t("results.interpretation") || "Interpretation"}</Badge>
-                      <EditableText value={interpretation} onChange={v => updateOverride(chart.key, "interpretation", v)} />
+                      <EditableText value={interpretation} onChange={v => updateChartOverride(chart.key, "interpretation", v)} />
                     </div>
                   </div>
                 )}

@@ -667,13 +667,7 @@ function EditableText({ value, onChange, variant = "text" }: { value: string; on
 
 export function WorkspaceResults({ level = "student_license", projectContext }: { level?: string; projectContext?: ProjectContext }) {
   const { t, lang } = useLanguage();
-  const { analysisResults, dataset } = useDataset();
-
-  const [overrides, setOverrides] = useState<Record<string, { title?: string; interpretation?: string }>>({});
-
-  const updateOverride = (id: string, field: "title" | "interpretation", value: string) => {
-    setOverrides(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
-  };
+  const { analysisResults, dataset, tableOverrides, updateTableOverride } = useDataset();
 
   if (!dataset) {
     return (
@@ -706,7 +700,7 @@ export function WorkspaceResults({ level = "student_license", projectContext }: 
         const tableNum = idx + 1;
         const autoTitle = generateTableTitle(result, lang, t, projectContext);
         const autoInterp = generateTableInterpretation(result, lang, level);
-        const ov = overrides[result.id] || {};
+        const ov = tableOverrides[result.id] || {};
         const title = ov.title || autoTitle;
         const interpretation = ov.interpretation || autoInterp;
 
@@ -718,7 +712,7 @@ export function WorkspaceResults({ level = "student_license", projectContext }: 
                 <Badge variant="secondary" className="text-xs font-bold shrink-0">
                   {tableLabel} {tableNum}
                 </Badge>
-                <EditableText value={title} onChange={v => updateOverride(result.id, "title", v)} variant="title" />
+                <EditableText value={title} onChange={v => updateTableOverride(result.id, "title", v)} variant="title" />
               </div>
             </div>
 
@@ -740,7 +734,7 @@ export function WorkspaceResults({ level = "student_license", projectContext }: 
                 <CardContent className="py-3 px-4">
                   <div className="flex items-start gap-2">
                     <Badge variant="outline" className="text-[10px] shrink-0 mt-0.5">{t("results.interpretation") || "Interpretation"}</Badge>
-                    <EditableText value={interpretation} onChange={v => updateOverride(result.id, "interpretation", v)} />
+                    <EditableText value={interpretation} onChange={v => updateTableOverride(result.id, "interpretation", v)} />
                   </div>
                 </CardContent>
               </Card>
