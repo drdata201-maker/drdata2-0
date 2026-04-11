@@ -246,6 +246,16 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   const [interpretationData, setInterpretationData] = useState<InterpretationData | null>(null);
   const [cachedCharts, setCachedCharts] = useState<CachedChart[] | null>(null);
   const [chatState, setChatState] = useState<ChatState>(DEFAULT_CHAT_STATE);
+  const [tableOverrides, setTableOverrides] = useState<ContentOverrides>({});
+  const [chartOverrides, setChartOverrides] = useState<ContentOverrides>({});
+
+  const updateTableOverride = useCallback((id: string, field: "title" | "interpretation", value: string) => {
+    setTableOverrides(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+  }, []);
+
+  const updateChartOverride = useCallback((key: string, field: "title" | "interpretation", value: string) => {
+    setChartOverrides(prev => ({ ...prev, [key]: { ...prev[key], [field]: value } }));
+  }, []);
 
   const processFile = useCallback(async (file: File): Promise<DatasetSummary> => {
     setPrepStatus("uploading");
