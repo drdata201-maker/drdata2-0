@@ -19,7 +19,7 @@ import {
 } from "recharts";
 
 import type { ProjectContext } from "@/lib/academicFormatter";
-import { getLocalizedProjectContext } from "@/lib/projectMetadataLabels";
+import { getLocalizedProjectContext, formatMetadataLabel } from "@/lib/projectMetadataLabels";
 
 interface WorkspaceExportProps {
   projectTitle: string;
