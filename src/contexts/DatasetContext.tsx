@@ -88,6 +88,10 @@ interface DatasetContextType {
   setInterpretationData: (data: InterpretationData | null) => void;
   cachedCharts: CachedChart[] | null;
   setCachedCharts: (charts: CachedChart[] | null) => void;
+  tableOverrides: ContentOverrides;
+  chartOverrides: ContentOverrides;
+  updateTableOverride: (id: string, field: "title" | "interpretation", value: string) => void;
+  updateChartOverride: (key: string, field: "title" | "interpretation", value: string) => void;
   processFile: (file: File) => Promise<DatasetSummary>;
   runCleaning: () => void;
   runAnalyses: (analysisKeys: string[], software: string, depVar?: string, indVars?: string[]) => void;
