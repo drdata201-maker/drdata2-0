@@ -62,6 +62,9 @@ export interface CachedChart {
   data: Record<string, unknown>[];
 }
 
+export type ContentOverride = { title?: string; interpretation?: string };
+export type ContentOverrides = Record<string, ContentOverride>;
+
 export type ChatMessage = { role: "assistant" | "user"; content: string; type?: string };
 export type ChatPhase = "confirm" | "upload" | "software" | "analysis" | "variables" | "ready";
 
@@ -85,6 +88,10 @@ interface DatasetContextType {
   setInterpretationData: (data: InterpretationData | null) => void;
   cachedCharts: CachedChart[] | null;
   setCachedCharts: (charts: CachedChart[] | null) => void;
+  tableOverrides: ContentOverrides;
+  chartOverrides: ContentOverrides;
+  updateTableOverride: (id: string, field: "title" | "interpretation", value: string) => void;
+  updateChartOverride: (key: string, field: "title" | "interpretation", value: string) => void;
   processFile: (file: File) => Promise<DatasetSummary>;
   runCleaning: () => void;
   runAnalyses: (analysisKeys: string[], software: string, depVar?: string, indVars?: string[]) => void;
@@ -239,6 +246,16 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   const [interpretationData, setInterpretationData] = useState<InterpretationData | null>(null);
   const [cachedCharts, setCachedCharts] = useState<CachedChart[] | null>(null);
   const [chatState, setChatState] = useState<ChatState>(DEFAULT_CHAT_STATE);
+  const [tableOverrides, setTableOverrides] = useState<ContentOverrides>({});
+  const [chartOverrides, setChartOverrides] = useState<ContentOverrides>({});
+
+  const updateTableOverride = useCallback((id: string, field: "title" | "interpretation", value: string) => {
+    setTableOverrides(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+  }, []);
+
+  const updateChartOverride = useCallback((key: string, field: "title" | "interpretation", value: string) => {
+    setChartOverrides(prev => ({ ...prev, [key]: { ...prev[key], [field]: value } }));
+  }, []);
 
   const processFile = useCallback(async (file: File): Promise<DatasetSummary> => {
     setPrepStatus("uploading");
@@ -427,7 +444,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, interpretationData, setInterpretationData, cachedCharts, setCachedCharts, processFile, runCleaning, runAnalyses, reset, restoreState, restoreDatasetSummary, chatState, setChatState }}>
+    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, interpretationData, setInterpretationData, cachedCharts, setCachedCharts, tableOverrides, chartOverrides, updateTableOverride, updateChartOverride, processFile, runCleaning, runAnalyses, reset, restoreState, restoreDatasetSummary, chatState, setChatState }}>
       {children}
     </DatasetContext.Provider>
   );

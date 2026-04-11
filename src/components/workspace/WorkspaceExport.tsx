@@ -19,6 +19,7 @@ import {
 } from "recharts";
 
 import type { ProjectContext } from "@/lib/academicFormatter";
+import { generateTableTitle, generateTableInterpretation, generateFigureInterpretation } from "@/lib/academicFormatter";
 import { getLocalizedProjectContext, formatMetadataLabel } from "@/lib/projectMetadataLabels";
 
 interface WorkspaceExportProps {
@@ -80,7 +81,7 @@ function MiniChart({ chart, colors, barRadius, showGrid, showLabels }: { chart: 
 export function WorkspaceExport({ projectTitle, projectType, projectDomain, projectDescription, level, projectContext }: WorkspaceExportProps) {
   const { t, lang } = useLanguage();
   const localizedProjectContext = useMemo(() => getLocalizedProjectContext(projectContext, t), [projectContext, t]);
-  const { dataset, analysisResults, interpretationData, cachedCharts } = useDataset();
+  const { dataset, analysisResults, interpretationData, cachedCharts, tableOverrides, chartOverrides } = useDataset();
   const { settings: chartSettings } = useChartStyle();
   const [loading, setLoading] = useState<string | null>(null);
   const [previewContent, setPreviewContent] = useState<ContentType | null>(null);
@@ -362,74 +363,77 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
 
                 <Separator />
 
-                {/* Stats tables */}
-                {showStats(previewContent) && data.statsTable.length > 0 && (
-                  <section className="space-y-3">
-                    <h2 className="text-lg font-semibold text-foreground">{t("export.descriptiveStats") || "Descriptive Statistics"}</h2>
-                    <div className="rounded-md border border-border overflow-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>{t("export.variable") || "Variable"}</TableHead>
-                            <TableHead className="text-right">N</TableHead>
-                            <TableHead className="text-right">{t("export.mean") || "Mean"}</TableHead>
-                            <TableHead className="text-right">{t("export.std") || "Std"}</TableHead>
-                            <TableHead className="text-right">Min</TableHead>
-                            <TableHead className="text-right">Max</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {data.statsTable.map((row, i) => (
-                            <TableRow key={i}>
-                              <TableCell className="font-medium">{row.variable}</TableCell>
-                              <TableCell className="text-right">{row.n}</TableCell>
-                              <TableCell className="text-right">{typeof row.mean === "number" ? row.mean.toFixed(3) : row.mean}</TableCell>
-                              <TableCell className="text-right">{typeof row.std === "number" ? row.std.toFixed(3) : row.std}</TableCell>
-                              <TableCell className="text-right">{typeof row.min === "number" ? row.min.toFixed(2) : row.min}</TableCell>
-                              <TableCell className="text-right">{typeof row.max === "number" ? row.max.toFixed(2) : row.max}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                {/* Results with academic numbering */}
+                {showStats(previewContent) && analysisResults.length > 0 && (
+                  <section className="space-y-4">
+                    <h2 className="text-lg font-semibold text-foreground">{t("export.descriptiveStats") || "Results"}</h2>
+                    {analysisResults.map((result, idx) => {
+                      const tableNum = idx + 1;
+                      const tableLabel = lang === "fr" ? "Tableau" : lang === "es" ? "Tabla" : lang === "de" ? "Tabelle" : lang === "pt" ? "Tabela" : "Table";
+                      const ov = tableOverrides[result.id] || {};
+                      const title = ov.title || generateTableTitle(result, lang, t, localizedProjectContext);
+                      const interpretation = ov.interpretation || generateTableInterpretation(result, lang, level);
+
+                      return (
+                        <div key={result.id} className="space-y-2">
+                          <p className="text-sm font-semibold text-foreground">
+                            {tableLabel} {tableNum} : {title}
+                          </p>
+                          {result.descriptive && (
+                            <div className="rounded-md border border-border overflow-auto">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>{t("export.variable") || "Variable"}</TableHead>
+                                    <TableHead className="text-right">N</TableHead>
+                                    <TableHead className="text-right">{t("export.mean") || "Mean"}</TableHead>
+                                    <TableHead className="text-right">{t("export.std") || "Std"}</TableHead>
+                                    <TableHead className="text-right">Min</TableHead>
+                                    <TableHead className="text-right">Max</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {result.descriptive.map((row, i) => (
+                                    <TableRow key={i}>
+                                      <TableCell className="font-medium">{row.variable}</TableCell>
+                                      <TableCell className="text-right">{row.n}</TableCell>
+                                      <TableCell className="text-right">{typeof row.mean === "number" ? row.mean.toFixed(3) : row.mean}</TableCell>
+                                      <TableCell className="text-right">{typeof row.std === "number" ? row.std.toFixed(3) : row.std}</TableCell>
+                                      <TableCell className="text-right">{typeof row.min === "number" ? row.min.toFixed(2) : row.min}</TableCell>
+                                      <TableCell className="text-right">{typeof row.max === "number" ? row.max.toFixed(2) : row.max}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          )}
+                          {interpretation && (
+                            <p className="text-xs italic text-muted-foreground leading-relaxed">{interpretation}</p>
+                          )}
+                        </div>
+                      );
+                    })}
                   </section>
                 )}
 
-                {showStats(previewContent) && data.testResults.length > 0 && (
-                  <section className="space-y-3">
-                    <h2 className="text-lg font-semibold text-foreground">{t("export.testResults") || "Test Results"}</h2>
-                    <div className="rounded-md border border-border overflow-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>{t("export.test") || "Test"}</TableHead>
-                            <TableHead className="text-right">{t("export.value") || "Value"}</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {data.testResults.map((row, i) => (
-                            <TableRow key={i}>
-                              <TableCell className="font-medium">{row.label}</TableCell>
-                              <TableCell className="text-right font-mono text-sm">{row.value}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </section>
-                )}
-
-                {/* Charts in preview */}
+                {/* Charts with academic numbering */}
                 {showCharts(previewContent) && charts.length > 0 && (
                   <section className="space-y-3">
                     <Separator />
                     <h2 className="text-lg font-semibold text-foreground">{t("workspace.graphs") || "Charts"}</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {charts.slice(0, 8).map(chart => (
-                        <div key={chart.key} className="rounded-md border border-border p-3 bg-card">
-                          <MiniChart chart={chart} colors={chartColors} barRadius={barRadius} showGrid={chartSettings.showGrid} showLabels={chartSettings.showLabels} />
-                        </div>
-                      ))}
+                      {charts.slice(0, 8).map((chart, idx) => {
+                        const figNum = idx + 1;
+                        const figLabel = lang === "fr" ? "Figure" : lang === "es" ? "Figura" : lang === "de" ? "Abbildung" : lang === "pt" ? "Figura" : "Figure";
+                        const ov = chartOverrides[chart.key] || {};
+                        const title = ov.title || chart.title;
+                        return (
+                          <div key={chart.key} className="rounded-md border border-border p-3 bg-card space-y-1">
+                            <p className="text-xs font-semibold text-foreground">{figLabel} {figNum} : {title}</p>
+                            <MiniChart chart={chart} colors={chartColors} barRadius={barRadius} showGrid={chartSettings.showGrid} showLabels={chartSettings.showLabels} />
+                          </div>
+                        );
+                      })}
                     </div>
                   </section>
                 )}
