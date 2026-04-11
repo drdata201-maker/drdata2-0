@@ -221,6 +221,8 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
 
   const data = buildData;
   const lvl = (levelLabels[lang] || levelLabels.en)[level] || level;
+  const localizedType = formatMetadataLabel(data.projectType, "projectType", t) || data.projectType;
+  const localizedDomain = formatMetadataLabel(data.projectDomain, "domain", t) || data.projectDomain;
 
   const exportOptions: { content: ContentType; icon: typeof FileText; labelKey: string }[] = [
     { content: "full", icon: FileText, labelKey: "export.fullReport" },
