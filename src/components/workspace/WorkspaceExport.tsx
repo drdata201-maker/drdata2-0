@@ -80,7 +80,7 @@ function MiniChart({ chart, colors, barRadius, showGrid, showLabels }: { chart: 
 export function WorkspaceExport({ projectTitle, projectType, projectDomain, projectDescription, level, projectContext }: WorkspaceExportProps) {
   const { t, lang } = useLanguage();
   const localizedProjectContext = useMemo(() => getLocalizedProjectContext(projectContext, t), [projectContext, t]);
-  const { dataset, analysisResults, interpretationData } = useDataset();
+  const { dataset, analysisResults, interpretationData, cachedCharts } = useDataset();
   const { settings: chartSettings } = useChartStyle();
   const [loading, setLoading] = useState<string | null>(null);
   const [previewContent, setPreviewContent] = useState<ContentType | null>(null);
@@ -88,10 +88,13 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
   const chartColors = chartSettings.palette.colors;
   const barRadius: [number, number, number, number] = chartSettings.style === "rounded" ? [3, 3, 0, 0] : chartSettings.style === "sharp" ? [1, 1, 0, 0] : [0, 0, 0, 0];
 
-  const charts = useMemo((): ChartItem[] => {
+  const builtCharts = useMemo((): ChartItem[] => {
     if (!dataset) return [];
     return buildChartData(dataset.rawData, dataset.variables, analysisResults, t);
   }, [dataset, analysisResults, t]);
+
+  // Use cached charts as fallback (same pattern as WorkspaceCharts)
+  const charts = builtCharts.length > 0 ? builtCharts : (cachedCharts as ChartItem[] || []);
 
   const buildData = useMemo((): ExportData | null => {
     if (!dataset || analysisResults.length === 0) return null;
