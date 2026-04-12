@@ -862,6 +862,24 @@ Keep under 120 words. Use academic language.`);
               </div>
             ))}
 
+            {/* Analytical graphs toggle */}
+            {selectedAnalyses.some(a => ["crosstab", "chi_square", "t_test", "anova_basic", "anova", "correlation"].includes(a)) && (
+              <div className="space-y-1.5 rounded-lg border border-border bg-muted/20 p-3">
+                <label className="text-xs font-semibold text-foreground">📊 {t("joel.analyticalGraphs")}</label>
+                <Select value={analyticalGraphMode} onValueChange={(v) => setAnalyticalGraphMode(v as "standard" | "advanced" | "presentation")}>
+                  <SelectTrigger className="text-xs h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="standard" className="text-xs">{t("joel.graphMode.standard")}</SelectItem>
+                    <SelectItem value="advanced" className="text-xs">{t("joel.graphMode.advanced")}</SelectItem>
+                    <SelectItem value="presentation" className="text-xs">{t("joel.graphMode.presentation")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">{t(`joel.graphMode.${analyticalGraphMode}Desc`)}</p>
+              </div>
+            )}
+
             {/* Other analysis */}
             <div className="space-y-1.5">
               <p className="text-xs font-medium text-muted-foreground">{t("joel.otherAnalysis")}</p>
