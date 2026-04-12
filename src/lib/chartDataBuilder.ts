@@ -52,6 +52,7 @@ export function buildChartData(
           key: `hist-${desc.variable}`,
           title: `${tFn("charts.histogram")}: ${desc.variable}`,
           type: "histogram",
+          analysisType: "descriptive",
           data: buildHistogram(vals),
         });
       }
@@ -63,12 +64,14 @@ export function buildChartData(
           key: `pie-${freq.variable}`,
           title: `${tFn("charts.pieChart")}: ${freq.variable}`,
           type: "pie",
+          analysisType: "frequency",
           data: freq.categories.slice(0, 8).map(c => ({ name: c.value, value: c.count })),
         });
         items.push({
           key: `bar-${freq.variable}`,
           title: `${tFn("charts.barChart")}: ${freq.variable}`,
           type: "bar",
+          analysisType: "frequency",
           data: freq.categories.slice(0, 10).map(c => ({ name: c.value, value: c.count })),
         });
       }
