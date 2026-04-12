@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset } from "@/contexts/DatasetContext";
 import type { AnalysisResultItem } from "@/contexts/DatasetContext";
@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Table2, TrendingUp, BarChart3, Upload, Layers, GitBranch, CircleDot, Pencil, Check, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table2, TrendingUp, BarChart3, Upload, Layers, GitBranch, CircleDot, Pencil, Check, X, Trash2, RefreshCw, Settings2 } from "lucide-react";
 import {
   generateTableTitle, generateTableInterpretation, getTableLabel,
   getDescriptiveHeadersShort, getFrequencyHeaders, getCorrelationHeaders,
@@ -665,9 +666,106 @@ function EditableText({ value, onChange, variant = "text" }: { value: string; on
   );
 }
 
+const ANALYSIS_KEYS = [
+  "descriptive_stats", "frequencies", "correlation", "t_test", "chi_square",
+  "crosstab", "anova", "simple_regression", "multiple_regression",
+  "pca", "factor_analysis", "cluster_analysis", "cronbach_alpha",
+];
+
+function AnalysisActions({
+  result, onDelete, onRecalculate, onEdit,
+}: {
+  result: AnalysisResultItem;
+  onDelete: () => void;
+  onRecalculate: () => void;
+  onEdit: () => void;
+}) {
+  const { t } = useLanguage();
+  return (
+    <div className="flex items-center gap-1">
+      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={onEdit}>
+        <Settings2 className="h-3 w-3" /> {t("results.editAnalysis")}
+      </Button>
+      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={onRecalculate}>
+        <RefreshCw className="h-3 w-3" /> {t("results.recalculate")}
+      </Button>
+      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-destructive hover:text-destructive" onClick={onDelete}>
+        <Trash2 className="h-3 w-3" /> {t("results.deleteAnalysis")}
+      </Button>
+    </div>
+  );
+}
+
+function EditAnalysisPanel({
+  result, dataset, onSave, onCancel,
+}: {
+  result: AnalysisResultItem;
+  dataset: NonNullable<ReturnType<typeof useDataset>["dataset"]>;
+  onSave: (key: string, depVar?: string, indVars?: string[]) => void;
+  onCancel: () => void;
+}) {
+  const { t } = useLanguage();
+  const [analysisKey, setAnalysisKey] = useState(result.type);
+  const [depVar, setDepVar] = useState("");
+  const [indVars, setIndVars] = useState<string[]>([]);
+
+  const numVars = dataset.variables.filter(v => v.type === "numeric").map(v => v.name);
+  const catVars = dataset.variables.filter(v => v.type === "categorical" || v.type === "ordinal").map(v => v.name);
+  const allVars = [...numVars, ...catVars];
+
+  const toggleIndVar = useCallback((v: string) => {
+    setIndVars(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v]);
+  }, []);
+
+  return (
+    <Card className="border-primary/40 bg-primary/5">
+      <CardContent className="py-4 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">{t("results.analysisType")}</label>
+            <Select value={analysisKey} onValueChange={setAnalysisKey}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {ANALYSIS_KEYS.map(k => <SelectItem key={k} value={k} className="text-xs">{k.replace(/_/g, " ")}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">{t("joel.varDependent")}</label>
+            <Select value={depVar} onValueChange={setDepVar}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectContent>
+                {allVars.map(v => <SelectItem key={v} value={v} className="text-xs">{v}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">{t("joel.varIndependent")}</label>
+            <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
+              {allVars.filter(v => v !== depVar).map(v => (
+                <Badge key={v} variant={indVars.includes(v) ? "default" : "outline"}
+                  className="cursor-pointer text-[10px]" onClick={() => toggleIndVar(v)}>
+                  {v}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-2 justify-end">
+          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onCancel}>{t("common.cancel") || "Cancel"}</Button>
+          <Button size="sm" className="h-7 text-xs" onClick={() => onSave(analysisKey, depVar || undefined, indVars.length ? indVars : undefined)}>
+            {t("results.recalculate")}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function WorkspaceResults({ level = "student_license", projectContext }: { level?: string; projectContext?: ProjectContext }) {
   const { t, lang } = useLanguage();
-  const { analysisResults, dataset, tableOverrides, updateTableOverride } = useDataset();
+  const { analysisResults, dataset, tableOverrides, updateTableOverride, deleteAnalysis, replaceAnalysis } = useDataset();
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   if (!dataset) {
     return (
@@ -706,15 +804,33 @@ export function WorkspaceResults({ level = "student_license", projectContext }: 
 
         return (
           <div key={result.id} className="space-y-3">
-            {/* Academic header: Table N: Title */}
+            {/* Academic header with action buttons */}
             <div className="border-b-2 border-primary/20 pb-2">
-              <div className="flex items-baseline gap-2">
-                <Badge variant="secondary" className="text-xs font-bold shrink-0">
-                  {tableLabel} {tableNum}
-                </Badge>
-                <EditableText value={title} onChange={v => updateTableOverride(result.id, "title", v)} variant="title" />
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-baseline gap-2 min-w-0">
+                  <Badge variant="secondary" className="text-xs font-bold shrink-0">
+                    {tableLabel} {tableNum}
+                  </Badge>
+                  <EditableText value={title} onChange={v => updateTableOverride(result.id, "title", v)} variant="title" />
+                </div>
+                <AnalysisActions
+                  result={result}
+                  onDelete={() => deleteAnalysis(result.id)}
+                  onRecalculate={() => replaceAnalysis(result.id, result.type, "")}
+                  onEdit={() => setEditingId(editingId === result.id ? null : result.id)}
+                />
               </div>
             </div>
+
+            {/* Edit panel */}
+            {editingId === result.id && (
+              <EditAnalysisPanel
+                result={result}
+                dataset={dataset}
+                onSave={(key, dep, ind) => { replaceAnalysis(result.id, key, "", dep, ind); setEditingId(null); }}
+                onCancel={() => setEditingId(null)}
+              />
+            )}
 
             {/* Table content */}
             {result.descriptive && <DescriptiveTable data={result.descriptive} />}
@@ -728,7 +844,7 @@ export function WorkspaceResults({ level = "student_license", projectContext }: 
             {result.factorAnalysis && <FactorAnalysisTable data={result.factorAnalysis} level={level} />}
             {result.clusterAnalysis && <ClusterAnalysisTable data={result.clusterAnalysis} level={level} />}
 
-            {/* Inline interpretation (no Source text) */}
+            {/* Inline interpretation */}
             {interpretation && (
               <Card className="bg-muted/30 border-dashed">
                 <CardContent className="py-3 px-4">

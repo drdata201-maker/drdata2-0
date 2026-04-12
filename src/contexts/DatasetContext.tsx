@@ -95,6 +95,8 @@ interface DatasetContextType {
   processFile: (file: File) => Promise<DatasetSummary>;
   runCleaning: () => void;
   runAnalyses: (analysisKeys: string[], software: string, depVar?: string, indVars?: string[]) => void;
+  deleteAnalysis: (id: string) => void;
+  replaceAnalysis: (id: string, analysisKey: string, software: string, depVar?: string, indVars?: string[]) => void;
   reset: () => void;
   restoreState: (results: AnalysisResultItem[], interpretation: InterpretationData | null) => void;
   restoreDatasetSummary: (summary: DatasetSummary) => void;
@@ -423,6 +425,63 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     })();
   }, [dataset, cleanedData]);
 
+  const deleteAnalysis = useCallback((id: string) => {
+    setAnalysisResults(prev => prev.filter(r => r.id !== id));
+    setTableOverrides(prev => { const n = { ...prev }; delete n[id]; return n; });
+    setChartOverrides(prev => { const n = { ...prev }; delete n[id]; return n; });
+  }, []);
+
+  const replaceAnalysis = useCallback((id: string, analysisKey: string, software: string, depVar?: string, indVars?: string[]) => {
+    if (!dataset) return;
+    const rows = cleanedData || dataset.rawData;
+    const numVars = dataset.variables.filter(v => v.type === "numeric" && !isIdentifierVariable(v.name, rows)).map(v => v.name);
+    const catVars = dataset.variables.filter(v => (v.type === "categorical" || v.type === "ordinal") && !isIdentifierVariable(v.name, rows)).map(v => v.name);
+    const effectiveDepVar = depVar || numVars[0];
+    const effectiveIndVars = indVars && indVars.length > 0 ? indVars : numVars.slice(1);
+    const analysisName = analysisKey.startsWith("custom:") ? analysisKey.slice(7) : analysisKey;
+    const result: AnalysisResultItem = { id, type: analysisName, title: analysisName, timestamp: new Date().toISOString() };
+
+    // Reuse the same analysis logic from runAnalyses for a single key
+    if (analysisKey === "descriptive_stats" || analysisKey === "frequencies" || analysisKey.startsWith("custom:")) {
+      if (numVars.length) result.descriptive = computeDescriptive(rows, numVars);
+      if (catVars.length) result.frequencies = computeFrequencies(rows, catVars);
+    }
+    if (analysisKey === "frequencies") result.frequencies = computeFrequencies(rows, catVars.length ? catVars : numVars.slice(0, 3));
+    if (analysisKey === "correlation") {
+      const corrVars = indVars && indVars.length >= 2 ? indVars.filter(v => numVars.includes(v)) : numVars;
+      result.correlations = computeCorrelations(rows, corrVars);
+    }
+    if (analysisKey === "t_test" && effectiveDepVar) {
+      const groupVar = indVars?.[0] || catVars[0];
+      if (groupVar) { const t = computeTTest(rows, effectiveDepVar, groupVar); if (t) result.tTests = [t]; }
+    }
+    if (analysisKey === "chi_square" || analysisKey === "crosstab") {
+      const v1 = indVars?.[0] || catVars[0]; const v2 = indVars?.[1] || catVars[1];
+      if (v1 && v2) result.chiSquares = [computeChiSquare(rows, v1, v2)];
+    }
+    if ((analysisKey === "anova" || analysisKey === "anova_basic") && effectiveDepVar) {
+      const factorVar = indVars?.[0] || catVars[0];
+      if (factorVar) result.anovas = [computeAnova(rows, effectiveDepVar, factorVar)];
+    }
+    if ((analysisKey === "simple_regression" || analysisKey === "multiple_regression" || analysisKey === "logistic_regression") && effectiveDepVar) {
+      const regInd = effectiveIndVars.filter(v => v !== effectiveDepVar && numVars.includes(v));
+      const ind = analysisKey === "simple_regression" ? regInd.slice(0, 1) : regInd;
+      if (ind.length > 0) result.regressions = [computeRegression(rows, effectiveDepVar, ind)];
+    }
+    if (analysisKey === "pca" && numVars.length >= 2) result.pca = computePCA(rows, numVars);
+    if (analysisKey === "factor_analysis" && numVars.length >= 2) result.factorAnalysis = computeFactorAnalysis(rows, numVars);
+    if (analysisKey === "cluster_analysis" && numVars.length >= 2) result.clusterAnalysis = computeClusterAnalysis(rows, numVars);
+    if (analysisKey === "cronbach_alpha") {
+      if (numVars.length) result.descriptive = computeDescriptive(rows, numVars);
+      if (numVars.length >= 2) result.correlations = computeCorrelations(rows, numVars);
+    }
+
+    setAnalysisResults(prev => prev.map(r => r.id === id ? result : r));
+    // Clear overrides for this analysis so auto-generated titles/interps refresh
+    setTableOverrides(prev => { const n = { ...prev }; delete n[id]; return n; });
+    setChartOverrides(prev => { const n = { ...prev }; delete n[id]; return n; });
+  }, [dataset, cleanedData]);
+
   const reset = useCallback(() => {
     setDataset(null);
     setPrepStatus("idle");
@@ -444,7 +503,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, interpretationData, setInterpretationData, cachedCharts, setCachedCharts, tableOverrides, chartOverrides, updateTableOverride, updateChartOverride, processFile, runCleaning, runAnalyses, reset, restoreState, restoreDatasetSummary, chatState, setChatState }}>
+    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, analysisResults, interpretationData, setInterpretationData, cachedCharts, setCachedCharts, tableOverrides, chartOverrides, updateTableOverride, updateChartOverride, processFile, runCleaning, runAnalyses, deleteAnalysis, replaceAnalysis, reset, restoreState, restoreDatasetSummary, chatState, setChatState }}>
       {children}
     </DatasetContext.Provider>
   );
