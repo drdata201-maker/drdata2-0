@@ -454,7 +454,8 @@ Keep under 80 words.`;
 
   // Check if any selected analysis needs variable selection
   const needsVariableSelection = useMemo(() => {
-    return selectedAnalyses.some(a => VARIABLE_REQUIRING[a]);
+    const expanded = expandAnalysisKeys(selectedAnalyses);
+    return expanded.some(a => VARIABLE_REQUIRING[a]);
   }, [selectedAnalyses]);
 
   const numericVars = useMemo(() =>
@@ -513,8 +514,9 @@ Keep under 80 words.`;
 
     setPhase("ready");
 
-    // Run analyses with selected variables
-    runAnalyses(selectedAnalyses, selectedSoftware, selectedDepVar || undefined, selectedIndVars.length > 0 ? selectedIndVars : undefined);
+    // Expand meta-keys before running
+    const expandedKeys = expandAnalysisKeys(selectedAnalyses);
+    runAnalyses(expandedKeys, selectedSoftware, selectedDepVar || undefined, selectedIndVars.length > 0 ? selectedIndVars : undefined);
 
     // Notify parent to switch to Results tab
     onAnalysisComplete?.();
