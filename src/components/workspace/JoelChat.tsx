@@ -40,7 +40,8 @@ const ANALYSIS_GROUPS_BY_LEVEL: Record<string, AnalysisCategoryGroup[]> = {
     {
       groupKey: "recommended",
       categories: [
-        { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab", "chi_square"] },
+        { key: "descriptive_analysis", analyses: ["descriptive_full"] },
+        { key: "analytical_analysis", analyses: ["crosstab", "chi_square"] },
       ],
     },
     {
@@ -48,14 +49,16 @@ const ANALYSIS_GROUPS_BY_LEVEL: Record<string, AnalysisCategoryGroup[]> = {
       categories: [
         { key: "comparative", analyses: ["t_test", "anova_basic"] },
         { key: "relationship", analyses: ["correlation"] },
+        { key: "custom_analysis", analyses: [] },
       ],
     },
   ],
   student_master: [
     {
       categories: [
-        { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
-        { key: "comparative", analyses: ["t_test", "chi_square", "anova", "nonparametric"] },
+        { key: "descriptive_analysis", analyses: ["descriptive_full"] },
+        { key: "analytical_analysis", analyses: ["crosstab", "chi_square"] },
+        { key: "comparative", analyses: ["t_test", "anova", "nonparametric"] },
         { key: "relationship", analyses: ["correlation", "simple_regression", "multiple_regression"] },
         { key: "predictive", analyses: ["logistic_regression", "factor_analysis"] },
         { key: "reliability", analyses: ["cronbach_alpha", "pca"] },
@@ -65,8 +68,9 @@ const ANALYSIS_GROUPS_BY_LEVEL: Record<string, AnalysisCategoryGroup[]> = {
   student_doctorate: [
     {
       categories: [
-        { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
-        { key: "comparative", analyses: ["t_test", "chi_square", "anova", "nonparametric"] },
+        { key: "descriptive_analysis", analyses: ["descriptive_full"] },
+        { key: "analytical_analysis", analyses: ["crosstab", "chi_square"] },
+        { key: "comparative", analyses: ["t_test", "anova", "nonparametric"] },
         { key: "relationship", analyses: ["correlation", "simple_regression", "multiple_regression"] },
         { key: "predictive", analyses: ["logistic_regression", "factor_analysis", "sem"] },
         { key: "advanced", analyses: ["pca", "cluster_analysis", "panel_data", "time_series", "survival_analysis", "multilevel_modeling", "multivariate"] },
@@ -89,6 +93,19 @@ const VARIABLE_REQUIRING: Record<string, { dependent?: boolean; independent?: bo
   pca: { variables: 2 },
   factor_analysis: { variables: 2 },
   cluster_analysis: { variables: 2 },
+};
+
+// "descriptive_full" is a meta-key that expands into descriptive_stats + frequencies
+const expandAnalysisKeys = (keys: string[]): string[] => {
+  const expanded: string[] = [];
+  for (const k of keys) {
+    if (k === "descriptive_full") {
+      expanded.push("descriptive_stats", "frequencies");
+    } else {
+      expanded.push(k);
+    }
+  }
+  return expanded;
 };
 
 type Msg = { role: "assistant" | "user"; content: string; type?: string };
