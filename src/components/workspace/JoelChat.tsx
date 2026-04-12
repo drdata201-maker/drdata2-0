@@ -235,7 +235,10 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
   const [isStreaming, setIsStreaming] = useState(false);
   const [selectedDepVar, setSelectedDepVar] = useState("");
   const [selectedIndVars, setSelectedIndVars] = useState<string[]>([]);
-  const [analyticalGraphMode, setAnalyticalGraphMode] = useState<"standard" | "advanced" | "presentation">("standard");
+  const analyticalGraphMode = chatState.analyticalGraphMode;
+  const setAnalyticalGraphMode = useCallback((v: "standard" | "advanced" | "presentation") => {
+    setChatState(prev => ({ ...prev, analyticalGraphMode: v }));
+  }, [setChatState]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const chatHistoryRef = useRef<{ role: string; content: string }[]>(chatState.chatHistory);
 
