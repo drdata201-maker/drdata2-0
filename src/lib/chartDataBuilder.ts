@@ -6,6 +6,7 @@ export interface ChartItem {
   key: string;
   title: string;
   type: "histogram" | "bar" | "scatter" | "pie" | "scree" | "cluster-scatter";
+  analysisType?: "descriptive" | "frequency" | "bivariate" | "advanced";
   data: { name?: string; value?: number; x?: number; y?: number; cluster?: number; cumulative?: number }[];
 }
 
