@@ -850,88 +850,150 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
           </div>
         )}
 
-        {/* Variable selection */}
+        {/* Variable selection — improved academic interface */}
         {phase === "variables" && !isStreaming && dataset && (
-          <div className="mt-2 space-y-3">
-            <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-              <Variable className="h-3.5 w-3.5" />
-              {t("joel.selectVariables") || "Select variables for your analysis"}
-            </p>
+          <div className="mt-2 space-y-4">
+            <div className="flex items-center gap-2">
+              <Variable className="h-4 w-4 text-primary" />
+              <p className="text-xs font-semibold text-foreground">
+                {t("joel.selectVariables")}
+              </p>
+            </div>
 
-            {/* Show dependent variable selector for analyses that need it */}
+            {/* Smart suggestion based on project metadata */}
+            {(() => {
+              const suggestedDep = projectMetadata?.primaryVariable
+                || projectMetadata?.dependentVar
+                || "";
+              const matchingVar = suggestedDep
+                ? allVarNames.find(v => v.toLowerCase().includes(suggestedDep.toLowerCase()) || suggestedDep.toLowerCase().includes(v.toLowerCase()))
+                : null;
+              if (matchingVar && !selectedDepVar) {
+                return (
+                  <div className="rounded-md bg-primary/10 border border-primary/20 px-3 py-2 text-xs text-foreground flex items-center justify-between gap-2">
+                    <span>💡 <strong>{t("joel.varSuggestion")}</strong> : {matchingVar}</span>
+                    <Button size="sm" variant="outline" className="h-6 text-[10px] px-2" onClick={() => setSelectedDepVar(matchingVar)}>
+                      {t("joel.confirmContinue")}
+                    </Button>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
+            {/* Dependent variable selector — for dep/ind analyses */}
             {selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.dependent) && (
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">
-                  {t("joel.varDependent") || "Dependent variable"}
+              <div className="space-y-1.5 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                <label className="text-xs font-semibold text-primary flex items-center gap-1.5">
+                  🎯 {t("joel.varDependent")}
                 </label>
+                <p className="text-[10px] text-muted-foreground mb-1.5">{t("joel.varDepHint")}</p>
                 <Select value={selectedDepVar} onValueChange={setSelectedDepVar}>
-                  <SelectTrigger className="text-xs h-8">
-                    <SelectValue placeholder={t("joel.varSelectPlaceholder") || "Select variable..."} />
+                  <SelectTrigger className="text-xs h-9 bg-background">
+                    <SelectValue placeholder={t("joel.varSelectPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {numericVars.map(v => (
-                      <SelectItem key={v} value={v} className="text-xs">{v}</SelectItem>
-                    ))}
+                    {allVarNames.map(v => {
+                      const varInfo = dataset.variables.find(dv => dv.name === v);
+                      const isNum = varInfo?.type === "numeric";
+                      return (
+                        <SelectItem key={v} value={v} className="text-xs">
+                          <span className="flex items-center gap-2">
+                            {v}
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
+                              {isNum ? t("joel.varNumeric") : t("joel.varCategorical")}
+                            </Badge>
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
             )}
 
-            {/* Independent / paired variable selection */}
+            {/* Independent variable(s) — for dep/ind analyses */}
             {selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.independent) && (
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">
-                  {t("joel.varIndependent") || "Independent variable(s)"}
+              <div className="space-y-1.5 rounded-lg border border-border bg-muted/20 p-3">
+                <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  📊 {t("joel.varIndependent")}
                 </label>
-                <div className="flex flex-wrap gap-1">
-                  {allVarNames.filter(v => v !== selectedDepVar).map(v => (
-                    <Button
-                      key={v}
-                      variant={selectedIndVars.includes(v) ? "default" : "outline"}
-                      size="sm"
-                      className="h-auto py-1 text-xs"
-                      onClick={() => toggleIndVar(v)}
-                    >
-                      {v}
-                      <Badge variant="secondary" className="ml-1 text-[10px] px-1">
-                        {dataset.variables.find(dv => dv.name === v)?.type === "numeric" ? "N" : "C"}
-                      </Badge>
-                    </Button>
-                  ))}
+                <p className="text-[10px] text-muted-foreground mb-1.5">{t("joel.varIndHint")}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {allVarNames.filter(v => v !== selectedDepVar).map(v => {
+                    const varInfo = dataset.variables.find(dv => dv.name === v);
+                    const isNum = varInfo?.type === "numeric";
+                    const isSelected = selectedIndVars.includes(v);
+                    return (
+                      <Button
+                        key={v}
+                        variant={isSelected ? "default" : "outline"}
+                        size="sm"
+                        className="h-auto py-1.5 px-2.5 text-xs gap-1.5"
+                        onClick={() => toggleIndVar(v)}
+                      >
+                        {v}
+                        <Badge
+                          variant={isSelected ? "secondary" : "outline"}
+                          className="text-[9px] px-1 py-0 h-4"
+                        >
+                          {isNum ? "N" : "C"}
+                        </Badge>
+                      </Button>
+                    );
+                  })}
                 </div>
+                {selectedIndVars.length > 0 && (
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {selectedIndVars.length} {t("joel.varSelected").toLowerCase()}
+                  </p>
+                )}
               </div>
             )}
 
-            {/* For chi-square / correlation: just pick 2 variables */}
+            {/* For correlation/PCA/factor/cluster: pick multiple variables */}
             {selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.variables) && !selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.dependent) && (
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">
-                  {t("joel.varSelect2") || "Select variables"}
+              <div className="space-y-1.5 rounded-lg border border-border bg-muted/20 p-3">
+                <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  📊 {t("joel.varSelect2")}
                 </label>
-                <div className="flex flex-wrap gap-1">
-                  {allVarNames.map(v => (
-                    <Button
-                      key={v}
-                      variant={selectedIndVars.includes(v) ? "default" : "outline"}
-                      size="sm"
-                      className="h-auto py-1 text-xs"
-                      onClick={() => toggleIndVar(v)}
-                    >
-                      {v}
-                      <Badge variant="secondary" className="ml-1 text-[10px] px-1">
-                        {dataset.variables.find(dv => dv.name === v)?.type === "numeric" ? "N" : "C"}
-                      </Badge>
-                    </Button>
-                  ))}
+                <div className="flex flex-wrap gap-1.5">
+                  {allVarNames.map(v => {
+                    const varInfo = dataset.variables.find(dv => dv.name === v);
+                    const isNum = varInfo?.type === "numeric";
+                    const isSelected = selectedIndVars.includes(v);
+                    return (
+                      <Button
+                        key={v}
+                        variant={isSelected ? "default" : "outline"}
+                        size="sm"
+                        className="h-auto py-1.5 px-2.5 text-xs gap-1.5"
+                        onClick={() => toggleIndVar(v)}
+                      >
+                        {v}
+                        <Badge
+                          variant={isSelected ? "secondary" : "outline"}
+                          className="text-[9px] px-1 py-0 h-4"
+                        >
+                          {isNum ? "N" : "C"}
+                        </Badge>
+                      </Button>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
             {/* Confirm variables */}
             {(selectedDepVar || selectedIndVars.length >= 2 || (selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.independent) && selectedIndVars.length >= 1)) && (
-              <Button size="sm" className="w-full" onClick={confirmVariablesAndRun}>
-                <Sparkles className="mr-1 h-3 w-3" />
-                {t("joel.runWithVariables") || "Run analysis"}
+              <Button size="sm" className="w-full gap-1.5" onClick={confirmVariablesAndRun}>
+                <Sparkles className="h-3.5 w-3.5" />
+                {t("joel.runWithVariables")}
+                {selectedDepVar && (
+                  <span className="text-[10px] opacity-80">
+                    ({selectedDepVar} → {selectedIndVars.join(", ")})
+                  </span>
+                )}
               </Button>
             )}
           </div>
