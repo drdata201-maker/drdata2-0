@@ -86,6 +86,7 @@ export function buildChartData(
           key: `scatter-${corr.var1}-${corr.var2}`,
           title: `${tFn("charts.scatter")}: ${corr.var1} × ${corr.var2} (r=${corr.r})`,
           type: "scatter",
+          analysisType: "bivariate",
           data: Array.from({ length: n }, (_, i) => ({ x: xVals[i], y: yVals[i] })),
         });
       }
@@ -101,6 +102,7 @@ export function buildChartData(
             key: `reg-${reg.dependent}`,
             title: `${tFn("charts.regression")}: ${reg.dependent} ~ ${reg.independents[0]} (R²=${reg.rSquared})`,
             type: "scatter",
+            analysisType: "bivariate",
             data: Array.from({ length: n }, (_, i) => ({ x: xVals[i], y: yVals[i] })),
           });
         }
@@ -113,6 +115,7 @@ export function buildChartData(
           key: `anova-bar-${a.dependent}-${a.factor}`,
           title: `${tFn("charts.boxPlot")}: ${a.dependent} × ${a.factor}`,
           type: "bar",
+          analysisType: "bivariate",
           data: a.groups.map(g => ({ name: g.name, value: g.mean })),
         });
       }
@@ -124,6 +127,7 @@ export function buildChartData(
           key: `ttest-${tt.variable}`,
           title: `T-Test: ${tt.variable}`,
           type: "bar",
+          analysisType: "bivariate",
           data: tt.groups.map((g, i) => ({ name: g, value: tt.means[i] })),
         });
       }
