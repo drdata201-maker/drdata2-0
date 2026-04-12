@@ -239,6 +239,7 @@ const DEFAULT_CHAT_STATE: ChatState = {
   greetingSent: false,
   selectedSoftware: "",
   selectedAnalyses: [],
+  analyticalGraphMode: "standard",
   file: null,
 };
 
