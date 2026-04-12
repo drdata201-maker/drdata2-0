@@ -364,15 +364,11 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
           if (t) result.tTests = [t];
         }
       }
-      if (key === "chi_square") {
-        const v1 = indVars?.[0] || catVars[0];
-        const v2 = indVars?.[1] || catVars[1];
-        if (v1 && v2) result.chiSquares = [computeChiSquare(rows, v1, v2)];
-      }
-      if (key === "crosstab") {
-        const v1 = indVars?.[0] || catVars[0];
-        const v2 = indVars?.[1] || catVars[1];
-        if (v1 && v2) result.chiSquares = [computeChiSquare(rows, v1, v2)];
+      if (key === "chi_square" || key === "crosstab") {
+        // Use dependent variable as var1 and first independent as var2
+        const v1 = depVar || indVars?.[0] || catVars[0];
+        const v2 = depVar ? (indVars?.[0] || catVars[0]) : (indVars?.[1] || catVars[1]);
+        if (v1 && v2 && v1 !== v2) result.chiSquares = [computeChiSquare(rows, v1, v2)];
       }
       if ((key === "anova" || key === "anova_basic") && effectiveDepVar) {
         const factorVar = indVars?.[0] || catVars[0];
@@ -426,9 +422,16 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   }, [dataset, cleanedData]);
 
   const deleteAnalysis = useCallback((id: string) => {
-    setAnalysisResults(prev => prev.filter(r => r.id !== id));
+    setAnalysisResults(prev => {
+      const remaining = prev.filter(r => r.id !== id);
+      // Clear interpretation if no results left
+      if (remaining.length === 0) setInterpretationData(null);
+      return remaining;
+    });
     setTableOverrides(prev => { const n = { ...prev }; delete n[id]; return n; });
     setChartOverrides(prev => { const n = { ...prev }; delete n[id]; return n; });
+    // Invalidate cached charts so they regenerate
+    setCachedCharts(null);
   }, []);
 
   const replaceAnalysis = useCallback((id: string, analysisKey: string, software: string, depVar?: string, indVars?: string[]) => {
@@ -456,8 +459,9 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
       if (groupVar) { const t = computeTTest(rows, effectiveDepVar, groupVar); if (t) result.tTests = [t]; }
     }
     if (analysisKey === "chi_square" || analysisKey === "crosstab") {
-      const v1 = indVars?.[0] || catVars[0]; const v2 = indVars?.[1] || catVars[1];
-      if (v1 && v2) result.chiSquares = [computeChiSquare(rows, v1, v2)];
+      const v1 = depVar || indVars?.[0] || catVars[0];
+      const v2 = depVar ? (indVars?.[0] || catVars[0]) : (indVars?.[1] || catVars[1]);
+      if (v1 && v2 && v1 !== v2) result.chiSquares = [computeChiSquare(rows, v1, v2)];
     }
     if ((analysisKey === "anova" || analysisKey === "anova_basic") && effectiveDepVar) {
       const factorVar = indVars?.[0] || catVars[0];
@@ -480,6 +484,9 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     // Clear overrides for this analysis so auto-generated titles/interps refresh
     setTableOverrides(prev => { const n = { ...prev }; delete n[id]; return n; });
     setChartOverrides(prev => { const n = { ...prev }; delete n[id]; return n; });
+    // Invalidate cached charts and interpretation so they regenerate
+    setCachedCharts(null);
+    setInterpretationData(null);
   }, [dataset, cleanedData]);
 
   const reset = useCallback(() => {

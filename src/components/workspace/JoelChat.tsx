@@ -548,6 +548,8 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
     setSelectedAnalyses([]);
     setExpandedCategory(null);
     setCustomAnalysis("");
+    setSelectedDepVar("");
+    setSelectedIndVars([]);
     setPhase("analysis");
     setMessages(prev => [...prev, { role: "user", content: t("joel.newAnalysis") }]);
     scrollToBottom();
