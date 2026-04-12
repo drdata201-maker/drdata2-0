@@ -591,7 +591,7 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
     // Build a summary of all analyses for the AI to generate global interpretation
     const analysisSummary = analysisResults.map((r, i) => `Analysis ${i + 1}: ${r.type}`).join(", ");
     const significantResults = analysisResults
-      .flatMap(r => (r.chiSquares || []).map(c => ({ var1: c.variable1, var2: c.variable2, p: c.pValue, sig: c.pValue < 0.05 })))
+      .flatMap(r => (r.chiSquares || []).map(c => ({ var1: c.var1, var2: c.var2, p: c.pValue, sig: c.pValue < 0.05 })))
       .filter(r => r.sig)
       .map(r => `${r.var1} × ${r.var2} (p=${r.p.toFixed(3)})`)
       .join(", ");
