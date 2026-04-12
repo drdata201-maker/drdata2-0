@@ -68,6 +68,8 @@ export type ContentOverrides = Record<string, ContentOverride>;
 export type ChatMessage = { role: "assistant" | "user"; content: string; type?: string };
 export type ChatPhase = "confirm" | "upload" | "software" | "analysis" | "variables" | "ready";
 
+export type AnalyticalGraphMode = "standard" | "advanced" | "presentation";
+
 export interface ChatState {
   messages: ChatMessage[];
   phase: ChatPhase;
@@ -75,6 +77,7 @@ export interface ChatState {
   greetingSent: boolean;
   selectedSoftware: string;
   selectedAnalyses: string[];
+  analyticalGraphMode: AnalyticalGraphMode;
   file: { name: string; size: number } | null;
 }
 
