@@ -75,7 +75,7 @@ const ANALYSIS_GROUPS_BY_LEVEL: Record<string, AnalysisCategoryGroup[]> = {
   ],
 };
 
-// Analyses that require variable selection
+// Analyses that require variable selection — ALL bivariate/multivariate analyses need dep/ind
 const VARIABLE_REQUIRING: Record<string, { dependent?: boolean; independent?: boolean; variables?: number }> = {
   correlation: { variables: 2 },
   simple_regression: { dependent: true, independent: true },
@@ -84,8 +84,8 @@ const VARIABLE_REQUIRING: Record<string, { dependent?: boolean; independent?: bo
   t_test: { dependent: true, independent: true },
   anova: { dependent: true, independent: true },
   anova_basic: { dependent: true, independent: true },
-  chi_square: { variables: 2 },
-  crosstab: { variables: 2 },
+  chi_square: { dependent: true, independent: true },
+  crosstab: { dependent: true, independent: true },
   pca: { variables: 2 },
   factor_analysis: { variables: 2 },
   cluster_analysis: { variables: 2 },
