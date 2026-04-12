@@ -588,7 +588,23 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
       } catch { /* ignore */ }
     }
 
-    sendToAI("The student has finished all analyses. Congratulate them briefly. Remind them to check the Export tab to download their report. Keep under 50 words.");
+    // Build a summary of all analyses for the AI to generate global interpretation
+    const analysisSummary = analysisResults.map((r, i) => `Analysis ${i + 1}: ${r.type}`).join(", ");
+    const significantResults = analysisResults
+      .flatMap(r => (r.chiSquares || []).map(c => ({ var1: c.variable1, var2: c.variable2, p: c.pValue, sig: c.pValue < 0.05 })))
+      .filter(r => r.sig)
+      .map(r => `${r.var1} × ${r.var2} (p=${r.p.toFixed(3)})`)
+      .join(", ");
+
+    sendToAI(`The student has finished all analyses. Analyses performed: ${analysisSummary}. ${significantResults ? `Significant associations found: ${significantResults}.` : "No significant associations found."}
+
+Generate a brief academic summary that includes:
+1. A global analytical interpretation summarizing significant and non-significant associations
+2. A scientific conclusion listing associated and non-associated factors
+3. Research recommendations based on findings
+
+Then remind the student to check the **Export** tab for their professional report.
+Keep under 120 words. Use academic language.`);
   };
 
   const sendMessage = () => {
