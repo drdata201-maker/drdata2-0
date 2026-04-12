@@ -6,6 +6,7 @@ export interface ChartItem {
   key: string;
   title: string;
   type: "histogram" | "bar" | "scatter" | "pie" | "scree" | "cluster-scatter";
+  analysisType?: "descriptive" | "frequency" | "bivariate" | "advanced";
   data: { name?: string; value?: number; x?: number; y?: number; cluster?: number; cumulative?: number }[];
 }
 
@@ -51,6 +52,7 @@ export function buildChartData(
           key: `hist-${desc.variable}`,
           title: `${tFn("charts.histogram")}: ${desc.variable}`,
           type: "histogram",
+          analysisType: "descriptive",
           data: buildHistogram(vals),
         });
       }
@@ -62,12 +64,14 @@ export function buildChartData(
           key: `pie-${freq.variable}`,
           title: `${tFn("charts.pieChart")}: ${freq.variable}`,
           type: "pie",
+          analysisType: "frequency",
           data: freq.categories.slice(0, 8).map(c => ({ name: c.value, value: c.count })),
         });
         items.push({
           key: `bar-${freq.variable}`,
           title: `${tFn("charts.barChart")}: ${freq.variable}`,
           type: "bar",
+          analysisType: "frequency",
           data: freq.categories.slice(0, 10).map(c => ({ name: c.value, value: c.count })),
         });
       }
@@ -82,6 +86,7 @@ export function buildChartData(
           key: `scatter-${corr.var1}-${corr.var2}`,
           title: `${tFn("charts.scatter")}: ${corr.var1} × ${corr.var2} (r=${corr.r})`,
           type: "scatter",
+          analysisType: "bivariate",
           data: Array.from({ length: n }, (_, i) => ({ x: xVals[i], y: yVals[i] })),
         });
       }
@@ -97,6 +102,7 @@ export function buildChartData(
             key: `reg-${reg.dependent}`,
             title: `${tFn("charts.regression")}: ${reg.dependent} ~ ${reg.independents[0]} (R²=${reg.rSquared})`,
             type: "scatter",
+            analysisType: "bivariate",
             data: Array.from({ length: n }, (_, i) => ({ x: xVals[i], y: yVals[i] })),
           });
         }
@@ -109,6 +115,7 @@ export function buildChartData(
           key: `anova-bar-${a.dependent}-${a.factor}`,
           title: `${tFn("charts.boxPlot")}: ${a.dependent} × ${a.factor}`,
           type: "bar",
+          analysisType: "bivariate",
           data: a.groups.map(g => ({ name: g.name, value: g.mean })),
         });
       }
@@ -120,6 +127,7 @@ export function buildChartData(
           key: `ttest-${tt.variable}`,
           title: `T-Test: ${tt.variable}`,
           type: "bar",
+          analysisType: "bivariate",
           data: tt.groups.map((g, i) => ({ name: g, value: tt.means[i] })),
         });
       }

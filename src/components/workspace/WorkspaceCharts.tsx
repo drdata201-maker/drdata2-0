@@ -155,9 +155,10 @@ function SingleChart({ chart, colors, barRadius, showGrid, showLabels }: {
 
 export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectContext } = {}) {
   const { t, lang } = useLanguage();
-  const { dataset, analysisResults, cachedCharts, setCachedCharts, chartOverrides, updateChartOverride } = useDataset();
+  const { dataset, analysisResults, cachedCharts, setCachedCharts, chartOverrides, updateChartOverride, chatState } = useDataset();
   const { settings } = useChartStyle();
   const [retryKeys, setRetryKeys] = useState<Record<string, number>>({});
+  const graphMode = chatState.analyticalGraphMode;
 
   const colors = settings.palette.colors;
   const barRadius: [number, number, number, number] = settings.style === "rounded" ? [4, 4, 0, 0] : settings.style === "flat" ? [0, 0, 0, 0] : [2, 2, 0, 0];
@@ -168,8 +169,13 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
     if (!dataset.rawData || dataset.rawData.length === 0) {
       return [];
     }
-    return buildChartData(dataset.rawData, dataset.variables, analysisResults, t);
-  }, [dataset, analysisResults, t]);
+    const allCharts = buildChartData(dataset.rawData, dataset.variables, analysisResults, t);
+    // In standard mode, filter out analytical/bivariate charts (keep only descriptive)
+    if (graphMode === "standard") {
+      return allCharts.filter(c => c.analysisType === "descriptive" || c.analysisType === "frequency" || !c.analysisType);
+    }
+    return allCharts;
+  }, [dataset, analysisResults, t, graphMode]);
 
   // Use cached charts as fallback when rawData is unavailable
   const displayCharts = charts.length > 0 ? charts : (cachedCharts as ChartItem[] || []);

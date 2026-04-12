@@ -40,7 +40,8 @@ const ANALYSIS_GROUPS_BY_LEVEL: Record<string, AnalysisCategoryGroup[]> = {
     {
       groupKey: "recommended",
       categories: [
-        { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab", "chi_square"] },
+        { key: "descriptive_analysis", analyses: ["descriptive_full"] },
+        { key: "analytical_analysis", analyses: ["crosstab", "chi_square"] },
       ],
     },
     {
@@ -48,14 +49,16 @@ const ANALYSIS_GROUPS_BY_LEVEL: Record<string, AnalysisCategoryGroup[]> = {
       categories: [
         { key: "comparative", analyses: ["t_test", "anova_basic"] },
         { key: "relationship", analyses: ["correlation"] },
+        { key: "custom_analysis", analyses: [] },
       ],
     },
   ],
   student_master: [
     {
       categories: [
-        { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
-        { key: "comparative", analyses: ["t_test", "chi_square", "anova", "nonparametric"] },
+        { key: "descriptive_analysis", analyses: ["descriptive_full"] },
+        { key: "analytical_analysis", analyses: ["crosstab", "chi_square"] },
+        { key: "comparative", analyses: ["t_test", "anova", "nonparametric"] },
         { key: "relationship", analyses: ["correlation", "simple_regression", "multiple_regression"] },
         { key: "predictive", analyses: ["logistic_regression", "factor_analysis"] },
         { key: "reliability", analyses: ["cronbach_alpha", "pca"] },
@@ -65,8 +68,9 @@ const ANALYSIS_GROUPS_BY_LEVEL: Record<string, AnalysisCategoryGroup[]> = {
   student_doctorate: [
     {
       categories: [
-        { key: "descriptive", analyses: ["descriptive_stats", "frequencies", "crosstab"] },
-        { key: "comparative", analyses: ["t_test", "chi_square", "anova", "nonparametric"] },
+        { key: "descriptive_analysis", analyses: ["descriptive_full"] },
+        { key: "analytical_analysis", analyses: ["crosstab", "chi_square"] },
+        { key: "comparative", analyses: ["t_test", "anova", "nonparametric"] },
         { key: "relationship", analyses: ["correlation", "simple_regression", "multiple_regression"] },
         { key: "predictive", analyses: ["logistic_regression", "factor_analysis", "sem"] },
         { key: "advanced", analyses: ["pca", "cluster_analysis", "panel_data", "time_series", "survival_analysis", "multilevel_modeling", "multivariate"] },
@@ -89,6 +93,19 @@ const VARIABLE_REQUIRING: Record<string, { dependent?: boolean; independent?: bo
   pca: { variables: 2 },
   factor_analysis: { variables: 2 },
   cluster_analysis: { variables: 2 },
+};
+
+// "descriptive_full" is a meta-key that expands into descriptive_stats + frequencies
+const expandAnalysisKeys = (keys: string[]): string[] => {
+  const expanded: string[] = [];
+  for (const k of keys) {
+    if (k === "descriptive_full") {
+      expanded.push("descriptive_stats", "frequencies");
+    } else {
+      expanded.push(k);
+    }
+  }
+  return expanded;
 };
 
 type Msg = { role: "assistant" | "user"; content: string; type?: string };
@@ -202,7 +219,7 @@ async function streamChat({
 
 export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, projectObjective, level, onAnalysisComplete, projectMetadata }: JoelChatProps) {
   const { t, lang } = useLanguage();
-  const { processFile, dataset, runAnalyses, chatState, setChatState } = useDataset();
+  const { processFile, dataset, runAnalyses, analysisResults, chatState, setChatState } = useDataset();
 
   // Destructure persisted state
   const messages = chatState.messages;
@@ -218,6 +235,10 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
   const [isStreaming, setIsStreaming] = useState(false);
   const [selectedDepVar, setSelectedDepVar] = useState("");
   const [selectedIndVars, setSelectedIndVars] = useState<string[]>([]);
+  const analyticalGraphMode = chatState.analyticalGraphMode;
+  const setAnalyticalGraphMode = useCallback((v: "standard" | "advanced" | "presentation") => {
+    setChatState(prev => ({ ...prev, analyticalGraphMode: v }));
+  }, [setChatState]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const chatHistoryRef = useRef<{ role: string; content: string }[]>(chatState.chatHistory);
 
@@ -437,7 +458,8 @@ Keep under 80 words.`;
 
   // Check if any selected analysis needs variable selection
   const needsVariableSelection = useMemo(() => {
-    return selectedAnalyses.some(a => VARIABLE_REQUIRING[a]);
+    const expanded = expandAnalysisKeys(selectedAnalyses);
+    return expanded.some(a => VARIABLE_REQUIRING[a]);
   }, [selectedAnalyses]);
 
   const numericVars = useMemo(() =>
@@ -496,8 +518,9 @@ Keep under 80 words.`;
 
     setPhase("ready");
 
-    // Run analyses with selected variables
-    runAnalyses(selectedAnalyses, selectedSoftware, selectedDepVar || undefined, selectedIndVars.length > 0 ? selectedIndVars : undefined);
+    // Expand meta-keys before running
+    const expandedKeys = expandAnalysisKeys(selectedAnalyses);
+    runAnalyses(expandedKeys, selectedSoftware, selectedDepVar || undefined, selectedIndVars.length > 0 ? selectedIndVars : undefined);
 
     // Notify parent to switch to Results tab
     onAnalysisComplete?.();
@@ -568,7 +591,23 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
       } catch { /* ignore */ }
     }
 
-    sendToAI("The student has finished all analyses. Congratulate them briefly. Remind them to check the Export tab to download their report. Keep under 50 words.");
+    // Build a summary of all analyses for the AI to generate global interpretation
+    const analysisSummary = analysisResults.map((r, i) => `Analysis ${i + 1}: ${r.type}`).join(", ");
+    const significantResults = analysisResults
+      .flatMap(r => (r.chiSquares || []).map(c => ({ var1: c.var1, var2: c.var2, p: c.pValue, sig: c.pValue < 0.05 })))
+      .filter(r => r.sig)
+      .map(r => `${r.var1} × ${r.var2} (p=${r.p.toFixed(3)})`)
+      .join(", ");
+
+    sendToAI(`The student has finished all analyses. Analyses performed: ${analysisSummary}. ${significantResults ? `Significant associations found: ${significantResults}.` : "No significant associations found."}
+
+Generate a brief academic summary that includes:
+1. A global analytical interpretation summarizing significant and non-significant associations
+2. A scientific conclusion listing associated and non-associated factors
+3. Research recommendations based on findings
+
+Then remind the student to check the **Export** tab for their professional report.
+Keep under 120 words. Use academic language.`);
   };
 
   const sendMessage = () => {
@@ -825,6 +864,24 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
                 )}
               </div>
             ))}
+
+            {/* Analytical graphs toggle */}
+            {selectedAnalyses.some(a => ["crosstab", "chi_square", "t_test", "anova_basic", "anova", "correlation"].includes(a)) && (
+              <div className="space-y-1.5 rounded-lg border border-border bg-muted/20 p-3">
+                <label className="text-xs font-semibold text-foreground">📊 {t("joel.analyticalGraphs")}</label>
+                <Select value={analyticalGraphMode} onValueChange={(v) => setAnalyticalGraphMode(v as "standard" | "advanced" | "presentation")}>
+                  <SelectTrigger className="text-xs h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="standard" className="text-xs">{t("joel.graphMode.standard")}</SelectItem>
+                    <SelectItem value="advanced" className="text-xs">{t("joel.graphMode.advanced")}</SelectItem>
+                    <SelectItem value="presentation" className="text-xs">{t("joel.graphMode.presentation")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">{t(`joel.graphMode.${analyticalGraphMode}Desc`)}</p>
+              </div>
+            )}
 
             {/* Other analysis */}
             <div className="space-y-1.5">
