@@ -37,6 +37,7 @@ export function ProjectRestorer({ projectId, onRestored }: ProjectRestorerProps)
               greetingSent: saved.greetingSent ?? true,
               selectedSoftware: saved.selectedSoftware || "",
               selectedAnalyses: saved.selectedAnalyses || [],
+              analyticalGraphMode: saved.analyticalGraphMode || "standard",
               file: saved.file || null,
             });
           }
