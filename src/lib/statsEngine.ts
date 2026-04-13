@@ -520,8 +520,8 @@ export function computeTTest(
     groupVar,
     groups: groupNames.slice(0, 2),
     means: [round(m1), round(m2)],
-    tStat: round(tStat, 4),
-    pValue: round(tToP(tStat, df), 4),
+    tStat: round(isFinite(tStat) ? tStat : (tStat > 0 ? 1e10 : -1e10), 4),
+    pValue: round(pValue, 4),
     df,
   };
 }
