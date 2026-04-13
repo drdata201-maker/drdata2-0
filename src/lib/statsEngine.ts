@@ -37,6 +37,76 @@ export interface TTestResult {
   df: number;
 }
 
+export interface PairedTTestResult {
+  var1: string;
+  var2: string;
+  meanDiff: number;
+  tStat: number;
+  pValue: number;
+  df: number;
+  n: number;
+}
+
+export interface SpearmanResult {
+  var1: string;
+  var2: string;
+  rho: number;
+  pValue: number;
+  n: number;
+}
+
+export interface KendallResult {
+  var1: string;
+  var2: string;
+  tau: number;
+  pValue: number;
+  n: number;
+}
+
+export interface MannWhitneyResult {
+  variable: string;
+  groupVar: string;
+  groups: string[];
+  U: number;
+  z: number;
+  pValue: number;
+  n1: number;
+  n2: number;
+}
+
+export interface WilcoxonResult {
+  var1: string;
+  var2: string;
+  W: number;
+  z: number;
+  pValue: number;
+  n: number;
+}
+
+export interface KruskalWallisResult {
+  dependent: string;
+  factor: string;
+  H: number;
+  df: number;
+  pValue: number;
+  groups: { name: string; n: number; meanRank: number }[];
+}
+
+export interface ShapiroWilkResult {
+  variable: string;
+  W: number;
+  pValue: number;
+  n: number;
+  isNormal: boolean;
+}
+
+export interface CronbachAlphaResult {
+  alpha: number;
+  variables: string[];
+  n: number;
+  itemCount: number;
+}
+
 export interface RegressionResult {
   dependent: string;
   independents: string[];
@@ -134,10 +204,18 @@ export interface AnalysisResultItem {
   descriptive?: DescriptiveResult[];
   frequencies?: FrequencyResult[];
   correlations?: CorrelationResult[];
+  spearmanCorrelations?: SpearmanResult[];
+  kendallCorrelations?: KendallResult[];
   tTests?: TTestResult[];
+  pairedTTests?: PairedTTestResult[];
   regressions?: RegressionResult[];
   chiSquares?: ChiSquareResult[];
   anovas?: AnovaResult[];
+  mannWhitney?: MannWhitneyResult[];
+  wilcoxon?: WilcoxonResult[];
+  kruskalWallis?: KruskalWallisResult[];
+  shapiroWilk?: ShapiroWilkResult[];
+  cronbachAlpha?: CronbachAlphaResult;
   pca?: PCAResult;
   factorAnalysis?: FactorAnalysisResult;
   clusterAnalysis?: ClusterAnalysisResult;
