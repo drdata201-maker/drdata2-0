@@ -279,7 +279,18 @@ function gammainc(a: number, x: number): number {
   const Q = Math.exp(-x + a * Math.log(x) - lnGamma(a)) * f;
   return 1 - Q;
 }
+/** Standard normal CDF using error function approximation */
+function normalCDF(x: number): number {
+  const t = 1 / (1 + 0.2316419 * Math.abs(x));
+  const d = 0.3989422804014327;
+  const p = d * Math.exp(-x * x / 2) * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.8212560 + t * 1.3302744))));
+  return x > 0 ? 1 - p : p;
+}
 
+/** Two-tailed p-value from z-score */
+function zToP(z: number): number {
+  return 2 * (1 - normalCDF(Math.abs(z)));
+}
 
 
 /** Chi-square survival function: P(X² > x | df) */
