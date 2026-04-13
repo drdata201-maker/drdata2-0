@@ -37,6 +37,76 @@ export interface TTestResult {
   df: number;
 }
 
+export interface PairedTTestResult {
+  var1: string;
+  var2: string;
+  meanDiff: number;
+  tStat: number;
+  pValue: number;
+  df: number;
+  n: number;
+}
+
+export interface SpearmanResult {
+  var1: string;
+  var2: string;
+  rho: number;
+  pValue: number;
+  n: number;
+}
+
+export interface KendallResult {
+  var1: string;
+  var2: string;
+  tau: number;
+  pValue: number;
+  n: number;
+}
+
+export interface MannWhitneyResult {
+  variable: string;
+  groupVar: string;
+  groups: string[];
+  U: number;
+  z: number;
+  pValue: number;
+  n1: number;
+  n2: number;
+}
+
+export interface WilcoxonResult {
+  var1: string;
+  var2: string;
+  W: number;
+  z: number;
+  pValue: number;
+  n: number;
+}
+
+export interface KruskalWallisResult {
+  dependent: string;
+  factor: string;
+  H: number;
+  df: number;
+  pValue: number;
+  groups: { name: string; n: number; meanRank: number }[];
+}
+
+export interface ShapiroWilkResult {
+  variable: string;
+  W: number;
+  pValue: number;
+  n: number;
+  isNormal: boolean;
+}
+
+export interface CronbachAlphaResult {
+  alpha: number;
+  variables: string[];
+  n: number;
+  itemCount: number;
+}
+
 export interface RegressionResult {
   dependent: string;
   independents: string[];
@@ -134,10 +204,18 @@ export interface AnalysisResultItem {
   descriptive?: DescriptiveResult[];
   frequencies?: FrequencyResult[];
   correlations?: CorrelationResult[];
+  spearmanCorrelations?: SpearmanResult[];
+  kendallCorrelations?: KendallResult[];
   tTests?: TTestResult[];
+  pairedTTests?: PairedTTestResult[];
   regressions?: RegressionResult[];
   chiSquares?: ChiSquareResult[];
   anovas?: AnovaResult[];
+  mannWhitney?: MannWhitneyResult[];
+  wilcoxon?: WilcoxonResult[];
+  kruskalWallis?: KruskalWallisResult[];
+  shapiroWilk?: ShapiroWilkResult[];
+  cronbachAlpha?: CronbachAlphaResult;
   pca?: PCAResult;
   factorAnalysis?: FactorAnalysisResult;
   clusterAnalysis?: ClusterAnalysisResult;
@@ -201,7 +279,18 @@ function gammainc(a: number, x: number): number {
   const Q = Math.exp(-x + a * Math.log(x) - lnGamma(a)) * f;
   return 1 - Q;
 }
+/** Standard normal CDF using error function approximation */
+function normalCDF(x: number): number {
+  const t = 1 / (1 + 0.2316419 * Math.abs(x));
+  const d = 0.3989422804014327;
+  const p = d * Math.exp(-x * x / 2) * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.8212560 + t * 1.3302744))));
+  return x > 0 ? 1 - p : p;
+}
 
+/** Two-tailed p-value from z-score */
+function zToP(z: number): number {
+  return 2 * (1 - normalCDF(Math.abs(z)));
+}
 
 
 /** Chi-square survival function: P(X² > x | df) */
@@ -432,16 +521,18 @@ export function computeTTest(
   const m1 = mean(g1), m2 = mean(g2);
   const s1 = std(g1), s2 = std(g2);
   const se = Math.sqrt((s1 ** 2 / g1.length) + (s2 ** 2 / g2.length));
-  const tStat = se === 0 ? 0 : (m1 - m2) / se;
+  // Degenerate case: std=0 but means differ → p=0 (match scipy behavior)
+  const tStat = se === 0 ? (m1 !== m2 ? Infinity : 0) : (m1 - m2) / se;
   const df = g1.length + g2.length - 2;
+  const pValue = se === 0 && m1 !== m2 ? 0 : tToP(tStat, df);
 
   return {
     variable: depVar,
     groupVar,
     groups: groupNames.slice(0, 2),
     means: [round(m1), round(m2)],
-    tStat: round(tStat, 4),
-    pValue: round(tToP(tStat, df), 4),
+    tStat: round(isFinite(tStat) ? tStat : (tStat > 0 ? 1e10 : -1e10), 4),
+    pValue: round(pValue, 4),
     df,
   };
 }
@@ -1042,4 +1133,364 @@ export function computeClusterAnalysis(rows: Record<string, unknown>[], numericV
   }
 
   return { k, clusters, withinSS, totalSS, betweenSS, silhouetteScore: round(silhouette, 4), assignments };
+}
+
+// ─── Paired t-test ───
+
+export function computePairedTTest(
+  rows: Record<string, unknown>[],
+  var1: string,
+  var2: string
+): PairedTTestResult | null {
+  const pairs = rows
+    .map(r => ({ a: Number(r[var1]), b: Number(r[var2]) }))
+    .filter(p => !isNaN(p.a) && !isNaN(p.b));
+  if (pairs.length < 3) return null;
+
+  const diffs = pairs.map(p => p.a - p.b);
+  const n = diffs.length;
+  const mDiff = mean(diffs);
+  const sDiff = std(diffs);
+  const se = sDiff / Math.sqrt(n);
+  const tStat = se === 0 ? (mDiff !== 0 ? Infinity : 0) : mDiff / se;
+  const df = n - 1;
+  const pValue = se === 0 && mDiff !== 0 ? 0 : tToP(tStat, df);
+
+  return {
+    var1, var2,
+    meanDiff: round(mDiff, 4),
+    tStat: round(isFinite(tStat) ? tStat : (tStat > 0 ? 1e10 : -1e10), 4),
+    pValue: round(pValue, 4),
+    df, n,
+  };
+}
+
+// ─── Spearman Rank Correlation ───
+
+function rankData(arr: number[]): number[] {
+  const indexed = arr.map((v, i) => ({ v, i })).sort((a, b) => a.v - b.v);
+  const ranks = new Array(arr.length);
+  let i = 0;
+  while (i < indexed.length) {
+    let j = i;
+    while (j < indexed.length && indexed[j].v === indexed[i].v) j++;
+    const avgRank = (i + j + 1) / 2; // 1-based average rank
+    for (let k = i; k < j; k++) ranks[indexed[k].i] = avgRank;
+    i = j;
+  }
+  return ranks;
+}
+
+export function computeSpearman(
+  rows: Record<string, unknown>[],
+  numericVars: string[]
+): SpearmanResult[] {
+  const results: SpearmanResult[] = [];
+  for (let i = 0; i < numericVars.length; i++) {
+    for (let j = i + 1; j < numericVars.length; j++) {
+      const pairs = rows
+        .map(r => ({ x: Number(r[numericVars[i]]), y: Number(r[numericVars[j]]) }))
+        .filter(p => !isNaN(p.x) && !isNaN(p.y));
+      const n = pairs.length;
+      if (n < 3) continue;
+      const rx = rankData(pairs.map(p => p.x));
+      const ry = rankData(pairs.map(p => p.y));
+      const rho = pearsonR(rx, ry);
+      const t = rho * Math.sqrt((n - 2) / (1 - rho * rho + 1e-10));
+      results.push({
+        var1: numericVars[i], var2: numericVars[j],
+        rho: round(rho, 4),
+        pValue: round(tToP(t, n - 2), 4),
+        n,
+      });
+    }
+  }
+  return results;
+}
+
+// ─── Kendall Tau-b ───
+
+export function computeKendall(
+  rows: Record<string, unknown>[],
+  numericVars: string[]
+): KendallResult[] {
+  const results: KendallResult[] = [];
+  for (let i = 0; i < numericVars.length; i++) {
+    for (let j = i + 1; j < numericVars.length; j++) {
+      const pairs = rows
+        .map(r => ({ x: Number(r[numericVars[i]]), y: Number(r[numericVars[j]]) }))
+        .filter(p => !isNaN(p.x) && !isNaN(p.y));
+      const n = pairs.length;
+      if (n < 3) continue;
+      let concordant = 0, discordant = 0, tiesX = 0, tiesY = 0;
+      for (let a = 0; a < n; a++) {
+        for (let b = a + 1; b < n; b++) {
+          const dx = pairs[a].x - pairs[b].x;
+          const dy = pairs[a].y - pairs[b].y;
+          if (dx * dy > 0) concordant++;
+          else if (dx * dy < 0) discordant++;
+          else {
+            if (dx === 0) tiesX++;
+            if (dy === 0) tiesY++;
+          }
+        }
+      }
+      const n0 = n * (n - 1) / 2;
+      const denom = Math.sqrt((n0 - tiesX) * (n0 - tiesY));
+      const tau = denom > 0 ? (concordant - discordant) / denom : 0;
+      // Normal approximation for p-value
+      const variance = (2 * (2 * n + 5)) / (9 * n * (n - 1));
+      const z = tau / Math.sqrt(variance);
+      results.push({
+        var1: numericVars[i], var2: numericVars[j],
+        tau: round(tau, 4),
+        pValue: round(zToP(z), 4),
+        n,
+      });
+    }
+  }
+  return results;
+}
+
+// ─── Mann-Whitney U Test ───
+
+export function computeMannWhitney(
+  rows: Record<string, unknown>[],
+  depVar: string,
+  groupVar: string
+): MannWhitneyResult | null {
+  const groups: Record<string, number[]> = {};
+  rows.forEach(r => {
+    const g = String(r[groupVar] ?? "");
+    const v = Number(r[depVar]);
+    if (!isNaN(v) && g) {
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(v);
+    }
+  });
+  const groupNames = Object.keys(groups);
+  if (groupNames.length < 2) return null;
+
+  const g1 = groups[groupNames[0]];
+  const g2 = groups[groupNames[1]];
+  const n1 = g1.length, n2 = g2.length;
+
+  // Combine and rank
+  const combined = [
+    ...g1.map(v => ({ v, group: 0 })),
+    ...g2.map(v => ({ v, group: 1 })),
+  ];
+  const ranks = rankData(combined.map(c => c.v));
+  const R1 = ranks.filter((_, i) => combined[i].group === 0).reduce((s, r) => s + r, 0);
+  const U1 = R1 - n1 * (n1 + 1) / 2;
+  const U2 = n1 * n2 - U1;
+  const U = Math.min(U1, U2);
+
+  // Normal approximation
+  const mU = n1 * n2 / 2;
+  const sU = Math.sqrt(n1 * n2 * (n1 + n2 + 1) / 12);
+  const z = sU > 0 ? (U - mU) / sU : 0;
+
+  return {
+    variable: depVar, groupVar,
+    groups: groupNames.slice(0, 2),
+    U: round(U, 4),
+    z: round(z, 4),
+    pValue: round(zToP(z), 4),
+    n1, n2,
+  };
+}
+
+// ─── Wilcoxon Signed-Rank Test ───
+
+export function computeWilcoxon(
+  rows: Record<string, unknown>[],
+  var1: string,
+  var2: string
+): WilcoxonResult | null {
+  const pairs = rows
+    .map(r => ({ a: Number(r[var1]), b: Number(r[var2]) }))
+    .filter(p => !isNaN(p.a) && !isNaN(p.b));
+  const diffs = pairs.map(p => p.a - p.b).filter(d => d !== 0);
+  const n = diffs.length;
+  if (n < 5) return null;
+
+  const absDiffs = diffs.map(Math.abs);
+  const ranks = rankData(absDiffs);
+  let Wp = 0, Wn = 0;
+  for (let i = 0; i < n; i++) {
+    if (diffs[i] > 0) Wp += ranks[i];
+    else Wn += ranks[i];
+  }
+  const W = Math.min(Wp, Wn);
+  const mW = n * (n + 1) / 4;
+  const sW = Math.sqrt(n * (n + 1) * (2 * n + 1) / 24);
+  const z = sW > 0 ? (W - mW) / sW : 0;
+
+  return {
+    var1, var2,
+    W: round(W, 4),
+    z: round(z, 4),
+    pValue: round(zToP(z), 4),
+    n,
+  };
+}
+
+// ─── Kruskal-Wallis Test ───
+
+export function computeKruskalWallis(
+  rows: Record<string, unknown>[],
+  depVar: string,
+  factor: string
+): KruskalWallisResult | null {
+  const groups: Record<string, number[]> = {};
+  rows.forEach(r => {
+    const g = String(r[factor] ?? "");
+    const v = Number(r[depVar]);
+    if (!isNaN(v) && g) {
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(v);
+    }
+  });
+  const groupNames = Object.keys(groups);
+  if (groupNames.length < 2) return null;
+
+  const allVals = groupNames.flatMap(g => groups[g].map(v => ({ v, group: g })));
+  const N = allVals.length;
+  const ranks = rankData(allVals.map(a => a.v));
+
+  // Group rank sums
+  const groupRanks: Record<string, number[]> = {};
+  allVals.forEach((a, i) => {
+    if (!groupRanks[a.group]) groupRanks[a.group] = [];
+    groupRanks[a.group].push(ranks[i]);
+  });
+
+  let H = 0;
+  const groupResults = groupNames.map(g => {
+    const r = groupRanks[g];
+    const meanRank = mean(r);
+    H += (r.length * (meanRank - (N + 1) / 2) ** 2);
+    return { name: g, n: r.length, meanRank: round(meanRank, 2) };
+  });
+  H = (12 / (N * (N + 1))) * H;
+  const df = groupNames.length - 1;
+
+  return {
+    dependent: depVar, factor,
+    H: round(H, 4),
+    df,
+    pValue: round(chi2sf(H, df), 4),
+    groups: groupResults,
+  };
+}
+
+// ─── Shapiro-Wilk Test (simplified for n ≤ 50) ───
+
+export function computeShapiroWilk(
+  rows: Record<string, unknown>[],
+  variable: string
+): ShapiroWilkResult {
+  let vals = getNumericValues(rows, variable);
+  const n = vals.length;
+
+  if (n < 3) return { variable, W: 1, pValue: 1, n, isNormal: true };
+
+  // Use first 50 values (standard SW limit), or subsample
+  vals = vals.slice(0, 5000);
+  const sorted = [...vals].sort((a, b) => a - b);
+  const m = mean(vals);
+  const ss = vals.reduce((s, v) => s + (v - m) ** 2, 0);
+
+  if (ss === 0) return { variable, W: 1, pValue: 1, n, isNormal: true };
+
+  // Approximate SW coefficients using Blom's expected normal order statistics
+  const nn = sorted.length;
+  let b = 0;
+  for (let i = 0; i < Math.floor(nn / 2); i++) {
+    // Approximate a_i using normal quantile approach
+    const pi = (i + 1 - 0.375) / (nn + 0.25);
+    const qi = normalQuantile(pi);
+    b += qi * (sorted[nn - 1 - i] - sorted[i]);
+  }
+
+  const W = (b * b) / ss;
+  // Approximate p-value using normal transformation of W
+  const lnW = Math.log(1 - W);
+  const mu = -1.2725 + 1.0521 * Math.log(nn);
+  const sigma = 1.0308 - 0.26758 * Math.log(nn);
+  const z = (lnW - mu) / sigma;
+  const pValue = 1 - normalCDF(z);
+
+  return {
+    variable,
+    W: round(Math.min(1, Math.max(0, W)), 4),
+    pValue: round(Math.max(0, Math.min(1, pValue)), 4),
+    n,
+    isNormal: pValue > 0.05,
+  };
+}
+
+/** Approximate inverse normal CDF (Beasley-Springer-Moro) */
+function normalQuantile(p: number): number {
+  if (p <= 0) return -6;
+  if (p >= 1) return 6;
+  if (p === 0.5) return 0;
+  
+  const a = [-3.969683028665376e1, 2.209460984245205e2, -2.759285104469687e2,
+    1.383577518672690e2, -3.066479806614716e1, 2.506628277459239e0];
+  const b = [-5.447609879822406e1, 1.615858368580409e2, -1.556989798598866e2,
+    6.680131188771972e1, -1.328068155288572e1];
+  const c = [-7.784894002430293e-3, -3.223964580411365e-1, -2.400758277161838e0,
+    -2.549732539343734e0, 4.374664141464968e0, 2.938163982698783e0];
+  const d = [7.784695709041462e-3, 3.224671290700398e-1, 2.445134137142996e0, 3.754408661907416e0];
+
+  const pLow = 0.02425;
+  let q: number, r: number;
+
+  if (p < pLow) {
+    q = Math.sqrt(-2 * Math.log(p));
+    return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  } else if (p <= 1 - pLow) {
+    q = p - 0.5;
+    r = q * q;
+    return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+  } else {
+    q = Math.sqrt(-2 * Math.log(1 - p));
+    return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  }
+}
+
+// ─── Cronbach's Alpha ───
+
+export function computeCronbachAlpha(
+  rows: Record<string, unknown>[],
+  variables: string[]
+): CronbachAlphaResult {
+  const k = variables.length;
+  const validRows = rows.filter(r => variables.every(v => {
+    const val = r[v];
+    return val != null && val !== "" && !isNaN(Number(val));
+  }));
+  const n = validRows.length;
+
+  if (k < 2 || n < 3) return { alpha: 0, variables, n, itemCount: k };
+
+  // Item variances
+  const itemVars = variables.map(v => {
+    const vals = validRows.map(r => Number(r[v]));
+    return std(vals) ** 2; // already sample variance (n-1)
+  });
+  const sumItemVar = itemVars.reduce((s, v) => s + v, 0);
+
+  // Total score variance
+  const totals = validRows.map(r => variables.reduce((s, v) => s + Number(r[v]), 0));
+  const totalVar = std(totals) ** 2;
+
+  const alpha = totalVar > 0 ? (k / (k - 1)) * (1 - sumItemVar / totalVar) : 0;
+
+  return {
+    alpha: round(alpha, 4),
+    variables, n, itemCount: k,
+  };
 }
