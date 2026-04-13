@@ -510,8 +510,10 @@ export function computeTTest(
   const m1 = mean(g1), m2 = mean(g2);
   const s1 = std(g1), s2 = std(g2);
   const se = Math.sqrt((s1 ** 2 / g1.length) + (s2 ** 2 / g2.length));
-  const tStat = se === 0 ? 0 : (m1 - m2) / se;
+  // Degenerate case: std=0 but means differ → p=0 (match scipy behavior)
+  const tStat = se === 0 ? (m1 !== m2 ? Infinity : 0) : (m1 - m2) / se;
   const df = g1.length + g2.length - 2;
+  const pValue = se === 0 && m1 !== m2 ? 0 : tToP(tStat, df);
 
   return {
     variable: depVar,
