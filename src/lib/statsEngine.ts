@@ -676,39 +676,86 @@ export function computeRegression(
     };
   }
 
-  // Multiple regression: simplified approximation using pairwise correlations
-  const coefficients = indVars.map(iv => {
-    const x = validRows.map(r => Number(r[iv]));
-    const r = pearsonR(x, y);
-    const sx = std(x);
-    const sy = std(y);
-    const b = sy > 0 && sx > 0 ? r * (sy / sx) : 0;
-    const se = n > 2 ? Math.sqrt((1 - r * r) / (n - 2)) * (sy / sx) : 0;
-    const t = se > 0 ? b / se : 0;
-    return { variable: iv, b: round(b, 4), se: round(se, 4), t: round(t, 4), p: round(tToP(t, n - indVars.length - 1), 4) };
-  });
+  // Multiple regression: proper OLS via normal equations (X'X)^-1 X'y
+  const k = indVars.length;
+  // Build design matrix [1, x1, x2, ...]
+  const X: number[][] = validRows.map(r => [1, ...indVars.map(v => Number(r[v]))]);
+  const p = k + 1; // number of parameters including intercept
 
-  const predicted = validRows.map(r =>
-    coefficients.reduce((s, c) => s + c.b * Number(r[c.variable]), 0)
+  // X'X
+  const XtX: number[][] = Array.from({ length: p }, (_, i) =>
+    Array.from({ length: p }, (_, j) =>
+      X.reduce((s, row) => s + row[i] * row[j], 0)
+    )
   );
+
+  // Invert X'X using Gauss-Jordan elimination
+  const aug: number[][] = XtX.map((row, i) =>
+    [...row, ...Array.from({ length: p }, (_, j) => (i === j ? 1 : 0))]
+  );
+  for (let col = 0; col < p; col++) {
+    // Partial pivoting
+    let maxRow = col;
+    for (let row = col + 1; row < p; row++) {
+      if (Math.abs(aug[row][col]) > Math.abs(aug[maxRow][col])) maxRow = row;
+    }
+    [aug[col], aug[maxRow]] = [aug[maxRow], aug[col]];
+    const pivot = aug[col][col];
+    if (Math.abs(pivot) < 1e-14) {
+      // Singular matrix fallback
+      return {
+        dependent: depVar, independents: indVars,
+        coefficients: [{ variable: "(Intercept)", b: round(yMean, 4), se: 0, t: 0, p: 1 },
+          ...indVars.map(v => ({ variable: v, b: 0, se: 0, t: 0, p: 1 }))],
+        rSquared: 0, adjustedR2: 0, fStat: 0, fPValue: 1, n,
+      };
+    }
+    for (let j = 0; j < 2 * p; j++) aug[col][j] /= pivot;
+    for (let row = 0; row < p; row++) {
+      if (row === col) continue;
+      const factor = aug[row][col];
+      for (let j = 0; j < 2 * p; j++) aug[row][j] -= factor * aug[col][j];
+    }
+  }
+  const XtXinv: number[][] = aug.map(row => row.slice(p));
+
+  // X'y
+  const Xty: number[] = Array.from({ length: p }, (_, i) =>
+    X.reduce((s, row, ri) => s + row[i] * y[ri], 0)
+  );
+
+  // beta = (X'X)^-1 X'y
+  const beta: number[] = XtXinv.map(row => row.reduce((s, v, j) => s + v * Xty[j], 0));
+
+  // Residuals and R²
+  const predicted = X.map(row => row.reduce((s, v, j) => s + v * beta[j], 0));
   const ssRes = y.reduce((s, yi, i) => s + (yi - predicted[i]) ** 2, 0);
   const ssTot = y.reduce((s, yi) => s + (yi - yMean) ** 2, 0);
   const r2 = ssTot > 0 ? 1 - ssRes / ssTot : 0;
-  const k = indVars.length;
   const adjR2 = n > k + 1 ? 1 - ((1 - r2) * (n - 1)) / (n - k - 1) : r2;
-  const fStat = r2 / (1 - r2 + 1e-10) * ((n - k - 1) / k);
+
+  // MSE and coefficient standard errors
+  const mse = n > p ? ssRes / (n - p) : 0;
+  const coefficients = beta.map((b, i) => {
+    const se = mse > 0 ? Math.sqrt(XtXinv[i][i] * mse) : 0;
+    const t = se > 0 ? b / se : 0;
+    return {
+      variable: i === 0 ? "(Intercept)" : indVars[i - 1],
+      b: round(b, 4), se: round(se, 4), t: round(t, 4),
+      p: round(tToP(t, n - p), 4),
+    };
+  });
+
+  const fStat = mse > 0 && k > 0 ? ((ssTot - ssRes) / k) / mse : 0;
 
   return {
     dependent: depVar,
     independents: indVars,
-    coefficients: [
-      { variable: "(Intercept)", b: round(yMean - coefficients.reduce((s, c) => s + c.b * mean(validRows.map(r => Number(r[c.variable]))), 0), 4), se: 0, t: 0, p: 0 },
-      ...coefficients,
-    ],
+    coefficients,
     rSquared: round(Math.max(0, Math.min(1, r2)), 4),
     adjustedR2: round(Math.max(0, Math.min(1, adjR2)), 4),
     fStat: round(fStat, 4),
-    fPValue: round(fsf(fStat, k, n - k - 1), 4),
+    fPValue: round(fsf(fStat, k, n - p), 4),
     n,
   };
 }
