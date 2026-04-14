@@ -648,7 +648,7 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
         analysisResults,
         lang,
         level,
-        projectContext,
+        localizedProjectContext,
         existingInterp?.sections.map(s => s.interpretation).join("\n\n"),
         existingInterp?.globalConclusion,
         existingInterp?.globalRecommendations,
