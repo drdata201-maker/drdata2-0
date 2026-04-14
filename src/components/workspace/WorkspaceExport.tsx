@@ -968,7 +968,7 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                                 </Table>
                               </div>
                               <p className="text-xs text-muted-foreground">
-                                Within SS: {ca.withinSS.toFixed(2)} | Between SS: {ca.betweenSS.toFixed(2)} | Silhouette: {ca.silhouetteScore.toFixed(4)}
+                                Within SS: {ca.withinSS.reduce((a: number, b: number) => a + b, 0).toFixed(2)} | Between SS: {ca.betweenSS.toFixed(2)} | Silhouette: {ca.silhouetteScore.toFixed(4)}
                               </p>
                             </div>
                           );
