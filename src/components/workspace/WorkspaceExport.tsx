@@ -936,6 +936,44 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                           );
                         }
 
+                        {/* Cluster Analysis */}
+                        if (result.clusterAnalysis) {
+                          const ca = result.clusterAnalysis;
+                          tableNum++;
+                          blocks.push(
+                            <div key={`ca-${result.id}`} className="space-y-2">
+                              <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : Cluster Analysis — K-Means (k={ca.k})</p>
+                              <div className="rounded-md border border-border overflow-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Cluster</TableHead>
+                                      <TableHead className="text-right">Size</TableHead>
+                                      {ca.clusters[0]?.centroid.map(c => (
+                                        <TableHead key={c.variable} className="text-right">{c.variable}</TableHead>
+                                      ))}
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {ca.clusters.map(cl => (
+                                      <TableRow key={cl.cluster}>
+                                        <TableCell className="font-medium">C{cl.cluster}</TableCell>
+                                        <TableCell className="text-right">{cl.size}</TableCell>
+                                        {cl.centroid.map(c => (
+                                          <TableCell key={c.variable} className="text-right">{c.value.toFixed(3)}</TableCell>
+                                        ))}
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                Within SS: {ca.withinSS.reduce((a: number, b: number) => a + b, 0).toFixed(2)} | Between SS: {ca.betweenSS.toFixed(2)} | Silhouette: {ca.silhouetteScore.toFixed(4)}
+                              </p>
+                            </div>
+                          );
+                        }
+
                         return blocks.length > 0 ? <div key={result.id} className="space-y-4">{blocks}</div> : null;
                       })}
                     </section>

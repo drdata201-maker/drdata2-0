@@ -128,6 +128,9 @@ export function formatTestResultsAdaptive(analysisResults: AnalysisResultItem[],
     if (result.factorAnalysis) {
       results.push({ label: `Factor Analysis`, value: `${result.factorAnalysis.factors.length} factors (${result.factorAnalysis.rotation})` });
     }
+    if (result.clusterAnalysis) {
+      results.push({ label: `Cluster Analysis`, value: `K-Means (k=${result.clusterAnalysis.k}), Silhouette = ${result.clusterAnalysis.silhouetteScore.toFixed(4)}` });
+    }
   }
 
   return results;
@@ -953,6 +956,36 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
             sections.push(new Paragraph({ children: [] }));
           }
         }
+
+        // Cluster Analysis
+        if (result.clusterAnalysis) {
+          const ca = result.clusterAnalysis;
+          sections.push(new Paragraph({
+            spacing: { before: 200, after: 80 },
+            children: [
+              new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+              new TextRun({ text: `Cluster Analysis — K-Means (k=${ca.k})`, bold: true, size: 22 }),
+            ],
+          }));
+          const centroidVars = ca.clusters[0]?.centroid.map(c => c.variable) || [];
+          const caHeaders = ["Cluster", "Size", ...centroidVars];
+          const caRows = ca.clusters.map(cl => makeRow([
+            `C${cl.cluster}`, String(cl.size), ...cl.centroid.map(c => c.value.toFixed(3)),
+          ]));
+          sections.push(new Table({
+            width: { size: 9360, type: WidthType.DXA },
+            columnWidths: Array(caHeaders.length).fill(Math.floor(9360 / caHeaders.length)),
+            rows: [makeTableHeader(caHeaders), ...caRows],
+          }));
+          tableNum++;
+          sections.push(new Paragraph({
+            spacing: { before: 60 },
+            children: [
+              new TextRun({ text: `Within SS: ${ca.withinSS.reduce((a, b) => a + b, 0).toFixed(2)} | Between SS: ${ca.betweenSS.toFixed(2)} | Silhouette: ${ca.silhouetteScore.toFixed(4)}`, size: 18, italics: true }),
+            ],
+          }));
+          sections.push(new Paragraph({ children: [] }));
+        }
       }
     }
 
@@ -1612,6 +1645,29 @@ export function exportPdf(data: ExportData, content: ExportContent) {
             y = (doc as any).lastAutoTable.finalY + 8;
             tableNum++;
           }
+        }
+
+        // Cluster Analysis
+        if (result.clusterAnalysis) {
+          const ca = result.clusterAnalysis;
+          if (y > 200) { doc.addPage(); y = 20; }
+          doc.setFontSize(11);
+          doc.setFont("helvetica", "bold");
+          doc.text(`${tableLabel} ${tableNum}: Cluster Analysis — K-Means (k=${ca.k})`, 14, y);
+          y += 6;
+          const centroidVars = ca.clusters[0]?.centroid.map(c => c.variable) || [];
+          autoTable(doc, {
+            startY: y,
+            head: [["Cluster", "Size", ...centroidVars]],
+            body: ca.clusters.map(cl => [`C${cl.cluster}`, String(cl.size), ...cl.centroid.map(c => c.value.toFixed(3))]),
+            theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+          });
+          y = (doc as any).lastAutoTable.finalY + 4;
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "italic");
+          doc.text(`Within SS: ${ca.withinSS.reduce((a: number, b: number) => a + b, 0).toFixed(2)} | Between SS: ${ca.betweenSS.toFixed(2)} | Silhouette: ${ca.silhouetteScore.toFixed(4)}`, 14, y + 4);
+          y += 10;
+          tableNum++;
         }
       }
     }
