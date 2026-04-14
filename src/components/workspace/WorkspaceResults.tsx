@@ -670,6 +670,8 @@ const ANALYSIS_KEYS = [
   "descriptive_stats", "frequencies", "correlation", "t_test", "chi_square",
   "crosstab", "anova", "simple_regression", "multiple_regression",
   "pca", "factor_analysis", "cluster_analysis", "cronbach_alpha",
+  "paired_t_test", "spearman", "kendall", "mann_whitney", "wilcoxon",
+  "kruskal_wallis", "shapiro_wilk",
 ];
 
 function AnalysisActions({
@@ -843,6 +845,14 @@ export function WorkspaceResults({ level = "student_license", projectContext }: 
             {result.pca && <PCATable data={result.pca} level={level} />}
             {result.factorAnalysis && <FactorAnalysisTable data={result.factorAnalysis} level={level} />}
             {result.clusterAnalysis && <ClusterAnalysisTable data={result.clusterAnalysis} level={level} />}
+            {result.pairedTTests && <PairedTTestTable data={result.pairedTTests} />}
+            {result.spearmanCorrelations && <SpearmanTable data={result.spearmanCorrelations} />}
+            {result.kendallCorrelations && <KendallTable data={result.kendallCorrelations} />}
+            {result.mannWhitney && <MannWhitneyTable data={result.mannWhitney} />}
+            {result.wilcoxon && <WilcoxonTable data={result.wilcoxon} />}
+            {result.kruskalWallis && <KruskalWallisTable data={result.kruskalWallis} />}
+            {result.shapiroWilk && <ShapiroWilkTable data={result.shapiroWilk} />}
+            {result.cronbachAlpha && <CronbachAlphaTable data={result.cronbachAlpha} />}
 
             {/* Inline interpretation */}
             {interpretation && (
