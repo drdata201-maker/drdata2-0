@@ -164,6 +164,7 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
     try {
       const data = { ...buildData! };
       data.analysisResults = analysisResults;
+      data.academicReport = interpretationData?.academicReport;
       // Generate chart images for Word/PDF with chart metadata
       if (format !== "xlsx" && charts.length > 0) {
         const rendered = renderChartsToImages(charts, chartSettings);
