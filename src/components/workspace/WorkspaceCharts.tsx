@@ -107,6 +107,40 @@ function SingleChart({ chart, colors, barRadius, showGrid, showLabels }: {
           ))}
           <Legend />
         </ScatterChart>
+      ) : chart.type === "grouped-bar" ? (
+        (() => {
+          const groups = [...new Set((chart.data as { group?: string }[]).map(d => d.group).filter(Boolean))] as string[];
+          const categories = [...new Set((chart.data as { name?: string }[]).map(d => d.name).filter(Boolean))] as string[];
+          const reshapedData = categories.map(cat => {
+            const entry: Record<string, unknown> = { name: cat };
+            groups.forEach(g => {
+              const item = (chart.data as { name?: string; value?: number; group?: string }[]).find(d => d.name === cat && d.group === g);
+              entry[g] = item?.value ?? 0;
+            });
+            return entry;
+          });
+          return (
+            <BarChart data={reshapedData}>
+              {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
+              <XAxis dataKey="name" className="text-xs" tick={showLabels ? { fontSize: 10 } : false} />
+              <YAxis className="text-xs" />
+              <Tooltip />
+              <Legend />
+              {groups.map((g, gi) => (
+                <Bar key={g} dataKey={g} fill={colors[gi % colors.length]} radius={barRadius} />
+              ))}
+            </BarChart>
+          );
+        })()
+      ) : chart.type === "residual" ? (
+        <ScatterChart>
+          {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
+          <XAxis dataKey="x" type="number" className="text-xs" name="Predicted" />
+          <YAxis dataKey="y" type="number" className="text-xs" name="Residual" />
+          <Tooltip />
+          <Scatter data={chart.data as { x: number; y: number }[]} fill={colors[0]} />
+          {/* Zero reference line */}
+        </ScatterChart>
       ) : chart.type === "histogram" || chart.type === "bar" ? (
         <BarChart data={chart.data as { name: string; value: number }[]}>
           {showGrid && <CartesianGrid strokeDasharray="3 3" className="stroke-border" />}
