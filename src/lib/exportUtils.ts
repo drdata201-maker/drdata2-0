@@ -1688,16 +1688,41 @@ export function exportPdf(data: ExportData, content: ExportContent) {
     }
   }
 
-  if (content === "full" || content === "interpretation") {
-    addH2(t.interpretation);
-    addBody(stripLatex(data.interpretation || t.noData));
-  }
+  // Academic Report Structure (Sections 3.1–3.9) in PDF
+  if (data.academicReport && (content === "full" || content === "interpretation" || content === "conclusion")) {
+    doc.addPage();
+    y = 20;
+    for (const sec of data.academicReport.sections) {
+      if (y > 240) { doc.addPage(); y = 20; }
+      doc.setFontSize(13);
+      doc.setFont("helvetica", "bold");
+      doc.text(`${sec.number} ${sec.title}`, 14, y);
+      y += 8;
 
-  if (content === "full" || content === "conclusion") {
-    addH2(t.conclusion);
-    addBody(data.conclusion || t.noData);
-    addH2(t.recommendations);
-    addBody(data.recommendations || t.noData);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "normal");
+      const paragraphs = sec.content.split(/\n\n+/);
+      for (const para of paragraphs) {
+        if (!para.trim()) continue;
+        if (y > 260) { doc.addPage(); y = 20; }
+        const lines = doc.splitTextToSize(para.trim(), 180);
+        doc.text(lines, 14, y);
+        y += lines.length * 5.5 + 4;
+      }
+      y += 4;
+    }
+  } else {
+    if (content === "full" || content === "interpretation") {
+      addH2(t.interpretation);
+      addBody(stripLatex(data.interpretation || t.noData));
+    }
+
+    if (content === "full" || content === "conclusion") {
+      addH2(t.conclusion);
+      addBody(data.conclusion || t.noData);
+      addH2(t.recommendations);
+      addBody(data.recommendations || t.noData);
+    }
   }
 
   const prefix = filePrefix(data.level);
