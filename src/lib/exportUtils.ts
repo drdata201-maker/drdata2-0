@@ -124,6 +124,9 @@ export function formatTestResultsAdaptive(analysisResults: AnalysisResultItem[],
     if (result.pca) {
       results.push({ label: `PCA`, value: `${result.pca.components.length} components, KMO = ${result.pca.kmo?.toFixed(3) || "N/A"}` });
     }
+    if (result.factorAnalysis) {
+      results.push({ label: `Factor Analysis`, value: `${result.factorAnalysis.factors.length} factors (${result.factorAnalysis.rotation})` });
+    }
   }
 
   return results;
@@ -830,6 +833,125 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
           tableNum++;
           sections.push(new Paragraph({ children: [] }));
         }
+
+        // Paired T-tests
+        if (result.pairedTTests && result.pairedTTests.length > 0) {
+          for (const pt of result.pairedTTests) {
+            sections.push(new Paragraph({
+              spacing: { before: 200, after: 80 },
+              children: [
+                new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+                new TextRun({ text: `Paired T-test — ${pt.var1} × ${pt.var2}`, bold: true, size: 22 }),
+              ],
+            }));
+            sections.push(new Table({
+              width: { size: 9360, type: WidthType.DXA },
+              columnWidths: [4680, 4680],
+              rows: [
+                makeTableHeader(["Statistic", "Value"]),
+                makeRow(["Mean Diff", pt.meanDiff.toFixed(4)], [4680, 4680]),
+                makeRow(["t", pt.tStat.toFixed(3)], [4680, 4680]),
+                makeRow(["df", String(pt.df)], [4680, 4680]),
+                makeRow(["p-value", formatPValue(pt.pValue, opts)], [4680, 4680]),
+                makeRow(["N", String(pt.n)], [4680, 4680]),
+              ],
+            }));
+            tableNum++;
+            sections.push(new Paragraph({ children: [] }));
+          }
+        }
+
+        // PCA
+        if (result.pca) {
+          const pca = result.pca;
+          sections.push(new Paragraph({
+            spacing: { before: 200, after: 80 },
+            children: [
+              new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+              new TextRun({ text: "PCA — Variance Explained", bold: true, size: 22 }),
+            ],
+          }));
+          const pcaRows = pca.components.map(c => makeRow([
+            `PC${c.component}`, c.eigenvalue.toFixed(4), `${c.varianceExplained.toFixed(2)}%`, `${c.cumulativeVariance.toFixed(2)}%`,
+          ]));
+          sections.push(new Table({
+            width: { size: 9360, type: WidthType.DXA },
+            columnWidths: [2340, 2340, 2340, 2340],
+            rows: [makeTableHeader(["Component", "Eigenvalue", "% Variance", "Cumulative %"]), ...pcaRows],
+          }));
+          if (pca.kmo !== undefined) {
+            sections.push(new Paragraph({
+              spacing: { before: 60, after: 40 },
+              children: [new TextRun({ text: `KMO = ${pca.kmo.toFixed(3)}`, italics: true, size: 20 })],
+            }));
+          }
+          tableNum++;
+          sections.push(new Paragraph({ children: [] }));
+
+          // PCA Loadings
+          if (pca.loadings && pca.loadings.length > 0) {
+            sections.push(new Paragraph({
+              spacing: { before: 200, after: 80 },
+              children: [
+                new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+                new TextRun({ text: "PCA — Component Loadings", bold: true, size: 22 }),
+              ],
+            }));
+            const loadHeaders = ["Variable", ...pca.components.map(c => `PC${c.component}`)];
+            const loadRows = pca.loadings.map(l => makeRow([l.variable, ...l.components.map(v => v.toFixed(3))]));
+            sections.push(new Table({
+              width: { size: 9360, type: WidthType.DXA },
+              columnWidths: Array(loadHeaders.length).fill(Math.floor(9360 / loadHeaders.length)),
+              rows: [makeTableHeader(loadHeaders), ...loadRows],
+            }));
+            tableNum++;
+            sections.push(new Paragraph({ children: [] }));
+          }
+        }
+
+        // Factor Analysis
+        if (result.factorAnalysis) {
+          const fa = result.factorAnalysis;
+          sections.push(new Paragraph({
+            spacing: { before: 200, after: 80 },
+            children: [
+              new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+              new TextRun({ text: `Factor Analysis — Variance Explained (${fa.rotation})`, bold: true, size: 22 }),
+            ],
+          }));
+          const faRows = fa.factors.map(f => makeRow([
+            `F${f.factor}`, f.eigenvalue.toFixed(4), `${f.varianceExplained.toFixed(2)}%`, `${f.cumulativeVariance.toFixed(2)}%`,
+          ]));
+          sections.push(new Table({
+            width: { size: 9360, type: WidthType.DXA },
+            columnWidths: [2340, 2340, 2340, 2340],
+            rows: [makeTableHeader(["Factor", "Eigenvalue", "% Variance", "Cumulative %"]), ...faRows],
+          }));
+          tableNum++;
+          sections.push(new Paragraph({ children: [] }));
+
+          // Rotated Loadings
+          if (fa.rotatedLoadings && fa.rotatedLoadings.length > 0) {
+            sections.push(new Paragraph({
+              spacing: { before: 200, after: 80 },
+              children: [
+                new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+                new TextRun({ text: `Rotated Factor Loadings (${fa.rotation})`, bold: true, size: 22 }),
+              ],
+            }));
+            const rlHeaders = ["Variable", ...fa.factors.map(f => `F${f.factor}`), "Communality"];
+            const rlRows = fa.rotatedLoadings.map((l, li) => makeRow([
+              l.variable, ...l.factors.map(v => v.toFixed(3)), (fa.communalities[li]?.extraction ?? 0).toFixed(3),
+            ]));
+            sections.push(new Table({
+              width: { size: 9360, type: WidthType.DXA },
+              columnWidths: Array(rlHeaders.length).fill(Math.floor(9360 / rlHeaders.length)),
+              rows: [makeTableHeader(rlHeaders), ...rlRows],
+            }));
+            tableNum++;
+            sections.push(new Paragraph({ children: [] }));
+          }
+        }
       }
     }
 
@@ -1366,6 +1488,107 @@ export function exportPdf(data: ExportData, content: ExportContent) {
           doc.setFont("helvetica", "normal");
           y += 4;
           tableNum++;
+        }
+
+        // Paired T-tests
+        if (result.pairedTTests && result.pairedTTests.length > 0) {
+          for (const pt of result.pairedTTests) {
+            if (y > 220) { doc.addPage(); y = 20; }
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${tableLabel} ${tableNum}: Paired T-test — ${pt.var1} × ${pt.var2}`, 14, y);
+            y += 6;
+            autoTable(doc, {
+              startY: y, head: [["Statistic", "Value"]], body: [
+                ["Mean Diff", pt.meanDiff.toFixed(4)],
+                ["t", pt.tStat.toFixed(3)],
+                ["df", String(pt.df)],
+                ["p-value", pt.pValue.toFixed(4)],
+                ["N", String(pt.n)],
+              ],
+              theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 8;
+            tableNum++;
+          }
+        }
+
+        // PCA
+        if (result.pca) {
+          const pca = result.pca;
+          if (y > 200) { doc.addPage(); y = 20; }
+          doc.setFontSize(11);
+          doc.setFont("helvetica", "bold");
+          doc.text(`${tableLabel} ${tableNum}: PCA — Variance Explained`, 14, y);
+          y += 6;
+          autoTable(doc, {
+            startY: y,
+            head: [["Component", "Eigenvalue", "% Variance", "Cumulative %"]],
+            body: pca.components.map(c => [`PC${c.component}`, c.eigenvalue.toFixed(4), `${c.varianceExplained.toFixed(2)}%`, `${c.cumulativeVariance.toFixed(2)}%`]),
+            theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+          });
+          y = (doc as any).lastAutoTable.finalY + 4;
+          if (pca.kmo !== undefined) {
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "italic");
+            doc.text(`KMO = ${pca.kmo.toFixed(3)}`, 14, y);
+            y += 5;
+            doc.setFont("helvetica", "normal");
+          }
+          y += 4;
+          tableNum++;
+
+          // PCA Loadings
+          if (pca.loadings && pca.loadings.length > 0) {
+            if (y > 200) { doc.addPage(); y = 20; }
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${tableLabel} ${tableNum}: PCA — Component Loadings`, 14, y);
+            y += 6;
+            autoTable(doc, {
+              startY: y,
+              head: [["Variable", ...pca.components.map(c => `PC${c.component}`)]],
+              body: pca.loadings.map(l => [l.variable, ...l.components.map(v => v.toFixed(3))]),
+              theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 8;
+            tableNum++;
+          }
+        }
+
+        // Factor Analysis
+        if (result.factorAnalysis) {
+          const fa = result.factorAnalysis;
+          if (y > 200) { doc.addPage(); y = 20; }
+          doc.setFontSize(11);
+          doc.setFont("helvetica", "bold");
+          doc.text(`${tableLabel} ${tableNum}: Factor Analysis — ${fa.rotation}`, 14, y);
+          y += 6;
+          autoTable(doc, {
+            startY: y,
+            head: [["Factor", "Eigenvalue", "% Variance", "Cumulative %"]],
+            body: fa.factors.map(f => [`F${f.factor}`, f.eigenvalue.toFixed(4), `${f.varianceExplained.toFixed(2)}%`, `${f.cumulativeVariance.toFixed(2)}%`]),
+            theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+          });
+          y = (doc as any).lastAutoTable.finalY + 8;
+          tableNum++;
+
+          // Rotated Loadings
+          if (fa.rotatedLoadings && fa.rotatedLoadings.length > 0) {
+            if (y > 200) { doc.addPage(); y = 20; }
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${tableLabel} ${tableNum}: Rotated Loadings (${fa.rotation})`, 14, y);
+            y += 6;
+            autoTable(doc, {
+              startY: y,
+              head: [["Variable", ...fa.factors.map(f => `F${f.factor}`), "Communality"]],
+              body: fa.rotatedLoadings.map((l, li) => [l.variable, ...l.factors.map(v => v.toFixed(3)), (fa.communalities[li]?.extraction ?? 0).toFixed(3)]),
+              theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 8;
+            tableNum++;
+          }
         }
       }
     }

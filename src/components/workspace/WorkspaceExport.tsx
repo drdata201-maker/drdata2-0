@@ -783,6 +783,158 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                           );
                         }
 
+                        {/* Paired T-tests */}
+                        if (result.pairedTTests && result.pairedTTests.length > 0) {
+                          for (const pt of result.pairedTTests) {
+                            tableNum++;
+                            blocks.push(
+                              <div key={`pt-${pt.var1}-${pt.var2}`} className="space-y-2">
+                                <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : Paired T-test — {pt.var1} × {pt.var2}</p>
+                                <div className="rounded-md border border-border overflow-auto">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead>Statistic</TableHead>
+                                        <TableHead className="text-right">Value</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      <TableRow><TableCell className="font-medium">Mean Diff</TableCell><TableCell className="text-right">{pt.meanDiff.toFixed(4)}</TableCell></TableRow>
+                                      <TableRow><TableCell className="font-medium">t</TableCell><TableCell className="text-right">{pt.tStat.toFixed(3)}</TableCell></TableRow>
+                                      <TableRow><TableCell className="font-medium">df</TableCell><TableCell className="text-right">{pt.df}</TableCell></TableRow>
+                                      <TableRow><TableCell className="font-medium">p-value</TableCell><TableCell className="text-right">{pt.pValue.toFixed(4)}</TableCell></TableRow>
+                                      <TableRow><TableCell className="font-medium">N</TableCell><TableCell className="text-right">{pt.n}</TableCell></TableRow>
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              </div>
+                            );
+                          }
+                        }
+
+                        {/* PCA */}
+                        if (result.pca) {
+                          tableNum++;
+                          const pca = result.pca;
+                          blocks.push(
+                            <div key={`pca-${result.id}`} className="space-y-2">
+                              <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : PCA — Variance Explained</p>
+                              <div className="rounded-md border border-border overflow-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Component</TableHead>
+                                      <TableHead className="text-right">Eigenvalue</TableHead>
+                                      <TableHead className="text-right">% Variance</TableHead>
+                                      <TableHead className="text-right">Cumulative %</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {pca.components.map(c => (
+                                      <TableRow key={c.component}>
+                                        <TableCell className="font-medium">PC{c.component}</TableCell>
+                                        <TableCell className="text-right">{c.eigenvalue.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{c.varianceExplained.toFixed(2)}%</TableCell>
+                                        <TableCell className="text-right">{c.cumulativeVariance.toFixed(2)}%</TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                              {pca.kmo !== undefined && <p className="text-xs italic text-muted-foreground">KMO = {pca.kmo.toFixed(3)}</p>}
+                              {/* Loadings */}
+                              {pca.loadings && pca.loadings.length > 0 && (() => {
+                                tableNum++;
+                                return (
+                                  <div className="space-y-2 mt-2">
+                                    <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : PCA — Component Loadings</p>
+                                    <div className="rounded-md border border-border overflow-auto">
+                                      <Table>
+                                        <TableHeader>
+                                          <TableRow>
+                                            <TableHead>Variable</TableHead>
+                                            {pca.components.map(c => <TableHead key={c.component} className="text-right">PC{c.component}</TableHead>)}
+                                          </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                          {pca.loadings.map(l => (
+                                            <TableRow key={l.variable}>
+                                              <TableCell className="font-medium">{l.variable}</TableCell>
+                                              {l.components.map((v, i) => <TableCell key={i} className="text-right">{v.toFixed(3)}</TableCell>)}
+                                            </TableRow>
+                                          ))}
+                                        </TableBody>
+                                      </Table>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          );
+                        }
+
+                        {/* Factor Analysis */}
+                        if (result.factorAnalysis) {
+                          tableNum++;
+                          const fa = result.factorAnalysis;
+                          blocks.push(
+                            <div key={`fa-${result.id}`} className="space-y-2">
+                              <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : Factor Analysis — Variance Explained ({fa.rotation})</p>
+                              <div className="rounded-md border border-border overflow-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Factor</TableHead>
+                                      <TableHead className="text-right">Eigenvalue</TableHead>
+                                      <TableHead className="text-right">% Variance</TableHead>
+                                      <TableHead className="text-right">Cumulative %</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {fa.factors.map(f => (
+                                      <TableRow key={f.factor}>
+                                        <TableCell className="font-medium">F{f.factor}</TableCell>
+                                        <TableCell className="text-right">{f.eigenvalue.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{f.varianceExplained.toFixed(2)}%</TableCell>
+                                        <TableCell className="text-right">{f.cumulativeVariance.toFixed(2)}%</TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                              {/* Rotated Loadings */}
+                              {fa.rotatedLoadings && fa.rotatedLoadings.length > 0 && (() => {
+                                tableNum++;
+                                return (
+                                  <div className="space-y-2 mt-2">
+                                    <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : Rotated Factor Loadings ({fa.rotation})</p>
+                                    <div className="rounded-md border border-border overflow-auto">
+                                      <Table>
+                                        <TableHeader>
+                                          <TableRow>
+                                            <TableHead>Variable</TableHead>
+                                            {fa.factors.map(f => <TableHead key={f.factor} className="text-right">F{f.factor}</TableHead>)}
+                                            <TableHead className="text-right">Communality</TableHead>
+                                          </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                          {fa.rotatedLoadings.map((l, li) => (
+                                            <TableRow key={l.variable}>
+                                              <TableCell className="font-medium">{l.variable}</TableCell>
+                                              {l.factors.map((v, i) => <TableCell key={i} className="text-right">{v.toFixed(3)}</TableCell>)}
+                                              <TableCell className="text-right">{fa.communalities[li]?.extraction.toFixed(3) ?? "—"}</TableCell>
+                                            </TableRow>
+                                          ))}
+                                        </TableBody>
+                                      </Table>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          );
+                        }
+
                         return blocks.length > 0 ? <div key={result.id} className="space-y-4">{blocks}</div> : null;
                       })}
                     </section>
