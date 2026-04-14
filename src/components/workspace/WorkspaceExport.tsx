@@ -966,22 +966,43 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
 
                 <Separator />
 
-                {/* Interpretation */}
-                {showInterp(previewContent) && (
-                  <section className="space-y-2">
-                    <h2 className="text-lg font-semibold text-foreground">{t("export.interpretation") || "Academic Interpretation"}</h2>
-                    <p className="text-sm leading-relaxed text-foreground whitespace-pre-line">{data.interpretation}</p>
+                {/* Academic Report Sections 3.1–3.9 */}
+                {(showInterp(previewContent) || showConc(previewContent)) && interpretationData?.academicReport ? (
+                  <section className="space-y-4">
+                    {interpretationData.academicReport.sections
+                      .filter(sec => {
+                        if (showInterp(previewContent) && showConc(previewContent)) return true;
+                        if (showInterp(previewContent)) return sec.number !== "3.9";
+                        if (showConc(previewContent)) return sec.number === "3.9";
+                        return false;
+                      })
+                      .map(sec => (
+                        <div key={sec.number} className="space-y-2">
+                          <h2 className="text-base font-semibold text-foreground">{sec.number} {sec.title}</h2>
+                          <p className="text-sm leading-relaxed text-foreground whitespace-pre-line">{sec.content}</p>
+                        </div>
+                      ))}
                   </section>
-                )}
+                ) : (
+                  <>
+                    {/* Fallback: legacy interpretation */}
+                    {showInterp(previewContent) && (
+                      <section className="space-y-2">
+                        <h2 className="text-lg font-semibold text-foreground">{t("export.interpretation") || "Academic Interpretation"}</h2>
+                        <p className="text-sm leading-relaxed text-foreground whitespace-pre-line">{data.interpretation}</p>
+                      </section>
+                    )}
 
-                {/* Conclusion */}
-                {showConc(previewContent) && (
-                  <section className="space-y-2">
-                    <h2 className="text-lg font-semibold text-foreground">{t("export.conclusion") || "Conclusion"}</h2>
-                    <p className="text-sm leading-relaxed text-foreground whitespace-pre-line">{data.conclusion}</p>
-                    <h3 className="text-base font-semibold text-foreground mt-4">{t("export.recommendations") || "Recommendations"}</h3>
-                    <p className="text-sm leading-relaxed text-foreground whitespace-pre-line">{data.recommendations}</p>
-                  </section>
+                    {/* Fallback: legacy conclusion */}
+                    {showConc(previewContent) && (
+                      <section className="space-y-2">
+                        <h2 className="text-lg font-semibold text-foreground">{t("export.conclusion") || "Conclusion"}</h2>
+                        <p className="text-sm leading-relaxed text-foreground whitespace-pre-line">{data.conclusion}</p>
+                        <h3 className="text-base font-semibold text-foreground mt-4">{t("export.recommendations") || "Recommendations"}</h3>
+                        <p className="text-sm leading-relaxed text-foreground whitespace-pre-line">{data.recommendations}</p>
+                      </section>
+                    )}
+                  </>
                 )}
 
                 {/* Export buttons */}
