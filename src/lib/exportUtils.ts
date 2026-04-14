@@ -978,7 +978,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
           sections.push(new Paragraph({
             spacing: { before: 60 },
             children: [
-              new TextRun({ text: `Within SS: ${ca.withinSS.toFixed(2)} | Between SS: ${ca.betweenSS.toFixed(2)} | Silhouette: ${ca.silhouetteScore.toFixed(4)}`, size: 18, italics: true }),
+              new TextRun({ text: `Within SS: ${ca.withinSS.reduce((a, b) => a + b, 0).toFixed(2)} | Between SS: ${ca.betweenSS.toFixed(2)} | Silhouette: ${ca.silhouetteScore.toFixed(4)}`, size: 18, italics: true }),
             ],
           }));
           sections.push(new Paragraph({ children: [] }));
@@ -1662,7 +1662,7 @@ export function exportPdf(data: ExportData, content: ExportContent) {
           y = (doc as any).lastAutoTable.finalY + 4;
           doc.setFontSize(9);
           doc.setFont("helvetica", "italic");
-          doc.text(`Within SS: ${ca.withinSS.toFixed(2)} | Between SS: ${ca.betweenSS.toFixed(2)} | Silhouette: ${ca.silhouetteScore.toFixed(4)}`, 14, y + 4);
+          doc.text(`Within SS: ${ca.withinSS.reduce((a: number, b: number) => a + b, 0).toFixed(2)} | Between SS: ${ca.betweenSS.toFixed(2)} | Silhouette: ${ca.silhouetteScore.toFixed(4)}`, 14, y + 4);
           y += 10;
           tableNum++;
         }
