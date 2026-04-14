@@ -81,7 +81,7 @@ function MiniChart({ chart, colors, barRadius, showGrid, showLabels }: { chart: 
 export function WorkspaceExport({ projectTitle, projectType, projectDomain, projectDescription, level, projectContext }: WorkspaceExportProps) {
   const { t, lang } = useLanguage();
   const localizedProjectContext = useMemo(() => getLocalizedProjectContext(projectContext, t), [projectContext, t]);
-  const { dataset, analysisResults, interpretationData, cachedCharts, tableOverrides, chartOverrides } = useDataset();
+  const { dataset, analysisResults, interpretationData, cachedCharts, tableOverrides, chartOverrides, selectedSoftware } = useDataset();
   const { settings: chartSettings } = useChartStyle();
   const [loading, setLoading] = useState<string | null>(null);
   const [previewContent, setPreviewContent] = useState<ContentType | null>(null);
