@@ -628,7 +628,262 @@ function ClusterAnalysisTable({ data, level }: { data: NonNullable<AnalysisResul
   );
 }
 
-// Editable text block for titles, interpretations
+function PairedTTestTable({ data }: { data: NonNullable<AnalysisResultItem["pairedTTests"]> }) {
+  const { t } = useLanguage();
+  return (
+    <>
+      {data.map((pt, i) => (
+        <Card key={i}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-academic">
+              {t("results.pairedTTest") || "Paired t-Test"}: {pt.var1} × {pt.var2}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm font-academic">
+            <div className="flex justify-between"><span className="text-muted-foreground">{t("results.meanDiff") || "Mean Difference"}</span><span className="font-mono text-foreground">{pt.meanDiff}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground stat-notation">t({pt.df})</span><span className="font-mono text-foreground">= {pt.tStat}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground stat-notation">p</span><SignificanceBadge p={pt.pValue} /></div>
+            <div className="flex justify-between"><span className="text-muted-foreground stat-notation">N</span><span className="font-mono text-foreground">{pt.n}</span></div>
+          </CardContent>
+        </Card>
+      ))}
+    </>
+  );
+}
+
+function SpearmanTable({ data }: { data: NonNullable<AnalysisResultItem["spearmanCorrelations"]> }) {
+  const { t } = useLanguage();
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-sm font-academic">
+          <TrendingUp className="h-4 w-4 text-primary" />
+          {t("results.spearman") || "Spearman Correlation"}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <table className="w-full text-sm font-academic">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">Var 1</th>
+              <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">Var 2</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">ρ</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">p</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">N</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">Sig.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((s, i) => (
+              <tr key={i} className="border-b border-border/50">
+                <td className="px-2 py-1.5 text-foreground">{s.var1}</td>
+                <td className="px-2 py-1.5 text-foreground">{s.var2}</td>
+                <td className="px-2 py-1.5 text-right font-mono text-foreground">{s.rho}</td>
+                <td className="px-2 py-1.5 text-right font-mono text-foreground">{s.pValue}</td>
+                <td className="px-2 py-1.5 text-right text-foreground">{s.n}</td>
+                <td className="px-2 py-1.5 text-right"><SignificanceBadge p={s.pValue} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
+  );
+}
+
+function KendallTable({ data }: { data: NonNullable<AnalysisResultItem["kendallCorrelations"]> }) {
+  const { t } = useLanguage();
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-sm font-academic">
+          <TrendingUp className="h-4 w-4 text-primary" />
+          {t("results.kendall") || "Kendall Tau-b"}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <table className="w-full text-sm font-academic">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">Var 1</th>
+              <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">Var 2</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">τ</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">p</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">N</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">Sig.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((k, i) => (
+              <tr key={i} className="border-b border-border/50">
+                <td className="px-2 py-1.5 text-foreground">{k.var1}</td>
+                <td className="px-2 py-1.5 text-foreground">{k.var2}</td>
+                <td className="px-2 py-1.5 text-right font-mono text-foreground">{k.tau}</td>
+                <td className="px-2 py-1.5 text-right font-mono text-foreground">{k.pValue}</td>
+                <td className="px-2 py-1.5 text-right text-foreground">{k.n}</td>
+                <td className="px-2 py-1.5 text-right"><SignificanceBadge p={k.pValue} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MannWhitneyTable({ data }: { data: NonNullable<AnalysisResultItem["mannWhitney"]> }) {
+  const { t } = useLanguage();
+  return (
+    <>
+      {data.map((mw, i) => (
+        <Card key={i}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-academic">
+              {t("results.mannWhitney") || "Mann-Whitney U"}: {mw.variable} × {mw.groupVar}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm font-academic">
+            <div className="flex justify-between"><span className="text-muted-foreground">{mw.groups[0]} (n={mw.n1})</span><span className="text-muted-foreground">{mw.groups[1]} (n={mw.n2})</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground stat-notation">U</span><span className="font-mono text-foreground">= {mw.U}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground stat-notation">Z</span><span className="font-mono text-foreground">= {mw.z}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground stat-notation">p</span><SignificanceBadge p={mw.pValue} /></div>
+          </CardContent>
+        </Card>
+      ))}
+    </>
+  );
+}
+
+function WilcoxonTable({ data }: { data: NonNullable<AnalysisResultItem["wilcoxon"]> }) {
+  const { t } = useLanguage();
+  return (
+    <>
+      {data.map((w, i) => (
+        <Card key={i}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-academic">
+              {t("results.wilcoxon") || "Wilcoxon Signed-Rank"}: {w.var1} × {w.var2}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm font-academic">
+            <div className="flex justify-between"><span className="text-muted-foreground stat-notation">W</span><span className="font-mono text-foreground">= {w.W}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground stat-notation">Z</span><span className="font-mono text-foreground">= {w.z}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground stat-notation">p</span><SignificanceBadge p={w.pValue} /></div>
+            <div className="flex justify-between"><span className="text-muted-foreground stat-notation">N</span><span className="font-mono text-foreground">{w.n}</span></div>
+          </CardContent>
+        </Card>
+      ))}
+    </>
+  );
+}
+
+function KruskalWallisTable({ data }: { data: NonNullable<AnalysisResultItem["kruskalWallis"]> }) {
+  const { t } = useLanguage();
+  return (
+    <>
+      {data.map((kw, i) => (
+        <Card key={i}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-academic">
+              {t("results.kruskalWallis") || "Kruskal-Wallis"}: {kw.dependent} × {kw.factor}
+            </CardTitle>
+            <div className="flex gap-2 mt-1">
+              <Badge variant="outline"><span className="stat-notation">H</span>({kw.df}) = {kw.H}</Badge>
+              <SignificanceBadge p={kw.pValue} />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <table className="w-full text-sm font-academic">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">{t("results.group")}</th>
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">N</th>
+                  <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("results.meanRank") || "Mean Rank"}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {kw.groups.map(g => (
+                  <tr key={g.name} className="border-b border-border/50">
+                    <td className="px-2 py-1.5 text-foreground">{g.name}</td>
+                    <td className="px-2 py-1.5 text-right font-mono text-foreground">{g.n}</td>
+                    <td className="px-2 py-1.5 text-right font-mono text-foreground">{g.meanRank}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      ))}
+    </>
+  );
+}
+
+function ShapiroWilkTable({ data }: { data: NonNullable<AnalysisResultItem["shapiroWilk"]> }) {
+  const { t } = useLanguage();
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-academic">
+          {t("results.shapiroWilk") || "Shapiro-Wilk Normality Test"}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <table className="w-full text-sm font-academic">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="px-2 py-1.5 text-left font-medium text-muted-foreground text-xs">Variable</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">W</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs stat-notation">p</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">N</th>
+              <th className="px-2 py-1.5 text-right font-medium text-muted-foreground text-xs">{t("results.normality") || "Normal"}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((sw, i) => (
+              <tr key={i} className="border-b border-border/50">
+                <td className="px-2 py-1.5 font-medium text-foreground">{sw.variable}</td>
+                <td className="px-2 py-1.5 text-right font-mono text-foreground">{sw.W}</td>
+                <td className="px-2 py-1.5 text-right font-mono text-foreground">{sw.pValue}</td>
+                <td className="px-2 py-1.5 text-right text-foreground">{sw.n}</td>
+                <td className="px-2 py-1.5 text-right">
+                  <Badge variant={sw.isNormal ? "secondary" : "destructive"} className="text-xs">
+                    {sw.isNormal ? (t("results.yes") || "Yes") : (t("results.no") || "No")}
+                  </Badge>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
+  );
+}
+
+function CronbachAlphaTable({ data }: { data: NonNullable<AnalysisResultItem["cronbachAlpha"]> }) {
+  const { t } = useLanguage();
+  const reliability = data.alpha >= 0.9 ? "Excellent" : data.alpha >= 0.8 ? "Good" : data.alpha >= 0.7 ? "Acceptable" : data.alpha >= 0.6 ? "Questionable" : "Poor";
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-academic">
+          {t("results.cronbachAlpha") || "Cronbach's Alpha"}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm font-academic">
+        <div className="flex justify-between"><span className="text-muted-foreground stat-notation">α</span><span className="font-mono text-foreground text-lg font-bold">{data.alpha}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">{t("results.reliability") || "Reliability"}</span><Badge variant="outline">{reliability}</Badge></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">{t("results.itemCount") || "Items"}</span><span className="font-mono text-foreground">{data.itemCount}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">N</span><span className="font-mono text-foreground">{data.n}</span></div>
+        <div className="mt-2">
+          <span className="text-xs text-muted-foreground">{t("results.variables") || "Variables"}: </span>
+          <span className="text-xs text-foreground">{data.variables.join(", ")}</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+
 function EditableText({ value, onChange, variant = "text" }: { value: string; onChange: (v: string) => void; variant?: "title" | "text" }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
