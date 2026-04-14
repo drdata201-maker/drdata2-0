@@ -1489,6 +1489,107 @@ export function exportPdf(data: ExportData, content: ExportContent) {
           y += 4;
           tableNum++;
         }
+
+        // Paired T-tests
+        if (result.pairedTTests && result.pairedTTests.length > 0) {
+          for (const pt of result.pairedTTests) {
+            if (y > 220) { doc.addPage(); y = 20; }
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${tableLabel} ${tableNum}: Paired T-test — ${pt.var1} × ${pt.var2}`, 14, y);
+            y += 6;
+            autoTable(doc, {
+              startY: y, head: [["Statistic", "Value"]], body: [
+                ["Mean Diff", pt.meanDiff.toFixed(4)],
+                ["t", pt.tStat.toFixed(3)],
+                ["df", String(pt.df)],
+                ["p-value", pt.pValue.toFixed(4)],
+                ["N", String(pt.n)],
+              ],
+              theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 8;
+            tableNum++;
+          }
+        }
+
+        // PCA
+        if (result.pca) {
+          const pca = result.pca;
+          if (y > 200) { doc.addPage(); y = 20; }
+          doc.setFontSize(11);
+          doc.setFont("helvetica", "bold");
+          doc.text(`${tableLabel} ${tableNum}: PCA — Variance Explained`, 14, y);
+          y += 6;
+          autoTable(doc, {
+            startY: y,
+            head: [["Component", "Eigenvalue", "% Variance", "Cumulative %"]],
+            body: pca.components.map(c => [`PC${c.component}`, c.eigenvalue.toFixed(4), `${c.varianceExplained.toFixed(2)}%`, `${c.cumulativeVariance.toFixed(2)}%`]),
+            theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+          });
+          y = (doc as any).lastAutoTable.finalY + 4;
+          if (pca.kmo !== undefined) {
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "italic");
+            doc.text(`KMO = ${pca.kmo.toFixed(3)}`, 14, y);
+            y += 5;
+            doc.setFont("helvetica", "normal");
+          }
+          y += 4;
+          tableNum++;
+
+          // PCA Loadings
+          if (pca.loadings && pca.loadings.length > 0) {
+            if (y > 200) { doc.addPage(); y = 20; }
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${tableLabel} ${tableNum}: PCA — Component Loadings`, 14, y);
+            y += 6;
+            autoTable(doc, {
+              startY: y,
+              head: [["Variable", ...pca.components.map(c => `PC${c.component}`)]],
+              body: pca.loadings.map(l => [l.variable, ...l.components.map(v => v.toFixed(3))]),
+              theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 8;
+            tableNum++;
+          }
+        }
+
+        // Factor Analysis
+        if (result.factorAnalysis) {
+          const fa = result.factorAnalysis;
+          if (y > 200) { doc.addPage(); y = 20; }
+          doc.setFontSize(11);
+          doc.setFont("helvetica", "bold");
+          doc.text(`${tableLabel} ${tableNum}: Factor Analysis — ${fa.rotation}`, 14, y);
+          y += 6;
+          autoTable(doc, {
+            startY: y,
+            head: [["Factor", "Eigenvalue", "% Variance", "Cumulative %"]],
+            body: fa.factors.map(f => [`F${f.factor}`, f.eigenvalue.toFixed(4), `${f.varianceExplained.toFixed(2)}%`, `${f.cumulativeVariance.toFixed(2)}%`]),
+            theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+          });
+          y = (doc as any).lastAutoTable.finalY + 8;
+          tableNum++;
+
+          // Rotated Loadings
+          if (fa.rotatedLoadings && fa.rotatedLoadings.length > 0) {
+            if (y > 200) { doc.addPage(); y = 20; }
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${tableLabel} ${tableNum}: Rotated Loadings (${fa.rotation})`, 14, y);
+            y += 6;
+            autoTable(doc, {
+              startY: y,
+              head: [["Variable", ...fa.factors.map(f => `F${f.factor}`), "Communality"]],
+              body: fa.rotatedLoadings.map((l, li) => [l.variable, ...l.factors.map(v => v.toFixed(3)), (fa.communalities[li]?.extraction ?? 0).toFixed(3)]),
+              theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 8;
+            tableNum++;
+          }
+        }
       }
     }
 
