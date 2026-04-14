@@ -129,6 +129,8 @@ function formatTestResultsAdaptive(analysisResults: AnalysisResultItem[], softwa
   return results;
 }
 
+type ExportContent = "full" | "results" | "graphs" | "interpretation" | "conclusion";
+
 const labels: Record<string, Record<string, string>> = {
   fr: {
     fullReport: "Rapport d'Analyse Complet",
