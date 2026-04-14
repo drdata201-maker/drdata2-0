@@ -108,8 +108,8 @@ export function buildChartData(
           // Residual plot
           const coeffs = reg.coefficients;
           if (coeffs.length >= 2) {
-            const intercept = coeffs[0].value;
-            const slope = coeffs[1].value;
+            const intercept = coeffs[0].b;
+            const slope = coeffs[1].b;
             items.push({
               key: `residual-${reg.dependent}`,
               title: `${tFn("charts.residualPlot") || "Residuals"}: ${reg.dependent} ~ ${reg.independents[0]}`,
