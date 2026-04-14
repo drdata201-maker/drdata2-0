@@ -753,7 +753,7 @@ export function generateAcademicReport(
     if (frequencies.length > 0) {
       for (const f of frequencies) {
         tableNum++;
-        const sorted = [...f.counts].sort((a, b) => b.count - a.count);
+        const sorted = [...f.categories].sort((a, b) => b.count - a.count);
         const topCat = sorted[0];
         const total = sorted.reduce((s, c) => s + c.count, 0);
         const topPct = total > 0 ? ((topCat.count / total) * 100).toFixed(1) : "0";
