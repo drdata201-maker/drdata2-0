@@ -248,7 +248,7 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                 <Eye className="mr-1 h-3 w-3" />
                 {t("export.preview") || "Preview"}
               </Button>
-              {(["docx", "pdf", "xlsx"] as FormatType[]).map(format => {
+              {(["docx", "pdf", ...(content === "full" || content === "results" ? ["xlsx"] : [])] as FormatType[]).map(format => {
                 const key = `${content}-${format}`;
                 const isLoading = loading === key;
                 return (
@@ -1046,7 +1046,7 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                 {/* Export buttons */}
                 <Separator />
                 <div className="flex flex-wrap gap-2 justify-center pb-2">
-                  {(["docx", "pdf", "xlsx"] as FormatType[]).map(format => {
+                  {(["docx", "pdf", ...(previewContent === "full" || previewContent === "results" ? ["xlsx"] : [])] as FormatType[]).map(format => {
                     const key = `${previewContent}-${format}`;
                     const isLoading = loading === key;
                     return (
