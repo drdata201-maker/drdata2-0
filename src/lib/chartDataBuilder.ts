@@ -169,6 +169,84 @@ export function buildChartData(
         });
       }
     }
+
+    // Spearman correlation scatter plots
+    if (result.spearmanCorrelations) {
+      for (const s of result.spearmanCorrelations.slice(0, 4)) {
+        const xVals = getNumericValues(rows, s.var1);
+        const yVals = getNumericValues(rows, s.var2);
+        const n = Math.min(xVals.length, yVals.length, 200);
+        items.push({
+          key: `spearman-${s.var1}-${s.var2}`,
+          title: `Spearman: ${s.var1} × ${s.var2} (ρ=${s.rho})`,
+          type: "scatter",
+          analysisType: "bivariate",
+          data: Array.from({ length: n }, (_, i) => ({ x: xVals[i], y: yVals[i] })),
+        });
+      }
+    }
+
+    // Paired t-test bar
+    if (result.pairedTTests) {
+      for (const pt of result.pairedTTests) {
+        const v1Vals = getNumericValues(rows, pt.var1);
+        const v2Vals = getNumericValues(rows, pt.var2);
+        const mean1 = v1Vals.length ? v1Vals.reduce((a, b) => a + b, 0) / v1Vals.length : 0;
+        const mean2 = v2Vals.length ? v2Vals.reduce((a, b) => a + b, 0) / v2Vals.length : 0;
+        items.push({
+          key: `paired-ttest-${pt.var1}-${pt.var2}`,
+          title: `${tFn("results.pairedTTest") || "Paired t-Test"}: ${pt.var1} × ${pt.var2}`,
+          type: "bar",
+          analysisType: "bivariate",
+          data: [{ name: pt.var1, value: mean1 }, { name: pt.var2, value: mean2 }],
+        });
+      }
+    }
+
+    // Mann-Whitney bar
+    if (result.mannWhitney) {
+      for (const mw of result.mannWhitney) {
+        items.push({
+          key: `mw-${mw.variable}-${mw.groupVar}`,
+          title: `Mann-Whitney: ${mw.variable} × ${mw.groupVar}`,
+          type: "bar",
+          analysisType: "bivariate",
+          data: mw.groups.map((g, i) => ({ name: g, value: i === 0 ? mw.n1 : mw.n2 })),
+        });
+      }
+    }
+
+    // Kruskal-Wallis mean rank bar
+    if (result.kruskalWallis) {
+      for (const kw of result.kruskalWallis) {
+        items.push({
+          key: `kw-${kw.dependent}-${kw.factor}`,
+          title: `Kruskal-Wallis: ${kw.dependent} × ${kw.factor}`,
+          type: "bar",
+          analysisType: "bivariate",
+          data: kw.groups.map(g => ({ name: g.name, value: g.meanRank })),
+        });
+      }
+    }
+
+    // Factor analysis loading bar chart
+    if (result.factorAnalysis) {
+      const fa = result.factorAnalysis;
+      const retainedFactors = fa.factors.filter(f => f.eigenvalue >= 1);
+      if (retainedFactors.length > 0) {
+        items.push({
+          key: `factor-scree`,
+          title: `${tFn("charts.varianceExplained") || "Variance"} — Factor Analysis`,
+          type: "scree",
+          analysisType: "advanced",
+          data: fa.factors.map(f => ({
+            name: `F${f.factor}`,
+            value: f.eigenvalue,
+            cumulative: f.cumulativeVariance,
+          })),
+        });
+      }
+    }
   }
 
   // Fallback overview
