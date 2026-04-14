@@ -128,6 +128,9 @@ export function formatTestResultsAdaptive(analysisResults: AnalysisResultItem[],
     if (result.factorAnalysis) {
       results.push({ label: `Factor Analysis`, value: `${result.factorAnalysis.factors.length} factors (${result.factorAnalysis.rotation})` });
     }
+    if (result.clusterAnalysis) {
+      results.push({ label: `Cluster Analysis`, value: `K-Means (k=${result.clusterAnalysis.k}), Silhouette = ${result.clusterAnalysis.silhouetteScore.toFixed(4)}` });
+    }
   }
 
   return results;
