@@ -5,9 +5,9 @@ import { isIdentifierVariable } from "@/lib/academicFormatter";
 export interface ChartItem {
   key: string;
   title: string;
-  type: "histogram" | "bar" | "scatter" | "pie" | "scree" | "cluster-scatter";
+  type: "histogram" | "bar" | "scatter" | "pie" | "scree" | "cluster-scatter" | "grouped-bar" | "residual";
   analysisType?: "descriptive" | "frequency" | "bivariate" | "advanced";
-  data: { name?: string; value?: number; x?: number; y?: number; cluster?: number; cumulative?: number }[];
+  data: { name?: string; value?: number; x?: number; y?: number; cluster?: number; cumulative?: number; group?: string }[];
 }
 
 function getNumericValues(rows: Record<string, unknown>[], col: string): number[] {
@@ -104,6 +104,48 @@ export function buildChartData(
             type: "scatter",
             analysisType: "bivariate",
             data: Array.from({ length: n }, (_, i) => ({ x: xVals[i], y: yVals[i] })),
+          });
+          // Residual plot
+          const coeffs = reg.coefficients;
+          if (coeffs.length >= 2) {
+            const intercept = coeffs[0].value;
+            const slope = coeffs[1].value;
+            items.push({
+              key: `residual-${reg.dependent}`,
+              title: `${tFn("charts.residualPlot") || "Residuals"}: ${reg.dependent} ~ ${reg.independents[0]}`,
+              type: "residual",
+              analysisType: "bivariate",
+              data: Array.from({ length: n }, (_, i) => {
+                const predicted = intercept + slope * xVals[i];
+                return { x: predicted, y: yVals[i] - predicted };
+              }),
+            });
+          }
+        }
+      }
+    }
+
+    // Chi-square / Cross-tab grouped bar chart
+    if (result.chiSquares) {
+      for (const chi of result.chiSquares) {
+        if (chi.contingencyTable) {
+          const ct = chi.contingencyTable;
+          const groupedData: ChartItem["data"] = [];
+          for (let ri = 0; ri < ct.rowLabels.length; ri++) {
+            for (let ci = 0; ci < ct.colLabels.length; ci++) {
+              groupedData.push({
+                name: ct.colLabels[ci],
+                value: ct.observed[ri][ci],
+                group: ct.rowLabels[ri],
+              });
+            }
+          }
+          items.push({
+            key: `crosstab-${chi.var1}-${chi.var2}`,
+            title: `${tFn("charts.groupedBar") || "Cross-tab"}: ${chi.var1} × ${chi.var2}`,
+            type: "grouped-bar",
+            analysisType: "bivariate",
+            data: groupedData,
           });
         }
       }
