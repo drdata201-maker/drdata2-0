@@ -945,79 +945,59 @@ function generateLicenceReport(
   globalConclusion?: string,
   globalRecommendations?: string,
 ): AcademicReport {
-  const sections: AcademicSection[] = [];
-  const tableLabel = getTableLabel(lang);
-  let tableNum = 0;
+  const candidateSections: { key: string; content: string }[] = [];
 
-  const noData: Record<string, string> = {
-    fr: "Aucune analyse de ce type n'a été réalisée dans ce projet.",
-    en: "No analysis of this type was performed in this project.",
-    es: "No se realizó ningún análisis de este tipo en este proyecto.",
-    de: "Für dieses Projekt wurde keine Analyse dieses Typs durchgeführt.",
-    pt: "Nenhuma análise deste tipo foi realizada neste projeto.",
-  };
-
-  // 3.1 Descriptive Statistics
+  // Descriptive Statistics
   const descriptives = results.flatMap(r => (r.descriptive || []).filter(d => !isIdentifierVariable(d.variable)));
-  {
-    const interps: string[] = [];
-    if (descriptives.length > 0) {
-      for (const d of descriptives) interps.push(interpDescriptive(d, lang));
-      tableNum++;
-    }
-    sections.push({ number: "3.1", title: sectionTitle("3.1", lang), content: descriptives.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en) });
+  if (descriptives.length > 0) {
+    const interps = descriptives.map(d => interpDescriptive(d, lang));
+    candidateSections.push({ key: "3.1", content: interps.join("\n\n") });
   }
 
-  // 3.2 Frequency Tables
+  // Frequency Tables
   const frequencies = results.flatMap(r => (r.frequencies || []).filter(f => !isIdentifierVariable(f.variable)));
-  {
+  if (frequencies.length > 0) {
     const interps: string[] = [];
-    if (frequencies.length > 0) {
-      for (const f of frequencies) {
-        tableNum++;
-        const sorted = [...f.categories].sort((a, b) => b.count - a.count);
-        const topCat = sorted[0];
-        const total = sorted.reduce((s, c) => s + c.count, 0);
-        const topPct = total > 0 ? ((topCat.count / total) * 100).toFixed(1) : "0";
-        const freqInterp: Record<string, string> = {
-          fr: `La distribution de « ${f.variable} » montre que la modalité « ${topCat.value} » est la plus fréquente avec ${topCat.count} occurrences (${topPct}%). ${sorted.length} modalités ont été identifiées au total.`,
-          en: `The distribution of "${f.variable}" shows that "${topCat.value}" is the most frequent category with ${topCat.count} occurrences (${topPct}%). ${sorted.length} categories were identified in total.`,
-          es: `La distribución de "${f.variable}" muestra que "${topCat.value}" es la categoría más frecuente con ${topCat.count} ocurrencias (${topPct}%). Se identificaron ${sorted.length} categorías en total.`,
-          de: `Die Verteilung von "${f.variable}" zeigt, dass "${topCat.value}" mit ${topCat.count} Vorkommen (${topPct}%) die häufigste Kategorie ist. Insgesamt wurden ${sorted.length} Kategorien identifiziert.`,
-          pt: `A distribuição de "${f.variable}" mostra que "${topCat.value}" é a categoria mais frequente com ${topCat.count} ocorrências (${topPct}%). ${sorted.length} categorias foram identificadas no total.`,
-        };
-        interps.push(freqInterp[lang] || freqInterp.en);
-      }
+    for (const f of frequencies) {
+      const sorted = [...f.categories].sort((a, b) => b.count - a.count);
+      const topCat = sorted[0];
+      const total = sorted.reduce((s, c) => s + c.count, 0);
+      const topPct = total > 0 ? ((topCat.count / total) * 100).toFixed(1) : "0";
+      const freqInterp: Record<string, string> = {
+        fr: `La distribution de « ${f.variable} » montre que la modalité « ${topCat.value} » est la plus fréquente avec ${topCat.count} occurrences (${topPct}%). ${sorted.length} modalités ont été identifiées au total.`,
+        en: `The distribution of "${f.variable}" shows that "${topCat.value}" is the most frequent category with ${topCat.count} occurrences (${topPct}%). ${sorted.length} categories were identified in total.`,
+        es: `La distribución de "${f.variable}" muestra que "${topCat.value}" es la categoría más frecuente con ${topCat.count} ocurrencias (${topPct}%). Se identificaron ${sorted.length} categorías en total.`,
+        de: `Die Verteilung von "${f.variable}" zeigt, dass "${topCat.value}" mit ${topCat.count} Vorkommen (${topPct}%) die häufigste Kategorie ist. Insgesamt wurden ${sorted.length} Kategorien identifiziert.`,
+        pt: `A distribuição de "${f.variable}" mostra que "${topCat.value}" é a categoria mais frequente com ${topCat.count} ocorrências (${topPct}%). ${sorted.length} categorias foram identificadas no total.`,
+      };
+      interps.push(freqInterp[lang] || freqInterp.en);
     }
-    sections.push({ number: "3.2", title: sectionTitle("3.2", lang), content: frequencies.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en) });
+    candidateSections.push({ key: "3.2", content: interps.join("\n\n") });
   }
 
-  // 3.3 Chi-Square
+  // Chi-Square
   const chiSquares = results.flatMap(r => r.chiSquares ? r.chiSquares.map(c => ({ chi: c, result: r })) : []);
-  {
-    const interps: string[] = [];
-    for (const { chi } of chiSquares) { tableNum++; interps.push(interpChi(chi, lang, "licence")); }
-    sections.push({ number: "3.3", title: sectionTitle("3.3", lang), content: chiSquares.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en) });
+  if (chiSquares.length > 0) {
+    const interps = chiSquares.map(({ chi }) => interpChi(chi, lang, "licence"));
+    candidateSections.push({ key: "3.3", content: interps.join("\n\n") });
   }
 
-  // 3.4 Correlations
+  // Correlations
   const correlations = results.flatMap(r => (r.correlations || []).concat(
     (r.spearmanCorrelations || []).map(s => ({ var1: s.var1, var2: s.var2, r: s.rho, pValue: s.pValue, n: s.n }))
   ));
-  {
-    const interps: string[] = [];
-    if (correlations.length > 0) { tableNum++; for (const c of correlations) interps.push(interpCorrelation(c, lang, "licence")); }
-    sections.push({ number: "3.4", title: sectionTitle("3.4", lang), content: correlations.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en) });
+  if (correlations.length > 0) {
+    const interps = correlations.map(c => interpCorrelation(c, lang, "licence"));
+    candidateSections.push({ key: "3.4", content: interps.join("\n\n") });
   }
 
-  // 3.5 T-test
-  const tTests = results.flatMap(r => (r.tTests || []).map(tt => ({ tt, result: r })));
-  const pairedTTests = results.flatMap(r => (r.pairedTTests || []).map(pt => ({ pt, result: r })));
-  {
+  // T-test
+  const tTests = results.flatMap(r => r.tTests || []);
+  const pairedTTests = results.flatMap(r => r.pairedTTests || []);
+  if (tTests.length > 0 || pairedTTests.length > 0) {
     const interps: string[] = [];
-    for (const { tt } of tTests) { tableNum++; interps.push(interpTTest(tt, lang)); }
-    for (const { pt } of pairedTTests) {
-      tableNum++;
+    for (const tt of tTests) interps.push(interpTTest(tt, lang));
+    for (const pt of pairedTTests) {
       const sig = pt.pValue < 0.05;
       const ptInterp: Record<string, string> = {
         fr: `Le test T apparié entre ${pt.var1} et ${pt.var2} ${sig ? "révèle une différence significative" : "ne révèle pas de différence significative"} (t(${pt.df}) = ${pt.tStat.toFixed(3)}, p = ${pt.pValue.toFixed(4)}, différence moyenne = ${pt.meanDiff.toFixed(3)}).`,
@@ -1028,34 +1008,46 @@ function generateLicenceReport(
       };
       interps.push(ptInterp[lang] || ptInterp.en);
     }
-    sections.push({ number: "3.5", title: sectionTitle("3.5", lang), content: (tTests.length + pairedTTests.length) > 0 ? interps.join("\n\n") : (noData[lang] || noData.en) });
+    candidateSections.push({ key: "3.5", content: interps.join("\n\n") });
   }
 
-  // 3.6 ANOVA
-  const anovas = results.flatMap(r => (r.anovas || []).map(a => ({ anova: a, result: r })));
-  {
-    const interps: string[] = [];
-    for (const { anova } of anovas) { tableNum++; interps.push(interpAnova(anova, lang)); }
-    sections.push({ number: "3.6", title: sectionTitle("3.6", lang), content: anovas.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en) });
+  // ANOVA
+  const anovas = results.flatMap(r => r.anovas || []);
+  if (anovas.length > 0) {
+    const interps = anovas.map(a => interpAnova(a, lang));
+    candidateSections.push({ key: "3.6", content: interps.join("\n\n") });
   }
 
-  // 3.7 Regression
-  const regressions = results.flatMap(r => (r.regressions || []).map(reg => ({ reg, result: r })));
-  {
-    const interps: string[] = [];
-    for (const { reg } of regressions) { tableNum++; interps.push(interpRegression(reg, lang, "licence")); }
-    sections.push({ number: "3.7", title: sectionTitle("3.7", lang), content: regressions.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en) });
+  // Regression
+  const regressions = results.flatMap(r => r.regressions || []);
+  if (regressions.length > 0) {
+    const interps = regressions.map(reg => interpRegression(reg, lang, "licence"));
+    candidateSections.push({ key: "3.7", content: interps.join("\n\n") });
   }
 
-  // 3.8 General Interpretation
+  // General Interpretation (always present)
   {
     const allInterps: string[] = [];
     for (const result of results) { const interp = generateTableInterpretation(result, lang, level); if (interp) allInterps.push(interp); }
-    sections.push({ number: "3.8", title: sectionTitle("3.8", lang), content: globalInterpretation || allInterps.join("\n\n") || (noData[lang] || noData.en) });
+    const content = globalInterpretation || allInterps.join("\n\n");
+    if (content) candidateSections.push({ key: "3.8", content });
   }
 
-  // 3.9 Conclusion & Recommendations
-  sections.push({ number: "3.9", title: sectionTitle("3.9", lang), content: buildConclusionContent(results, lang, globalConclusion, globalRecommendations) });
+  // Conclusion & Recommendations (always present)
+  candidateSections.push({ key: "3.9", content: buildConclusionContent(results, lang, globalConclusion, globalRecommendations) });
+
+  // Build final sections with intelligent numbering
+  const sections: AcademicSection[] = [];
+  let secNum = 1;
+  for (const cs of candidateSections) {
+    if (!cs.content || cs.content.trim() === "") continue;
+    sections.push({
+      number: `3.${secNum}`,
+      title: sectionTitle(cs.key, lang),
+      content: cs.content,
+    });
+    secNum++;
+  }
 
   return { sections, level, lang };
 }
