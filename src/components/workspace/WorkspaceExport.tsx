@@ -572,6 +572,219 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                           }
                         }
 
+                        {/* Spearman Correlations */}
+                        if (result.spearmanCorrelations && result.spearmanCorrelations.length > 0) {
+                          tableNum++;
+                          blocks.push(
+                            <div key={`spearman-${result.id}`} className="space-y-2">
+                              <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : Spearman Correlations</p>
+                              <div className="rounded-md border border-border overflow-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Variables</TableHead>
+                                      <TableHead className="text-right">ρ</TableHead>
+                                      <TableHead className="text-right">p</TableHead>
+                                      <TableHead className="text-right">N</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {result.spearmanCorrelations.map((s, i) => (
+                                      <TableRow key={i}>
+                                        <TableCell className="font-medium">{s.var1} × {s.var2}</TableCell>
+                                        <TableCell className="text-right">{s.rho.toFixed(3)}</TableCell>
+                                        <TableCell className="text-right">{s.pValue.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{s.n}</TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        {/* Kendall Correlations */}
+                        if (result.kendallCorrelations && result.kendallCorrelations.length > 0) {
+                          tableNum++;
+                          blocks.push(
+                            <div key={`kendall-${result.id}`} className="space-y-2">
+                              <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : Kendall Correlations</p>
+                              <div className="rounded-md border border-border overflow-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Variables</TableHead>
+                                      <TableHead className="text-right">τ</TableHead>
+                                      <TableHead className="text-right">p</TableHead>
+                                      <TableHead className="text-right">N</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {result.kendallCorrelations.map((k, i) => (
+                                      <TableRow key={i}>
+                                        <TableCell className="font-medium">{k.var1} × {k.var2}</TableCell>
+                                        <TableCell className="text-right">{k.tau.toFixed(3)}</TableCell>
+                                        <TableCell className="text-right">{k.pValue.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{k.n}</TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        {/* Mann-Whitney */}
+                        if (result.mannWhitney && result.mannWhitney.length > 0) {
+                          for (const mw of result.mannWhitney) {
+                            tableNum++;
+                            blocks.push(
+                              <div key={`mw-${mw.variable}`} className="space-y-2">
+                                <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : Mann-Whitney — {mw.variable}</p>
+                                <div className="rounded-md border border-border overflow-auto">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead>Group</TableHead>
+                                        <TableHead className="text-right">Mean Rank</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {mw.groups.map((g, i) => (
+                                        <TableRow key={g}>
+                                          <TableCell className="font-medium">{g}</TableCell>
+                                          <TableCell className="text-right">{mw.meanRanks[i].toFixed(2)}</TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                                <p className="text-xs italic text-muted-foreground">U = {mw.U.toFixed(3)}, p = {mw.pValue.toFixed(4)}</p>
+                              </div>
+                            );
+                          }
+                        }
+
+                        {/* Wilcoxon */}
+                        if (result.wilcoxon && result.wilcoxon.length > 0) {
+                          for (const w of result.wilcoxon) {
+                            tableNum++;
+                            blocks.push(
+                              <div key={`wilc-${w.var1}-${w.var2}`} className="space-y-2">
+                                <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : Wilcoxon — {w.var1} × {w.var2}</p>
+                                <div className="rounded-md border border-border overflow-auto">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead>Statistic</TableHead>
+                                        <TableHead className="text-right">Value</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      <TableRow><TableCell className="font-medium">W</TableCell><TableCell className="text-right">{w.W.toFixed(3)}</TableCell></TableRow>
+                                      <TableRow><TableCell className="font-medium">p-value</TableCell><TableCell className="text-right">{w.pValue.toFixed(4)}</TableCell></TableRow>
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              </div>
+                            );
+                          }
+                        }
+
+                        {/* Kruskal-Wallis */}
+                        if (result.kruskalWallis && result.kruskalWallis.length > 0) {
+                          for (const kw of result.kruskalWallis) {
+                            tableNum++;
+                            blocks.push(
+                              <div key={`kw-${kw.dependent}`} className="space-y-2">
+                                <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : Kruskal-Wallis — {kw.dependent}</p>
+                                <div className="rounded-md border border-border overflow-auto">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead>Group</TableHead>
+                                        <TableHead className="text-right">Mean Rank</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {kw.groups.map(g => (
+                                        <TableRow key={g.name}>
+                                          <TableCell className="font-medium">{g.name}</TableCell>
+                                          <TableCell className="text-right">{g.meanRank.toFixed(2)}</TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                                <p className="text-xs italic text-muted-foreground">H({kw.df}) = {kw.H.toFixed(3)}, p = {kw.pValue.toFixed(4)}</p>
+                              </div>
+                            );
+                          }
+                        }
+
+                        {/* Shapiro-Wilk */}
+                        if (result.shapiroWilk && result.shapiroWilk.length > 0) {
+                          tableNum++;
+                          blocks.push(
+                            <div key={`sw-${result.id}`} className="space-y-2">
+                              <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : Shapiro-Wilk</p>
+                              <div className="rounded-md border border-border overflow-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Variable</TableHead>
+                                      <TableHead className="text-right">W</TableHead>
+                                      <TableHead className="text-right">p</TableHead>
+                                      <TableHead className="text-right">Normal</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {result.shapiroWilk.map((sw, i) => (
+                                      <TableRow key={i}>
+                                        <TableCell className="font-medium">{sw.variable}</TableCell>
+                                        <TableCell className="text-right">{sw.W.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{sw.pValue.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{sw.isNormal ? "✓" : "✗"}</TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        {/* Cronbach Alpha */}
+                        if (result.cronbachAlpha) {
+                          tableNum++;
+                          const ca = result.cronbachAlpha;
+                          blocks.push(
+                            <div key={`ca-${result.id}`} className="space-y-2">
+                              <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : Cronbach's Alpha</p>
+                              <div className="rounded-md border border-border overflow-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Statistic</TableHead>
+                                      <TableHead className="text-right">Value</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    <TableRow><TableCell className="font-medium">Alpha (α)</TableCell><TableCell className="text-right">{ca.alpha.toFixed(4)}</TableCell></TableRow>
+                                    <TableRow><TableCell className="font-medium">Items</TableCell><TableCell className="text-right">{ca.itemCount}</TableCell></TableRow>
+                                    {ca.variables && <TableRow><TableCell className="font-medium">Variables</TableCell><TableCell className="text-right">{ca.variables.join(", ")}</TableCell></TableRow>}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                              <p className="text-xs italic text-muted-foreground">
+                                {ca.alpha >= 0.9 ? "Excellent" : ca.alpha >= 0.8 ? "Good" : ca.alpha >= 0.7 ? "Acceptable" : ca.alpha >= 0.6 ? "Questionable" : "Poor"} reliability
+                              </p>
+                            </div>
+                          );
+                        }
+
                         return blocks.length > 0 ? <div key={result.id} className="space-y-4">{blocks}</div> : null;
                       })}
                     </section>
