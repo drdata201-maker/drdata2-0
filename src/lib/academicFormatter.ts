@@ -626,7 +626,7 @@ export function generateFigureInterpretation(
   return "";
 }
 
-// ─── Academic Report Structure (Sections 3.1–3.9) for Licence ───
+// ─── Academic Report Structure ───
 
 export interface AcademicSection {
   number: string;
@@ -641,7 +641,9 @@ export interface AcademicReport {
   lang: string;
 }
 
-const SECTION_TITLES: Record<string, Record<string, string>> = {
+// ─── Section titles by level ───
+
+const SECTION_TITLES_LICENCE: Record<string, Record<string, string>> = {
   fr: {
     "3.1": "Statistiques descriptives",
     "3.2": "Tableaux de fréquences",
@@ -699,15 +701,242 @@ const SECTION_TITLES: Record<string, Record<string, string>> = {
   },
 };
 
+// Advanced section titles for Master / Doctorate
+const SECTION_TITLES_ADVANCED: Record<string, Record<string, string>> = {
+  fr: {
+    descriptive: "Statistiques descriptives avancées",
+    normality: "Tests de normalité",
+    parametric: "Tests paramétriques",
+    nonparametric: "Tests non paramétriques",
+    correlation: "Analyse des corrélations",
+    regression: "Analyse de régression",
+    reliability: "Analyse de fiabilité",
+    factor: "Analyse factorielle",
+    cluster: "Analyse de clusters",
+    diagnostics: "Diagnostics du modèle",
+    interpretation: "Interprétation générale des résultats",
+    conclusion: "Conclusion et recommandations",
+  },
+  en: {
+    descriptive: "Advanced Descriptive Statistics",
+    normality: "Normality Tests",
+    parametric: "Parametric Tests",
+    nonparametric: "Non-Parametric Tests",
+    correlation: "Correlation Analysis",
+    regression: "Regression Analysis",
+    reliability: "Reliability Analysis",
+    factor: "Factor Analysis",
+    cluster: "Cluster Analysis",
+    diagnostics: "Model Diagnostics",
+    interpretation: "General Interpretation of Results",
+    conclusion: "Conclusion and Recommendations",
+  },
+  es: {
+    descriptive: "Estadísticas descriptivas avanzadas",
+    normality: "Pruebas de normalidad",
+    parametric: "Pruebas paramétricas",
+    nonparametric: "Pruebas no paramétricas",
+    correlation: "Análisis de correlaciones",
+    regression: "Análisis de regresión",
+    reliability: "Análisis de fiabilidad",
+    factor: "Análisis factorial",
+    cluster: "Análisis de clusters",
+    diagnostics: "Diagnósticos del modelo",
+    interpretation: "Interpretación general de los resultados",
+    conclusion: "Conclusión y recomendaciones",
+  },
+  de: {
+    descriptive: "Erweiterte deskriptive Statistik",
+    normality: "Normalitätstests",
+    parametric: "Parametrische Tests",
+    nonparametric: "Nicht-parametrische Tests",
+    correlation: "Korrelationsanalyse",
+    regression: "Regressionsanalyse",
+    reliability: "Reliabilitätsanalyse",
+    factor: "Faktorenanalyse",
+    cluster: "Clusteranalyse",
+    diagnostics: "Modelldiagnostik",
+    interpretation: "Allgemeine Interpretation der Ergebnisse",
+    conclusion: "Schlussfolgerung und Empfehlungen",
+  },
+  pt: {
+    descriptive: "Estatísticas descritivas avançadas",
+    normality: "Testes de normalidade",
+    parametric: "Testes paramétricos",
+    nonparametric: "Testes não paramétricos",
+    correlation: "Análise de correlações",
+    regression: "Análise de regressão",
+    reliability: "Análise de fiabilidade",
+    factor: "Análise fatorial",
+    cluster: "Análise de clusters",
+    diagnostics: "Diagnósticos do modelo",
+    interpretation: "Interpretação geral dos resultados",
+    conclusion: "Conclusão e recomendações",
+  },
+};
+
+function advTitle(key: string, lang: string): string {
+  return (SECTION_TITLES_ADVANCED[lang] || SECTION_TITLES_ADVANCED.en)[key] || key;
+}
+
 function sectionTitle(num: string, lang: string): string {
-  return (SECTION_TITLES[lang] || SECTION_TITLES.en)[num] || "";
+  return (SECTION_TITLES_LICENCE[lang] || SECTION_TITLES_LICENCE.en)[num] || "";
+}
+
+// ─── Interpretation helpers for advanced tests ───
+
+function interpShapiroWilk(sw: { variable: string; W: number; pValue: number; isNormal: boolean }, lang: string): string {
+  const t: Record<string, string> = {
+    fr: `Le test de Shapiro-Wilk pour « ${sw.variable} » donne W = ${sw.W.toFixed(4)}, p = ${sw.pValue.toFixed(4)}. ${sw.isNormal ? "La distribution ne diffère pas significativement de la normalité (p > 0.05), permettant l'utilisation de tests paramétriques." : "La distribution diffère significativement de la normalité (p < 0.05), ce qui justifie le recours aux tests non paramétriques."}`,
+    en: `The Shapiro-Wilk test for "${sw.variable}" yields W = ${sw.W.toFixed(4)}, p = ${sw.pValue.toFixed(4)}. ${sw.isNormal ? "The distribution does not significantly differ from normality (p > 0.05), supporting the use of parametric tests." : "The distribution significantly deviates from normality (p < 0.05), justifying the use of non-parametric tests."}`,
+    es: `La prueba de Shapiro-Wilk para "${sw.variable}" da W = ${sw.W.toFixed(4)}, p = ${sw.pValue.toFixed(4)}. ${sw.isNormal ? "La distribución no difiere significativamente de la normalidad (p > 0.05)." : "La distribución difiere significativamente de la normalidad (p < 0.05), justificando el uso de pruebas no paramétricas."}`,
+    de: `Der Shapiro-Wilk-Test für „${sw.variable}" ergibt W = ${sw.W.toFixed(4)}, p = ${sw.pValue.toFixed(4)}. ${sw.isNormal ? "Die Verteilung weicht nicht signifikant von der Normalverteilung ab (p > 0.05)." : "Die Verteilung weicht signifikant von der Normalverteilung ab (p < 0.05), was den Einsatz nicht-parametrischer Tests rechtfertigt."}`,
+    pt: `O teste de Shapiro-Wilk para "${sw.variable}" resulta em W = ${sw.W.toFixed(4)}, p = ${sw.pValue.toFixed(4)}. ${sw.isNormal ? "A distribuição não difere significativamente da normalidade (p > 0.05)." : "A distribuição difere significativamente da normalidade (p < 0.05), justificando o uso de testes não paramétricos."}`,
+  };
+  return t[lang] || t.en;
+}
+
+function interpMannWhitney(mw: { variable: string; U: number; z: number; pValue: number; groups: string[]; n1: number; n2: number }, lang: string): string {
+  const sig = mw.pValue < 0.05;
+  const t: Record<string, string> = {
+    fr: `Le test de Mann-Whitney pour « ${mw.variable} » entre ${mw.groups.join(" et ")} donne U = ${mw.U.toFixed(3)}, z = ${mw.z.toFixed(3)}, p = ${mw.pValue.toFixed(4)} (n₁ = ${mw.n1}, n₂ = ${mw.n2}). ${sig ? "La différence entre les deux groupes est statistiquement significative." : "Aucune différence significative n'est observée entre les deux groupes."}`,
+    en: `The Mann-Whitney test for "${mw.variable}" between ${mw.groups.join(" and ")} yields U = ${mw.U.toFixed(3)}, z = ${mw.z.toFixed(3)}, p = ${mw.pValue.toFixed(4)} (n₁ = ${mw.n1}, n₂ = ${mw.n2}). ${sig ? "The difference between the two groups is statistically significant." : "No significant difference is observed between the two groups."}`,
+    es: `La prueba de Mann-Whitney para "${mw.variable}" entre ${mw.groups.join(" y ")} da U = ${mw.U.toFixed(3)}, z = ${mw.z.toFixed(3)}, p = ${mw.pValue.toFixed(4)} (n₁ = ${mw.n1}, n₂ = ${mw.n2}). ${sig ? "La diferencia entre los dos grupos es estadísticamente significativa." : "No se observa diferencia significativa entre los dos grupos."}`,
+    de: `Der Mann-Whitney-Test für „${mw.variable}" zwischen ${mw.groups.join(" und ")} ergibt U = ${mw.U.toFixed(3)}, z = ${mw.z.toFixed(3)}, p = ${mw.pValue.toFixed(4)} (n₁ = ${mw.n1}, n₂ = ${mw.n2}). ${sig ? "Der Unterschied zwischen den beiden Gruppen ist statistisch signifikant." : "Kein signifikanter Unterschied zwischen den beiden Gruppen beobachtet."}`,
+    pt: `O teste de Mann-Whitney para "${mw.variable}" entre ${mw.groups.join(" e ")} resulta em U = ${mw.U.toFixed(3)}, z = ${mw.z.toFixed(3)}, p = ${mw.pValue.toFixed(4)} (n₁ = ${mw.n1}, n₂ = ${mw.n2}). ${sig ? "A diferença entre os dois grupos é estatisticamente significativa." : "Nenhuma diferença significativa é observada entre os dois grupos."}`,
+  };
+  return t[lang] || t.en;
+}
+
+function interpWilcoxon(w: { var1: string; var2: string; W: number; pValue: number }, lang: string): string {
+  const sig = w.pValue < 0.05;
+  const t: Record<string, string> = {
+    fr: `Le test de Wilcoxon entre « ${w.var1} » et « ${w.var2} » donne W = ${w.W.toFixed(3)}, p = ${w.pValue.toFixed(4)}. ${sig ? "La différence entre les deux mesures appariées est statistiquement significative." : "Aucune différence significative n'est observée entre les deux mesures appariées."}`,
+    en: `The Wilcoxon test between "${w.var1}" and "${w.var2}" yields W = ${w.W.toFixed(3)}, p = ${w.pValue.toFixed(4)}. ${sig ? "The difference between the paired measures is statistically significant." : "No significant difference is observed between the paired measures."}`,
+    es: `La prueba de Wilcoxon entre "${w.var1}" y "${w.var2}" da W = ${w.W.toFixed(3)}, p = ${w.pValue.toFixed(4)}. ${sig ? "La diferencia entre las medidas pareadas es estadísticamente significativa." : "No se observa diferencia significativa entre las medidas pareadas."}`,
+    de: `Der Wilcoxon-Test zwischen „${w.var1}" und „${w.var2}" ergibt W = ${w.W.toFixed(3)}, p = ${w.pValue.toFixed(4)}. ${sig ? "Der Unterschied zwischen den gepaarten Messungen ist statistisch signifikant." : "Kein signifikanter Unterschied zwischen den gepaarten Messungen beobachtet."}`,
+    pt: `O teste de Wilcoxon entre "${w.var1}" e "${w.var2}" resulta em W = ${w.W.toFixed(3)}, p = ${w.pValue.toFixed(4)}. ${sig ? "A diferença entre as medidas pareadas é estatisticamente significativa." : "Nenhuma diferença significativa é observada entre as medidas pareadas."}`,
+  };
+  return t[lang] || t.en;
+}
+
+function interpKruskalWallis(kw: { dependent: string; H: number; df: number; pValue: number; groups: { name: string; meanRank: number }[] }, lang: string): string {
+  const sig = kw.pValue < 0.05;
+  const sorted = [...kw.groups].sort((a, b) => b.meanRank - a.meanRank);
+  const highest = sorted[0];
+  const t: Record<string, string> = {
+    fr: `Le test de Kruskal-Wallis pour « ${kw.dependent} » donne H(${kw.df}) = ${kw.H.toFixed(3)}, p = ${kw.pValue.toFixed(4)}. ${sig ? `La différence entre les groupes est significative. Le groupe « ${highest.name} » présente le rang moyen le plus élevé (${highest.meanRank.toFixed(2)}).` : "Aucune différence significative n'est observée entre les groupes."}`,
+    en: `The Kruskal-Wallis test for "${kw.dependent}" yields H(${kw.df}) = ${kw.H.toFixed(3)}, p = ${kw.pValue.toFixed(4)}. ${sig ? `The difference between groups is significant. The group "${highest.name}" has the highest mean rank (${highest.meanRank.toFixed(2)}).` : "No significant difference is observed between groups."}`,
+    es: `La prueba de Kruskal-Wallis para "${kw.dependent}" da H(${kw.df}) = ${kw.H.toFixed(3)}, p = ${kw.pValue.toFixed(4)}. ${sig ? `La diferencia entre grupos es significativa. El grupo "${highest.name}" tiene el rango medio más alto (${highest.meanRank.toFixed(2)}).` : "No se observa diferencia significativa entre los grupos."}`,
+    de: `Der Kruskal-Wallis-Test für „${kw.dependent}" ergibt H(${kw.df}) = ${kw.H.toFixed(3)}, p = ${kw.pValue.toFixed(4)}. ${sig ? `Der Unterschied zwischen den Gruppen ist signifikant. Die Gruppe „${highest.name}" hat den höchsten mittleren Rang (${highest.meanRank.toFixed(2)}).` : "Kein signifikanter Unterschied zwischen den Gruppen beobachtet."}`,
+    pt: `O teste de Kruskal-Wallis para "${kw.dependent}" resulta em H(${kw.df}) = ${kw.H.toFixed(3)}, p = ${kw.pValue.toFixed(4)}. ${sig ? `A diferença entre os grupos é significativa. O grupo "${highest.name}" tem a classificação média mais alta (${highest.meanRank.toFixed(2)}).` : "Nenhuma diferença significativa é observada entre os grupos."}`,
+  };
+  return t[lang] || t.en;
+}
+
+function interpSpearman(s: { var1: string; var2: string; rho: number; pValue: number; n: number }, lang: string): string {
+  const sig = s.pValue < 0.05;
+  const strength = Math.abs(s.rho) >= 0.7 ? "strong" : Math.abs(s.rho) >= 0.4 ? "moderate" : "weak";
+  const sMap: Record<string, Record<string, string>> = {
+    fr: { strong: "forte", moderate: "modérée", weak: "faible" },
+    en: { strong: "strong", moderate: "moderate", weak: "weak" },
+    es: { strong: "fuerte", moderate: "moderada", weak: "débil" },
+    de: { strong: "starke", moderate: "moderate", weak: "schwache" },
+    pt: { strong: "forte", moderate: "moderada", weak: "fraca" },
+  };
+  const sl = (sMap[lang] || sMap.en)[strength];
+  const t: Record<string, string> = {
+    fr: `La corrélation de Spearman entre « ${s.var1} » et « ${s.var2} » est ${sl} (ρ = ${s.rho.toFixed(3)}, p = ${s.pValue.toFixed(4)}, N = ${s.n})${sig ? ", statistiquement significative" : ""}.`,
+    en: `Spearman's correlation between "${s.var1}" and "${s.var2}" is ${sl} (ρ = ${s.rho.toFixed(3)}, p = ${s.pValue.toFixed(4)}, N = ${s.n})${sig ? ", statistically significant" : ""}.`,
+    es: `La correlación de Spearman entre "${s.var1}" y "${s.var2}" es ${sl} (ρ = ${s.rho.toFixed(3)}, p = ${s.pValue.toFixed(4)}, N = ${s.n})${sig ? ", estadísticamente significativa" : ""}.`,
+    de: `Die Spearman-Korrelation zwischen „${s.var1}" und „${s.var2}" ist ${sl} (ρ = ${s.rho.toFixed(3)}, p = ${s.pValue.toFixed(4)}, N = ${s.n})${sig ? ", statistisch signifikant" : ""}.`,
+    pt: `A correlação de Spearman entre "${s.var1}" e "${s.var2}" é ${sl} (ρ = ${s.rho.toFixed(3)}, p = ${s.pValue.toFixed(4)}, N = ${s.n})${sig ? ", estatisticamente significativa" : ""}.`,
+  };
+  return t[lang] || t.en;
+}
+
+function interpKendall(k: { var1: string; var2: string; tau: number; pValue: number; n: number }, lang: string): string {
+  const sig = k.pValue < 0.05;
+  const t: Record<string, string> = {
+    fr: `La corrélation de Kendall entre « ${k.var1} » et « ${k.var2} » donne τ = ${k.tau.toFixed(3)}, p = ${k.pValue.toFixed(4)}, N = ${k.n}${sig ? ". Cette association est statistiquement significative." : ". Cette association n'est pas statistiquement significative."}`,
+    en: `Kendall's correlation between "${k.var1}" and "${k.var2}" yields τ = ${k.tau.toFixed(3)}, p = ${k.pValue.toFixed(4)}, N = ${k.n}${sig ? ". This association is statistically significant." : ". This association is not statistically significant."}`,
+    es: `La correlación de Kendall entre "${k.var1}" y "${k.var2}" da τ = ${k.tau.toFixed(3)}, p = ${k.pValue.toFixed(4)}, N = ${k.n}${sig ? ". Esta asociación es estadísticamente significativa." : ". Esta asociación no es estadísticamente significativa."}`,
+    de: `Die Kendall-Korrelation zwischen „${k.var1}" und „${k.var2}" ergibt τ = ${k.tau.toFixed(3)}, p = ${k.pValue.toFixed(4)}, N = ${k.n}${sig ? ". Dieser Zusammenhang ist statistisch signifikant." : ". Dieser Zusammenhang ist nicht statistisch signifikant."}`,
+    pt: `A correlação de Kendall entre "${k.var1}" e "${k.var2}" resulta em τ = ${k.tau.toFixed(3)}, p = ${k.pValue.toFixed(4)}, N = ${k.n}${sig ? ". Esta associação é estatisticamente significativa." : ". Esta associação não é estatisticamente significativa."}`,
+  };
+  return t[lang] || t.en;
+}
+
+function interpCronbach(ca: { alpha: number; itemCount: number; variables?: string[] }, lang: string): string {
+  const reliability = ca.alpha >= 0.9 ? "excellent" : ca.alpha >= 0.8 ? "good" : ca.alpha >= 0.7 ? "acceptable" : ca.alpha >= 0.6 ? "questionable" : "poor";
+  const relMap: Record<string, Record<string, string>> = {
+    fr: { excellent: "excellente", good: "bonne", acceptable: "acceptable", questionable: "discutable", poor: "insuffisante" },
+    en: { excellent: "excellent", good: "good", acceptable: "acceptable", questionable: "questionable", poor: "poor" },
+    es: { excellent: "excelente", good: "buena", acceptable: "aceptable", questionable: "cuestionable", poor: "insuficiente" },
+    de: { excellent: "ausgezeichnete", good: "gute", acceptable: "akzeptable", questionable: "fragwürdige", poor: "unzureichende" },
+    pt: { excellent: "excelente", good: "boa", acceptable: "aceitável", questionable: "questionável", poor: "insuficiente" },
+  };
+  const rl = (relMap[lang] || relMap.en)[reliability];
+  const varsInfo = ca.variables ? ` (${ca.variables.join(", ")})` : "";
+  const t: Record<string, string> = {
+    fr: `L'alpha de Cronbach est de ${ca.alpha.toFixed(4)} pour ${ca.itemCount} items${varsInfo}, indiquant une fiabilité ${rl} de l'échelle. ${ca.alpha >= 0.7 ? "L'instrument peut être considéré comme fiable pour cette étude." : "Il est recommandé de revoir les items de l'échelle pour améliorer la cohérence interne."}`,
+    en: `Cronbach's alpha is ${ca.alpha.toFixed(4)} for ${ca.itemCount} items${varsInfo}, indicating ${rl} scale reliability. ${ca.alpha >= 0.7 ? "The instrument can be considered reliable for this study." : "It is recommended to review scale items to improve internal consistency."}`,
+    es: `El alfa de Cronbach es ${ca.alpha.toFixed(4)} para ${ca.itemCount} ítems${varsInfo}, indicando una fiabilidad ${rl}. ${ca.alpha >= 0.7 ? "El instrumento puede considerarse fiable para este estudio." : "Se recomienda revisar los ítems de la escala para mejorar la consistencia interna."}`,
+    de: `Cronbachs Alpha beträgt ${ca.alpha.toFixed(4)} für ${ca.itemCount} Items${varsInfo}, was eine ${rl} Reliabilität anzeigt. ${ca.alpha >= 0.7 ? "Das Instrument kann als zuverlässig für diese Studie betrachtet werden." : "Es wird empfohlen, die Skalenitems zu überprüfen, um die interne Konsistenz zu verbessern."}`,
+    pt: `O alfa de Cronbach é ${ca.alpha.toFixed(4)} para ${ca.itemCount} itens${varsInfo}, indicando uma fiabilidade ${rl}. ${ca.alpha >= 0.7 ? "O instrumento pode ser considerado fiável para este estudo." : "Recomenda-se rever os itens da escala para melhorar a consistência interna."}`,
+  };
+  return t[lang] || t.en;
+}
+
+function interpDiagnostics(reg: { dependent: string; rSquared: number; coefficients: { variable: string; vif?: number }[] }, lang: string, isDoc: boolean): string {
+  const vifWarnings: string[] = [];
+  const vifOk: string[] = [];
+  for (const c of reg.coefficients) {
+    if (c.variable === "(Intercept)") continue;
+    if (c.vif != null) {
+      if (c.vif > 10) vifWarnings.push(`${c.variable} (VIF = ${c.vif.toFixed(2)})`);
+      else if (c.vif > 5) vifWarnings.push(`${c.variable} (VIF = ${c.vif.toFixed(2)})`);
+      else vifOk.push(`${c.variable} (VIF = ${c.vif.toFixed(2)})`);
+    }
+  }
+  const hasVif = vifWarnings.length + vifOk.length > 0;
+  if (!hasVif && !isDoc) return "";
+  const t: Record<string, string> = {
+    fr: `${hasVif ? `Diagnostic de multicolinéarité pour le modèle « ${reg.dependent} » : ${vifWarnings.length > 0 ? `Attention — multicolinéarité détectée pour ${vifWarnings.join(", ")}. ` : ""}${vifOk.length > 0 ? `VIF acceptable pour ${vifOk.join(", ")}.` : ""}` : `Le modèle « ${reg.dependent} » a été validé (R² = ${reg.rSquared.toFixed(4)}).`} ${isDoc ? "Une analyse des résidus est recommandée pour confirmer les hypothèses du modèle linéaire." : ""}`,
+    en: `${hasVif ? `Multicollinearity diagnostics for model "${reg.dependent}": ${vifWarnings.length > 0 ? `Warning — multicollinearity detected for ${vifWarnings.join(", ")}. ` : ""}${vifOk.length > 0 ? `VIF acceptable for ${vifOk.join(", ")}.` : ""}` : `Model "${reg.dependent}" has been validated (R² = ${reg.rSquared.toFixed(4)}).`} ${isDoc ? "Residual analysis is recommended to confirm linear model assumptions." : ""}`,
+    es: `${hasVif ? `Diagnósticos de multicolinealidad para el modelo "${reg.dependent}": ${vifWarnings.length > 0 ? `Advertencia — multicolinealidad detectada para ${vifWarnings.join(", ")}. ` : ""}${vifOk.length > 0 ? `VIF aceptable para ${vifOk.join(", ")}.` : ""}` : `El modelo "${reg.dependent}" ha sido validado (R² = ${reg.rSquared.toFixed(4)}).`}`,
+    de: `${hasVif ? `Multikollinearitätsdiagnostik für Modell „${reg.dependent}": ${vifWarnings.length > 0 ? `Warnung — Multikollinearität erkannt für ${vifWarnings.join(", ")}. ` : ""}${vifOk.length > 0 ? `VIF akzeptabel für ${vifOk.join(", ")}.` : ""}` : `Modell „${reg.dependent}" wurde validiert (R² = ${reg.rSquared.toFixed(4)}).`}`,
+    pt: `${hasVif ? `Diagnósticos de multicolinearidade para o modelo "${reg.dependent}": ${vifWarnings.length > 0 ? `Atenção — multicolinearidade detectada para ${vifWarnings.join(", ")}. ` : ""}${vifOk.length > 0 ? `VIF aceitável para ${vifOk.join(", ")}.` : ""}` : `O modelo "${reg.dependent}" foi validado (R² = ${reg.rSquared.toFixed(4)}).`}`,
+  };
+  return t[lang] || t.en;
 }
 
 /**
- * Generate a structured academic report (sections 3.1–3.9) from analysis results.
- * Designed for Licence level — clean, sequential, with inline interpretations.
+ * Generate a structured academic report from analysis results.
+ * Licence: sections 3.1–3.9 (basic)
+ * Master/Doctorate: sections 3.1–3.12 (advanced, intelligent activation)
  */
 export function generateAcademicReport(
+  results: AnalysisResultItem[],
+  lang: string,
+  level: string,
+  ctx?: ProjectContext,
+  globalInterpretation?: string,
+  globalConclusion?: string,
+  globalRecommendations?: string,
+): AcademicReport {
+  const lvl = level.includes("doctor") || level.includes("doctorat") ? "doctorate"
+    : level.includes("master") ? "master" : "licence";
+
+  if (lvl === "licence") {
+    return generateLicenceReport(results, lang, level, ctx, globalInterpretation, globalConclusion, globalRecommendations);
+  }
+  return generateAdvancedReport(results, lang, level, lvl, ctx, globalInterpretation, globalConclusion, globalRecommendations);
+}
+
+// ─── Licence Report (3.1–3.9) — unchanged logic ───
+
+function generateLicenceReport(
   results: AnalysisResultItem[],
   lang: string,
   level: string,
@@ -720,7 +949,6 @@ export function generateAcademicReport(
   const tableLabel = getTableLabel(lang);
   let tableNum = 0;
 
-  // Helper: no-data message
   const noData: Record<string, string> = {
     fr: "Aucune analyse de ce type n'a été réalisée dans ce projet.",
     en: "No analysis of this type was performed in this project.",
@@ -734,16 +962,10 @@ export function generateAcademicReport(
   {
     const interps: string[] = [];
     if (descriptives.length > 0) {
-      for (const d of descriptives) {
-        interps.push(interpDescriptive(d, lang));
-      }
+      for (const d of descriptives) interps.push(interpDescriptive(d, lang));
       tableNum++;
     }
-    sections.push({
-      number: "3.1",
-      title: sectionTitle("3.1", lang),
-      content: descriptives.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en),
-    });
+    sections.push({ number: "3.1", title: sectionTitle("3.1", lang), content: descriptives.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en) });
   }
 
   // 3.2 Frequency Tables
@@ -767,26 +989,15 @@ export function generateAcademicReport(
         interps.push(freqInterp[lang] || freqInterp.en);
       }
     }
-    sections.push({
-      number: "3.2",
-      title: sectionTitle("3.2", lang),
-      content: frequencies.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en),
-    });
+    sections.push({ number: "3.2", title: sectionTitle("3.2", lang), content: frequencies.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en) });
   }
 
-  // 3.3 Cross-tab / Chi-Square
+  // 3.3 Chi-Square
   const chiSquares = results.flatMap(r => r.chiSquares ? r.chiSquares.map(c => ({ chi: c, result: r })) : []);
   {
     const interps: string[] = [];
-    for (const { chi, result } of chiSquares) {
-      tableNum++;
-      interps.push(interpChi(chi, lang, "licence"));
-    }
-    sections.push({
-      number: "3.3",
-      title: sectionTitle("3.3", lang),
-      content: chiSquares.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en),
-    });
+    for (const { chi } of chiSquares) { tableNum++; interps.push(interpChi(chi, lang, "licence")); }
+    sections.push({ number: "3.3", title: sectionTitle("3.3", lang), content: chiSquares.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en) });
   }
 
   // 3.4 Correlations
@@ -795,17 +1006,8 @@ export function generateAcademicReport(
   ));
   {
     const interps: string[] = [];
-    if (correlations.length > 0) {
-      tableNum++;
-      for (const c of correlations) {
-        interps.push(interpCorrelation(c, lang, "licence"));
-      }
-    }
-    sections.push({
-      number: "3.4",
-      title: sectionTitle("3.4", lang),
-      content: correlations.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en),
-    });
+    if (correlations.length > 0) { tableNum++; for (const c of correlations) interps.push(interpCorrelation(c, lang, "licence")); }
+    sections.push({ number: "3.4", title: sectionTitle("3.4", lang), content: correlations.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en) });
   }
 
   // 3.5 T-test
@@ -813,10 +1015,7 @@ export function generateAcademicReport(
   const pairedTTests = results.flatMap(r => (r.pairedTTests || []).map(pt => ({ pt, result: r })));
   {
     const interps: string[] = [];
-    for (const { tt } of tTests) {
-      tableNum++;
-      interps.push(interpTTest(tt, lang));
-    }
+    for (const { tt } of tTests) { tableNum++; interps.push(interpTTest(tt, lang)); }
     for (const { pt } of pairedTTests) {
       tableNum++;
       const sig = pt.pValue < 0.05;
@@ -829,114 +1028,249 @@ export function generateAcademicReport(
       };
       interps.push(ptInterp[lang] || ptInterp.en);
     }
-    sections.push({
-      number: "3.5",
-      title: sectionTitle("3.5", lang),
-      content: (tTests.length + pairedTTests.length) > 0 ? interps.join("\n\n") : (noData[lang] || noData.en),
-    });
+    sections.push({ number: "3.5", title: sectionTitle("3.5", lang), content: (tTests.length + pairedTTests.length) > 0 ? interps.join("\n\n") : (noData[lang] || noData.en) });
   }
 
   // 3.6 ANOVA
   const anovas = results.flatMap(r => (r.anovas || []).map(a => ({ anova: a, result: r })));
   {
     const interps: string[] = [];
-    for (const { anova } of anovas) {
-      tableNum++;
-      interps.push(interpAnova(anova, lang));
-    }
-    sections.push({
-      number: "3.6",
-      title: sectionTitle("3.6", lang),
-      content: anovas.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en),
-    });
+    for (const { anova } of anovas) { tableNum++; interps.push(interpAnova(anova, lang)); }
+    sections.push({ number: "3.6", title: sectionTitle("3.6", lang), content: anovas.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en) });
   }
 
   // 3.7 Regression
   const regressions = results.flatMap(r => (r.regressions || []).map(reg => ({ reg, result: r })));
   {
     const interps: string[] = [];
-    for (const { reg } of regressions) {
-      tableNum++;
-      interps.push(interpRegression(reg, lang, "licence"));
-    }
-    sections.push({
-      number: "3.7",
-      title: sectionTitle("3.7", lang),
-      content: regressions.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en),
-    });
+    for (const { reg } of regressions) { tableNum++; interps.push(interpRegression(reg, lang, "licence")); }
+    sections.push({ number: "3.7", title: sectionTitle("3.7", lang), content: regressions.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en) });
   }
 
   // 3.8 General Interpretation
   {
     const allInterps: string[] = [];
-    for (const result of results) {
-      const interp = generateTableInterpretation(result, lang, level);
-      if (interp) allInterps.push(interp);
-    }
-    const globalContent = globalInterpretation || allInterps.join("\n\n");
-    sections.push({
-      number: "3.8",
-      title: sectionTitle("3.8", lang),
-      content: globalContent || (noData[lang] || noData.en),
-    });
+    for (const result of results) { const interp = generateTableInterpretation(result, lang, level); if (interp) allInterps.push(interp); }
+    sections.push({ number: "3.8", title: sectionTitle("3.8", lang), content: globalInterpretation || allInterps.join("\n\n") || (noData[lang] || noData.en) });
   }
 
   // 3.9 Conclusion & Recommendations
-  {
-    const conclusionContent: string[] = [];
-    if (globalConclusion) conclusionContent.push(globalConclusion);
-    if (globalRecommendations) conclusionContent.push(globalRecommendations);
+  sections.push({ number: "3.9", title: sectionTitle("3.9", lang), content: buildConclusionContent(results, lang, globalConclusion, globalRecommendations) });
 
-    if (conclusionContent.length === 0) {
-      // Auto-generate from significant results
-      const sigResults: string[] = [];
-      const nonSigResults: string[] = [];
-      for (const r of results) {
-        for (const c of r.chiSquares || []) {
-          (c.pValue < 0.05 ? sigResults : nonSigResults).push(`${c.var1} × ${c.var2}`);
-        }
-        for (const c of r.correlations || []) {
-          (c.pValue < 0.05 ? sigResults : nonSigResults).push(`${c.var1} × ${c.var2}`);
-        }
-        for (const tt of r.tTests || []) {
-          (tt.pValue < 0.05 ? sigResults : nonSigResults).push(`${tt.variable}`);
-        }
-        for (const a of r.anovas || []) {
-          (a.pValue < 0.05 ? sigResults : nonSigResults).push(`${a.dependent} × ${a.factor}`);
-        }
-        for (const reg of r.regressions || []) {
-          (reg.fPValue < 0.05 ? sigResults : nonSigResults).push(`${reg.dependent}`);
-        }
+  return { sections, level, lang };
+}
+
+// ─── Advanced Report (Master/Doctorate) — Intelligent section activation ───
+
+function generateAdvancedReport(
+  results: AnalysisResultItem[],
+  lang: string,
+  level: string,
+  lvl: "master" | "doctorate",
+  ctx?: ProjectContext,
+  globalInterpretation?: string,
+  globalConclusion?: string,
+  globalRecommendations?: string,
+): AcademicReport {
+  const candidateSections: { key: string; content: string }[] = [];
+
+  // 1. Descriptive Statistics
+  const descriptives = results.flatMap(r => (r.descriptive || []).filter(d => !isIdentifierVariable(d.variable)));
+  const frequencies = results.flatMap(r => (r.frequencies || []).filter(f => !isIdentifierVariable(f.variable)));
+  if (descriptives.length > 0 || frequencies.length > 0) {
+    const interps: string[] = [];
+    for (const d of descriptives) interps.push(interpDescriptive(d, lang));
+    if (frequencies.length > 0) {
+      for (const f of frequencies) {
+        const sorted = [...f.categories].sort((a, b) => b.count - a.count);
+        const topCat = sorted[0];
+        const total = sorted.reduce((s, c) => s + c.count, 0);
+        const topPct = total > 0 ? ((topCat.count / total) * 100).toFixed(1) : "0";
+        const fi: Record<string, string> = {
+          fr: `La distribution de « ${f.variable} » montre que « ${topCat.value} » est la modalité la plus fréquente (${topCat.count}, ${topPct}%).`,
+          en: `The distribution of "${f.variable}" shows "${topCat.value}" as the most frequent category (${topCat.count}, ${topPct}%).`,
+          es: `La distribución de "${f.variable}" muestra "${topCat.value}" como categoría más frecuente (${topCat.count}, ${topPct}%).`,
+          de: `Die Verteilung von "${f.variable}" zeigt "${topCat.value}" als häufigste Kategorie (${topCat.count}, ${topPct}%).`,
+          pt: `A distribuição de "${f.variable}" mostra "${topCat.value}" como categoria mais frequente (${topCat.count}, ${topPct}%).`,
+        };
+        interps.push(fi[lang] || fi.en);
       }
-
-      const concTemplates: Record<string, string> = {
-        fr: `${sigResults.length > 0 ? `Les résultats montrent des associations significatives pour : ${sigResults.join(", ")}.` : "Aucune association significative n'a été identifiée."} ${nonSigResults.length > 0 ? `Les variables suivantes n'ont pas montré d'association significative : ${nonSigResults.join(", ")}.` : ""}`,
-        en: `${sigResults.length > 0 ? `Results show significant associations for: ${sigResults.join(", ")}.` : "No significant associations were identified."} ${nonSigResults.length > 0 ? `The following variables showed no significant association: ${nonSigResults.join(", ")}.` : ""}`,
-        es: `${sigResults.length > 0 ? `Los resultados muestran asociaciones significativas para: ${sigResults.join(", ")}.` : "No se identificaron asociaciones significativas."} ${nonSigResults.length > 0 ? `Las siguientes variables no mostraron asociación significativa: ${nonSigResults.join(", ")}.` : ""}`,
-        de: `${sigResults.length > 0 ? `Die Ergebnisse zeigen signifikante Zusammenhänge für: ${sigResults.join(", ")}.` : "Es wurden keine signifikanten Zusammenhänge identifiziert."} ${nonSigResults.length > 0 ? `Die folgenden Variablen zeigten keinen signifikanten Zusammenhang: ${nonSigResults.join(", ")}.` : ""}`,
-        pt: `${sigResults.length > 0 ? `Os resultados mostram associações significativas para: ${sigResults.join(", ")}.` : "Nenhuma associação significativa foi identificada."} ${nonSigResults.length > 0 ? `As seguintes variáveis não mostraram associação significativa: ${nonSigResults.join(", ")}.` : ""}`,
-      };
-
-      const recTemplates: Record<string, string> = {
-        fr: "Il est recommandé d'approfondir l'analyse avec un échantillon plus large et d'explorer les variables médiatrices potentielles.",
-        en: "It is recommended to deepen the analysis with a larger sample and explore potential mediating variables.",
-        es: "Se recomienda profundizar el análisis con una muestra más grande y explorar variables mediadoras potenciales.",
-        de: "Es wird empfohlen, die Analyse mit einer größeren Stichprobe zu vertiefen und potenzielle Mediatorvariablen zu untersuchen.",
-        pt: "Recomenda-se aprofundar a análise com uma amostra maior e explorar variáveis mediadoras potenciais.",
-      };
-
-      conclusionContent.push(concTemplates[lang] || concTemplates.en);
-      conclusionContent.push(recTemplates[lang] || recTemplates.en);
     }
+    candidateSections.push({ key: "descriptive", content: interps.join("\n\n") });
+  }
 
+  // 2. Normality Tests
+  const shapiroResults = results.flatMap(r => r.shapiroWilk || []);
+  if (shapiroResults.length > 0) {
+    const interps = shapiroResults.map(sw => interpShapiroWilk(sw, lang));
+    candidateSections.push({ key: "normality", content: interps.join("\n\n") });
+  }
+
+  // 3. Parametric Tests (T-test, Paired T-test, ANOVA)
+  const tTests = results.flatMap(r => r.tTests || []);
+  const pairedTTests = results.flatMap(r => r.pairedTTests || []);
+  const anovas = results.flatMap(r => r.anovas || []);
+  if (tTests.length > 0 || pairedTTests.length > 0 || anovas.length > 0) {
+    const interps: string[] = [];
+    for (const tt of tTests) interps.push(interpTTest(tt, lang));
+    for (const pt of pairedTTests) {
+      const sig = pt.pValue < 0.05;
+      const ptI: Record<string, string> = {
+        fr: `Le test T apparié entre ${pt.var1} et ${pt.var2} ${sig ? "révèle une différence significative" : "ne révèle pas de différence significative"} (t(${pt.df}) = ${pt.tStat.toFixed(3)}, p = ${pt.pValue.toFixed(4)}, différence moyenne = ${pt.meanDiff.toFixed(3)}).`,
+        en: `The paired T-test between ${pt.var1} and ${pt.var2} ${sig ? "reveals a significant difference" : "reveals no significant difference"} (t(${pt.df}) = ${pt.tStat.toFixed(3)}, p = ${pt.pValue.toFixed(4)}, mean difference = ${pt.meanDiff.toFixed(3)}).`,
+        es: `La prueba T pareada entre ${pt.var1} y ${pt.var2} ${sig ? "revela una diferencia significativa" : "no revela diferencia significativa"} (t(${pt.df}) = ${pt.tStat.toFixed(3)}, p = ${pt.pValue.toFixed(4)}).`,
+        de: `Der gepaarte T-Test zwischen ${pt.var1} und ${pt.var2} ${sig ? "zeigt einen signifikanten Unterschied" : "zeigt keinen signifikanten Unterschied"} (t(${pt.df}) = ${pt.tStat.toFixed(3)}, p = ${pt.pValue.toFixed(4)}).`,
+        pt: `O teste T pareado entre ${pt.var1} e ${pt.var2} ${sig ? "revela uma diferença significativa" : "não revela diferença significativa"} (t(${pt.df}) = ${pt.tStat.toFixed(3)}, p = ${pt.pValue.toFixed(4)}).`,
+      };
+      interps.push(ptI[lang] || ptI.en);
+    }
+    for (const a of anovas) interps.push(interpAnova(a, lang));
+    candidateSections.push({ key: "parametric", content: interps.join("\n\n") });
+  }
+
+  // 4. Non-Parametric Tests
+  const mannWhitney = results.flatMap(r => r.mannWhitney || []);
+  const wilcoxon = results.flatMap(r => r.wilcoxon || []);
+  const kruskalWallis = results.flatMap(r => r.kruskalWallis || []);
+  if (mannWhitney.length > 0 || wilcoxon.length > 0 || kruskalWallis.length > 0) {
+    const interps: string[] = [];
+    for (const mw of mannWhitney) interps.push(interpMannWhitney(mw, lang));
+    for (const w of wilcoxon) interps.push(interpWilcoxon(w, lang));
+    for (const kw of kruskalWallis) interps.push(interpKruskalWallis(kw, lang));
+    candidateSections.push({ key: "nonparametric", content: interps.join("\n\n") });
+  }
+
+  // 5. Correlation Analysis (Pearson, Spearman, Kendall)
+  const pearson = results.flatMap(r => r.correlations || []);
+  const spearman = results.flatMap(r => r.spearmanCorrelations || []);
+  const kendall = results.flatMap(r => r.kendallCorrelations || []);
+  if (pearson.length > 0 || spearman.length > 0 || kendall.length > 0) {
+    const interps: string[] = [];
+    for (const c of pearson) interps.push(interpCorrelation(c, lang, lvl));
+    for (const s of spearman) interps.push(interpSpearman(s, lang));
+    for (const k of kendall) interps.push(interpKendall(k, lang));
+    candidateSections.push({ key: "correlation", content: interps.join("\n\n") });
+  }
+
+  // 6. Regression Analysis
+  const regressions = results.flatMap(r => r.regressions || []);
+  if (regressions.length > 0) {
+    const interps = regressions.map(reg => interpRegression(reg, lang, lvl));
+    candidateSections.push({ key: "regression", content: interps.join("\n\n") });
+  }
+
+  // 7. Reliability Analysis (Cronbach Alpha)
+  const cronbachResults = results.filter(r => r.cronbachAlpha).map(r => r.cronbachAlpha!);
+  if (cronbachResults.length > 0) {
+    const interps = cronbachResults.map(ca => interpCronbach(ca, lang));
+    candidateSections.push({ key: "reliability", content: interps.join("\n\n") });
+  }
+
+  // 8. Factor Analysis (PCA + Factor Analysis)
+  const pcaResults = results.filter(r => r.pca).map(r => r.pca!);
+  const faResults = results.filter(r => r.factorAnalysis).map(r => r.factorAnalysis!);
+  if (pcaResults.length > 0 || faResults.length > 0) {
+    const interps: string[] = [];
+    for (const pca of pcaResults) interps.push(interpPCA(pca, lang, lvl));
+    for (const fa of faResults) interps.push(interpFactor(fa, lang));
+    candidateSections.push({ key: "factor", content: interps.join("\n\n") });
+  }
+
+  // 9. Cluster Analysis
+  const clusterResults = results.filter(r => r.clusterAnalysis).map(r => r.clusterAnalysis!);
+  if (clusterResults.length > 0) {
+    const interps = clusterResults.map(cl => interpCluster(cl, lang, lvl));
+    candidateSections.push({ key: "cluster", content: interps.join("\n\n") });
+  }
+
+  // 10. Model Diagnostics (Doctorate emphasis, Master if regressions exist)
+  if (regressions.length > 0) {
+    const isDoc = lvl === "doctorate";
+    const interps = regressions.map(reg => interpDiagnostics(reg, lang, isDoc)).filter(Boolean);
+    if (interps.length > 0) {
+      candidateSections.push({ key: "diagnostics", content: interps.join("\n\n") });
+    }
+  }
+
+  // Always add interpretation and conclusion
+  // 11. General Interpretation
+  {
+    const allInterps: string[] = [];
+    for (const result of results) { const interp = generateTableInterpretation(result, lang, level); if (interp) allInterps.push(interp); }
+    candidateSections.push({ key: "interpretation", content: globalInterpretation || allInterps.join("\n\n") || "" });
+  }
+
+  // 12. Conclusion and Recommendations
+  candidateSections.push({ key: "conclusion", content: buildConclusionContent(results, lang, globalConclusion, globalRecommendations) });
+
+  // ─── Build final sections with intelligent numbering ───
+  const sections: AcademicSection[] = [];
+  let secNum = 1;
+  for (const cs of candidateSections) {
+    if (!cs.content || cs.content.trim() === "") continue;
     sections.push({
-      number: "3.9",
-      title: sectionTitle("3.9", lang),
-      content: conclusionContent.join("\n\n"),
+      number: `3.${secNum}`,
+      title: advTitle(cs.key, lang),
+      content: cs.content,
     });
+    secNum++;
   }
 
   return { sections, level, lang };
 }
+
+// ─── Shared conclusion builder ───
+
+function buildConclusionContent(
+  results: AnalysisResultItem[],
+  lang: string,
+  globalConclusion?: string,
+  globalRecommendations?: string,
+): string {
+  const parts: string[] = [];
+  if (globalConclusion) parts.push(globalConclusion);
+  if (globalRecommendations) parts.push(globalRecommendations);
+
+  if (parts.length === 0) {
+    const sigResults: string[] = [];
+    const nonSigResults: string[] = [];
+    for (const r of results) {
+      for (const c of r.chiSquares || []) (c.pValue < 0.05 ? sigResults : nonSigResults).push(`${c.var1} × ${c.var2}`);
+      for (const c of r.correlations || []) (c.pValue < 0.05 ? sigResults : nonSigResults).push(`${c.var1} × ${c.var2}`);
+      for (const tt of r.tTests || []) (tt.pValue < 0.05 ? sigResults : nonSigResults).push(`${tt.variable}`);
+      for (const a of r.anovas || []) (a.pValue < 0.05 ? sigResults : nonSigResults).push(`${a.dependent} × ${a.factor}`);
+      for (const reg of r.regressions || []) (reg.fPValue < 0.05 ? sigResults : nonSigResults).push(`${reg.dependent}`);
+      for (const mw of r.mannWhitney || []) (mw.pValue < 0.05 ? sigResults : nonSigResults).push(`${mw.variable}`);
+      for (const w of r.wilcoxon || []) (w.pValue < 0.05 ? sigResults : nonSigResults).push(`${w.var1} × ${w.var2}`);
+      for (const kw of r.kruskalWallis || []) (kw.pValue < 0.05 ? sigResults : nonSigResults).push(`${kw.dependent}`);
+      for (const s of r.spearmanCorrelations || []) (s.pValue < 0.05 ? sigResults : nonSigResults).push(`${s.var1} × ${s.var2}`);
+      for (const k of r.kendallCorrelations || []) (k.pValue < 0.05 ? sigResults : nonSigResults).push(`${k.var1} × ${k.var2}`);
+    }
+
+    const concTemplates: Record<string, string> = {
+      fr: `${sigResults.length > 0 ? `Les résultats montrent des associations significatives pour : ${sigResults.join(", ")}.` : "Aucune association significative n'a été identifiée."} ${nonSigResults.length > 0 ? `Les variables suivantes n'ont pas montré d'association significative : ${nonSigResults.join(", ")}.` : ""}`,
+      en: `${sigResults.length > 0 ? `Results show significant associations for: ${sigResults.join(", ")}.` : "No significant associations were identified."} ${nonSigResults.length > 0 ? `The following variables showed no significant association: ${nonSigResults.join(", ")}.` : ""}`,
+      es: `${sigResults.length > 0 ? `Los resultados muestran asociaciones significativas para: ${sigResults.join(", ")}.` : "No se identificaron asociaciones significativas."} ${nonSigResults.length > 0 ? `Las siguientes variables no mostraron asociación significativa: ${nonSigResults.join(", ")}.` : ""}`,
+      de: `${sigResults.length > 0 ? `Die Ergebnisse zeigen signifikante Zusammenhänge für: ${sigResults.join(", ")}.` : "Es wurden keine signifikanten Zusammenhänge identifiziert."} ${nonSigResults.length > 0 ? `Die folgenden Variablen zeigten keinen signifikanten Zusammenhang: ${nonSigResults.join(", ")}.` : ""}`,
+      pt: `${sigResults.length > 0 ? `Os resultados mostram associações significativas para: ${sigResults.join(", ")}.` : "Nenhuma associação significativa foi identificada."} ${nonSigResults.length > 0 ? `As seguintes variáveis não mostraram associação significativa: ${nonSigResults.join(", ")}.` : ""}`,
+    };
+
+    const recTemplates: Record<string, string> = {
+      fr: "Il est recommandé d'approfondir l'analyse avec un échantillon plus large et d'explorer les variables médiatrices potentielles.",
+      en: "It is recommended to deepen the analysis with a larger sample and explore potential mediating variables.",
+      es: "Se recomienda profundizar el análisis con una muestra más grande y explorar variables mediadoras potenciales.",
+      de: "Es wird empfohlen, die Analyse mit einer größeren Stichprobe zu vertiefen und potenzielle Mediatorvariablen zu untersuchen.",
+      pt: "Recomenda-se aprofundar a análise com uma amostra maior e explorar variáveis mediadoras potenciais.",
+    };
+
+    parts.push(concTemplates[lang] || concTemplates.en);
+    parts.push(recTemplates[lang] || recTemplates.en);
+  }
+
+  return parts.join("\n\n");
+}
+
+// Keep backward compat: SECTION_TITLES used externally
+const SECTION_TITLES = SECTION_TITLES_LICENCE;
 
 export { getTableLabel, getFigureLabel };
