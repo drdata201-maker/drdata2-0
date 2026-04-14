@@ -54,7 +54,7 @@ export interface ExportData {
 }
 
 /** Format test results with software-adaptive notation */
-function formatTestResultsAdaptive(analysisResults: AnalysisResultItem[], software: StatSoftware): { label: string; value: string }[] {
+export function formatTestResultsAdaptive(analysisResults: AnalysisResultItem[], software: StatSoftware): { label: string; value: string }[] {
   const opts = { software };
   const results: { label: string; value: string }[] = [];
 
