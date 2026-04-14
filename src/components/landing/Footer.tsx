@@ -16,9 +16,9 @@ export function Footer() {
           <div>
             <h4 className="mb-3 text-sm font-semibold">{t("footer.product")}</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/#features" className="hover:text-foreground">{t("nav.features")}</Link></li>
-              <li><Link to="/pricing" className="hover:text-foreground">{t("footer.pricing")}</Link></li>
-              <li>{t("footer.docs")}</li>
+              <li><Link to="/features" className="hover:text-foreground">{t("nav.features")}</Link></li>
+              <li><span className="cursor-not-allowed opacity-50">{t("footer.pricing")}</span></li>
+              <li><Link to="/documentation" className="hover:text-foreground">{t("footer.docs")}</Link></li>
             </ul>
           </div>
           <div>
@@ -26,14 +26,14 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link to="/about" className="hover:text-foreground">{t("footer.about")}</Link></li>
               <li><Link to="/contact" className="hover:text-foreground">{t("footer.contact")}</Link></li>
-              <li>{t("footer.blog")}</li>
+              <li><Link to="/blog" className="hover:text-foreground">{t("footer.blog")}</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="mb-3 text-sm font-semibold">{t("footer.legal")}</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>{t("footer.privacy")}</li>
-              <li>{t("footer.terms")}</li>
+              <li><Link to="/privacy" className="hover:text-foreground">{t("footer.privacy")}</Link></li>
+              <li><Link to="/terms" className="hover:text-foreground">{t("footer.terms")}</Link></li>
             </ul>
           </div>
         </div>
