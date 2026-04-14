@@ -7,6 +7,7 @@ import { dataUrlToUint8Array } from "./chartImageRenderer";
 import { getTableLabel, getFigureLabel, generateTableInterpretation, generateFigureInterpretation, getDescriptiveHeaders } from "./academicFormatter";
 import type { AnalysisResultItem } from "./statsEngine";
 import { stripLatex } from "./latexSanitizer";
+import { formatChiSquare, formatTTest, formatAnova, formatCorrelation, formatRSquared, formatPValue, type StatSoftware } from "./softwareFormatter";
 
 export interface ChartImage {
   title: string;
@@ -49,9 +50,84 @@ export interface ExportData {
   mediatorVars?: string;
   moderatorVars?: string;
   conceptualModel?: string;
+  software?: StatSoftware;
 }
 
-type ExportContent = "full" | "results" | "graphs" | "interpretation" | "conclusion";
+/** Format test results with software-adaptive notation */
+function formatTestResultsAdaptive(analysisResults: AnalysisResultItem[], software: StatSoftware): { label: string; value: string }[] {
+  const opts = { software };
+  const results: { label: string; value: string }[] = [];
+
+  for (const result of analysisResults) {
+    if (result.correlations) {
+      for (const c of result.correlations) {
+        results.push({ label: `Pearson (${c.var1} × ${c.var2})`, value: formatCorrelation(c.r, c.pValue, c.n, "pearson", opts) });
+      }
+    }
+    if (result.spearmanCorrelations) {
+      for (const s of result.spearmanCorrelations) {
+        results.push({ label: `Spearman (${s.var1} × ${s.var2})`, value: formatCorrelation(s.rho, s.pValue, s.n, "spearman", opts) });
+      }
+    }
+    if (result.regressions) {
+      for (const reg of result.regressions) {
+        results.push({ label: `${reg.dependent}`, value: formatRSquared(reg.rSquared, reg.adjustedR2, opts) });
+        for (const coeff of reg.coefficients) {
+          results.push({ label: `  ${coeff.variable}`, value: `b = ${coeff.b}, SE = ${coeff.se}, t = ${coeff.t}, ${formatPValue(coeff.p, opts)}` });
+        }
+      }
+    }
+    if (result.tTests) {
+      for (const tt of result.tTests) {
+        results.push({ label: `T-test: ${tt.variable}`, value: formatTTest(tt.tStat, tt.df, tt.pValue, opts) });
+      }
+    }
+    if (result.pairedTTests) {
+      for (const pt of result.pairedTTests) {
+        results.push({ label: `Paired t-test: ${pt.var1} × ${pt.var2}`, value: formatTTest(pt.tStat, pt.df, pt.pValue, opts) });
+      }
+    }
+    if (result.anovas) {
+      for (const a of result.anovas) {
+        results.push({ label: `ANOVA: ${a.dependent} × ${a.factor}`, value: formatAnova(a.fStat, a.dfBetween, a.dfWithin, a.pValue, opts) });
+      }
+    }
+    if (result.chiSquares) {
+      for (const c of result.chiSquares) {
+        results.push({ label: `Chi²: ${c.var1} × ${c.var2}`, value: formatChiSquare(c.chiSquare, c.df, c.pValue, opts) });
+        results.push({ label: `  Cramér's V`, value: c.cramersV.toFixed(3) });
+      }
+    }
+    if (result.mannWhitney) {
+      for (const mw of result.mannWhitney) {
+        results.push({ label: `Mann-Whitney: ${mw.variable}`, value: `U = ${mw.U}, ${formatPValue(mw.pValue, opts)}` });
+      }
+    }
+    if (result.wilcoxon) {
+      for (const w of result.wilcoxon) {
+        results.push({ label: `Wilcoxon: ${w.var1} × ${w.var2}`, value: `W = ${w.W}, ${formatPValue(w.pValue, opts)}` });
+      }
+    }
+    if (result.kruskalWallis) {
+      for (const kw of result.kruskalWallis) {
+        results.push({ label: `Kruskal-Wallis: ${kw.dependent}`, value: `H = ${kw.H}, df = ${kw.df}, ${formatPValue(kw.pValue, opts)}` });
+      }
+    }
+    if (result.shapiroWilk) {
+      for (const sw of result.shapiroWilk) {
+        results.push({ label: `Shapiro-Wilk: ${sw.variable}`, value: `W = ${sw.W}, ${formatPValue(sw.pValue, opts)}` });
+      }
+    }
+    if (result.cronbachAlpha) {
+      results.push({ label: `Cronbach's Alpha`, value: `α = ${result.cronbachAlpha.alpha}, items = ${result.cronbachAlpha.itemCount}` });
+    }
+    if (result.pca) {
+      results.push({ label: `PCA`, value: `${result.pca.components.length} components, KMO = ${result.pca.kmo?.toFixed(3) || "N/A"}` });
+    }
+  }
+
+  return results;
+}
 
 const labels: Record<string, Record<string, string>> = {
   fr: {
