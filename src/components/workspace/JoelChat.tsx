@@ -518,6 +518,45 @@ Keep under 80 words.`;
       : `${t("joel.varSelected")}: ${selectedIndVars.join(", ")}`;
     setMessages(prev => [...prev, { role: "user", content: `📊 ${varInfo}` }]);
     scrollToBottom();
+
+    // Run assumption validation before executing
+    if (dataset?.rawData) {
+      const results: ValidationResult[] = [];
+      const expanded = expandAnalysisKeys(selectedAnalyses);
+
+      for (const analysis of expanded) {
+        try {
+          if ((analysis === "t_test") && selectedDepVar && selectedIndVars.length > 0) {
+            results.push(validateTTest(dataset.rawData as Record<string, unknown>[], selectedDepVar, selectedIndVars[0]));
+          } else if ((analysis === "anova" || analysis === "anova_basic") && selectedDepVar && selectedIndVars.length > 0) {
+            results.push(validateAnova(dataset.rawData as Record<string, unknown>[], selectedDepVar, selectedIndVars[0]));
+          } else if (analysis === "correlation" && selectedIndVars.length >= 2) {
+            results.push(validateCorrelation(dataset.rawData as Record<string, unknown>[], selectedIndVars[0], selectedIndVars[1]));
+          } else if ((analysis === "simple_regression" || analysis === "multiple_regression" || analysis === "logistic_regression") && selectedDepVar) {
+            results.push(validateRegression(dataset.rawData as Record<string, unknown>[], selectedDepVar, selectedIndVars));
+          } else if ((analysis === "chi_square" || analysis === "crosstab") && selectedDepVar && selectedIndVars.length > 0) {
+            results.push(validateChiSquare(dataset.rawData as Record<string, unknown>[], selectedDepVar, selectedIndVars[0]));
+          } else if ((analysis === "pca" || analysis === "factor_analysis") && selectedIndVars.length >= 2) {
+            results.push(validatePCA(dataset.rawData as Record<string, unknown>[], selectedIndVars));
+          }
+        } catch { /* validation failed silently — proceed anyway */ }
+      }
+
+      const hasWarnings = results.some(r => !r.valid);
+      setValidationResults(results);
+
+      if (hasWarnings) {
+        setPhase("validation");
+        // Build validation message for AI
+        const warnings = results
+          .filter(r => !r.valid)
+          .map(r => `${r.analysisType}: ${r.checks.filter(c => !c.passed).map(c => c.detail).join("; ")}${r.alternativeSuggestion ? ` → ${r.alternativeSuggestion}` : ""}`)
+          .join("\n");
+        sendToAI(`Assumption validation detected issues:\n${warnings}\n\nAcknowledge the warnings briefly. Tell the student they can proceed anyway or choose the suggested alternative. Keep under 60 words. Use academic tone.`);
+        return;
+      }
+    }
+
     executeAnalyses();
   };
 
