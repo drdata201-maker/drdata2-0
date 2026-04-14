@@ -10,7 +10,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Table2, MessageSquare, BookOpen, Download, Loader2, Upload, Eye } from "lucide-react";
-import { exportDocx, exportPdf, exportXlsx, type ExportData } from "@/lib/exportUtils";
+import { exportDocx, exportPdf, exportXlsx, formatTestResultsAdaptive, type ExportData } from "@/lib/exportUtils";
+import type { StatSoftware } from "@/lib/softwareFormatter";
 import { buildChartData, type ChartItem } from "@/lib/chartDataBuilder";
 import { renderChartsToImages } from "@/lib/chartImageRenderer";
 import {
@@ -81,7 +82,8 @@ function MiniChart({ chart, colors, barRadius, showGrid, showLabels }: { chart: 
 export function WorkspaceExport({ projectTitle, projectType, projectDomain, projectDescription, level, projectContext }: WorkspaceExportProps) {
   const { t, lang } = useLanguage();
   const localizedProjectContext = useMemo(() => getLocalizedProjectContext(projectContext, t), [projectContext, t]);
-  const { dataset, analysisResults, interpretationData, cachedCharts, tableOverrides, chartOverrides } = useDataset();
+  const { dataset, analysisResults, interpretationData, cachedCharts, tableOverrides, chartOverrides, chatState } = useDataset();
+  const selectedSoftware = chatState?.selectedSoftware || "";
   const { settings: chartSettings } = useChartStyle();
   const [loading, setLoading] = useState<string | null>(null);
   const [previewContent, setPreviewContent] = useState<ContentType | null>(null);
@@ -101,7 +103,6 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
     if (!dataset || analysisResults.length === 0) return null;
 
     const statsTable: ExportData["statsTable"] = [];
-    const testResults: ExportData["testResults"] = [];
 
     for (const result of analysisResults) {
       if (result.descriptive) {
@@ -109,39 +110,11 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
           statsTable.push({ variable: d.variable, n: d.n, mean: d.mean, std: d.std, min: d.min, max: d.max });
         }
       }
-      if (result.correlations) {
-        for (const c of result.correlations) {
-          testResults.push({ label: `r(${c.var1}, ${c.var2})`, value: String(c.r) });
-          testResults.push({ label: `p-value (${c.var1}, ${c.var2})`, value: String(c.pValue) });
-        }
-      }
-      if (result.regressions) {
-        for (const reg of result.regressions) {
-          testResults.push({ label: `R² (${reg.dependent})`, value: String(reg.rSquared) });
-          testResults.push({ label: `Adj. R² (${reg.dependent})`, value: String(reg.adjustedR2) });
-          testResults.push({ label: `F (${reg.dependent})`, value: String(reg.fStat) });
-        }
-      }
-      if (result.tTests) {
-        for (const tt of result.tTests) {
-          testResults.push({ label: `t(${tt.df})`, value: String(tt.tStat) });
-          testResults.push({ label: `p-value (${tt.variable})`, value: String(tt.pValue) });
-        }
-      }
-      if (result.anovas) {
-        for (const a of result.anovas) {
-          testResults.push({ label: `F(${a.dfBetween},${a.dfWithin})`, value: String(a.fStat) });
-          testResults.push({ label: `p-value (${a.dependent})`, value: String(a.pValue) });
-        }
-      }
-      if (result.chiSquares) {
-        for (const c of result.chiSquares) {
-          testResults.push({ label: `χ² (${c.var1}×${c.var2})`, value: String(c.chiSquare) });
-          testResults.push({ label: `p-value (${c.var1}×${c.var2})`, value: String(c.pValue) });
-          testResults.push({ label: `Cramér's V`, value: String(c.cramersV) });
-        }
-      }
     }
+
+    // Use adaptive software formatting for test results
+    const sw = (selectedSoftware || "").toLowerCase() as StatSoftware;
+    const testResults = formatTestResultsAdaptive(analysisResults, sw);
 
     let interpretation = "";
     let conclusion = "";
@@ -181,8 +154,9 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
       mediatorVars: localizedProjectContext?.mediatorVars,
       moderatorVars: localizedProjectContext?.moderatorVars,
       conceptualModel: localizedProjectContext?.conceptualModel,
+      software: sw,
     };
-  }, [dataset, analysisResults, interpretationData, projectTitle, projectType, projectDomain, projectDescription, level, lang, t]);
+  }, [dataset, analysisResults, interpretationData, projectTitle, projectType, projectDomain, projectDescription, level, lang, t, selectedSoftware]);
 
   const handleExport = async (content: ContentType, format: FormatType) => {
     const key = `${content}-${format}`;

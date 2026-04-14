@@ -7,6 +7,7 @@ import { dataUrlToUint8Array } from "./chartImageRenderer";
 import { getTableLabel, getFigureLabel, generateTableInterpretation, generateFigureInterpretation, getDescriptiveHeaders } from "./academicFormatter";
 import type { AnalysisResultItem } from "./statsEngine";
 import { stripLatex } from "./latexSanitizer";
+import { formatChiSquare, formatTTest, formatAnova, formatCorrelation, formatRSquared, formatPValue, type StatSoftware } from "./softwareFormatter";
 
 export interface ChartImage {
   title: string;
@@ -49,6 +50,83 @@ export interface ExportData {
   mediatorVars?: string;
   moderatorVars?: string;
   conceptualModel?: string;
+  software?: StatSoftware;
+}
+
+/** Format test results with software-adaptive notation */
+export function formatTestResultsAdaptive(analysisResults: AnalysisResultItem[], software: StatSoftware): { label: string; value: string }[] {
+  const opts = { software };
+  const results: { label: string; value: string }[] = [];
+
+  for (const result of analysisResults) {
+    if (result.correlations) {
+      for (const c of result.correlations) {
+        results.push({ label: `Pearson (${c.var1} × ${c.var2})`, value: formatCorrelation(c.r, c.pValue, c.n, "pearson", opts) });
+      }
+    }
+    if (result.spearmanCorrelations) {
+      for (const s of result.spearmanCorrelations) {
+        results.push({ label: `Spearman (${s.var1} × ${s.var2})`, value: formatCorrelation(s.rho, s.pValue, s.n, "spearman", opts) });
+      }
+    }
+    if (result.regressions) {
+      for (const reg of result.regressions) {
+        results.push({ label: `${reg.dependent}`, value: formatRSquared(reg.rSquared, reg.adjustedR2, opts) });
+        for (const coeff of reg.coefficients) {
+          results.push({ label: `  ${coeff.variable}`, value: `b = ${coeff.b}, SE = ${coeff.se}, t = ${coeff.t}, ${formatPValue(coeff.p, opts)}` });
+        }
+      }
+    }
+    if (result.tTests) {
+      for (const tt of result.tTests) {
+        results.push({ label: `T-test: ${tt.variable}`, value: formatTTest(tt.tStat, tt.df, tt.pValue, opts) });
+      }
+    }
+    if (result.pairedTTests) {
+      for (const pt of result.pairedTTests) {
+        results.push({ label: `Paired t-test: ${pt.var1} × ${pt.var2}`, value: formatTTest(pt.tStat, pt.df, pt.pValue, opts) });
+      }
+    }
+    if (result.anovas) {
+      for (const a of result.anovas) {
+        results.push({ label: `ANOVA: ${a.dependent} × ${a.factor}`, value: formatAnova(a.fStat, a.dfBetween, a.dfWithin, a.pValue, opts) });
+      }
+    }
+    if (result.chiSquares) {
+      for (const c of result.chiSquares) {
+        results.push({ label: `Chi²: ${c.var1} × ${c.var2}`, value: formatChiSquare(c.chiSquare, c.df, c.pValue, opts) });
+        results.push({ label: `  Cramér's V`, value: c.cramersV.toFixed(3) });
+      }
+    }
+    if (result.mannWhitney) {
+      for (const mw of result.mannWhitney) {
+        results.push({ label: `Mann-Whitney: ${mw.variable}`, value: `U = ${mw.U}, ${formatPValue(mw.pValue, opts)}` });
+      }
+    }
+    if (result.wilcoxon) {
+      for (const w of result.wilcoxon) {
+        results.push({ label: `Wilcoxon: ${w.var1} × ${w.var2}`, value: `W = ${w.W}, ${formatPValue(w.pValue, opts)}` });
+      }
+    }
+    if (result.kruskalWallis) {
+      for (const kw of result.kruskalWallis) {
+        results.push({ label: `Kruskal-Wallis: ${kw.dependent}`, value: `H = ${kw.H}, df = ${kw.df}, ${formatPValue(kw.pValue, opts)}` });
+      }
+    }
+    if (result.shapiroWilk) {
+      for (const sw of result.shapiroWilk) {
+        results.push({ label: `Shapiro-Wilk: ${sw.variable}`, value: `W = ${sw.W}, ${formatPValue(sw.pValue, opts)}` });
+      }
+    }
+    if (result.cronbachAlpha) {
+      results.push({ label: `Cronbach's Alpha`, value: `α = ${result.cronbachAlpha.alpha}, items = ${result.cronbachAlpha.itemCount}` });
+    }
+    if (result.pca) {
+      results.push({ label: `PCA`, value: `${result.pca.components.length} components, KMO = ${result.pca.kmo?.toFixed(3) || "N/A"}` });
+    }
+  }
+
+  return results;
 }
 
 type ExportContent = "full" | "results" | "graphs" | "interpretation" | "conclusion";
@@ -418,8 +496,182 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
       sections.push(new Paragraph({ children: [] }));
     }
 
-    // Test results table with academic numbering
-    if (data.testResults.length > 0) {
+    // Per-analysis sequential tables with adaptive formatting
+    if (data.analysisResults && data.analysisResults.length > 0) {
+      const sw = data.software || "" as StatSoftware;
+      const opts = { software: sw };
+      const cellBorder = { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" };
+      const borders = { top: cellBorder, bottom: cellBorder, left: cellBorder, right: cellBorder };
+
+      const makeTableHeader = (headers: string[]) => new TableRow({
+        children: headers.map(h => new TableCell({
+          borders,
+          shading: { fill: "2563EB", type: ShadingType.CLEAR },
+          width: { size: Math.floor(9360 / headers.length), type: WidthType.DXA },
+          children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, color: "FFFFFF", size: 20 })] })],
+        })),
+      });
+
+      const makeRow = (cells: string[], widths?: number[]) => new TableRow({
+        children: cells.map((v, i) => new TableCell({
+          borders,
+          width: { size: widths ? widths[i] : Math.floor(9360 / cells.length), type: WidthType.DXA },
+          children: [new Paragraph({ children: [new TextRun({ text: v, size: 20 })] })],
+        })),
+      });
+
+      for (const result of data.analysisResults) {
+        // Chi-square / Cross-tab
+        if (result.chiSquares) {
+          for (const chi of result.chiSquares) {
+            sections.push(new Paragraph({
+              spacing: { before: 200, after: 80 },
+              children: [
+                new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+                new TextRun({ text: `Chi-square — ${chi.var1} × ${chi.var2}`, bold: true, size: 22 }),
+              ],
+            }));
+
+            // Contingency table
+            if (chi.contingencyTable) {
+              const ct = chi.contingencyTable;
+              const ctHeaders = ["", ...ct.colLabels, "Total"];
+              const ctRows = ct.rowLabels.map((rl, ri) => [
+                rl,
+                ...ct.observed[ri].map((o, ci) => `${o} (${ct.expected[ri][ci]})`),
+                String(ct.rowTotals[ri]),
+              ]);
+              ctRows.push(["Total", ...ct.colTotals.map(String), String(ct.grandTotal)]);
+
+              sections.push(new Table({
+                width: { size: 9360, type: WidthType.DXA },
+                columnWidths: Array(ctHeaders.length).fill(Math.floor(9360 / ctHeaders.length)),
+                rows: [makeTableHeader(ctHeaders), ...ctRows.map(r => makeRow(r))],
+              }));
+            }
+
+            // Stats summary
+            sections.push(new Paragraph({
+              spacing: { before: 60, after: 40 },
+              children: [new TextRun({ text: formatChiSquare(chi.chiSquare, chi.df, chi.pValue, opts), size: 20, italics: true })],
+            }));
+            sections.push(new Paragraph({
+              spacing: { after: 40 },
+              children: [new TextRun({ text: `Cramér's V = ${chi.cramersV.toFixed(3)}`, size: 20, italics: true })],
+            }));
+
+            const interp = generateTableInterpretation(result, data.lang, data.level);
+            if (interp) {
+              sections.push(new Paragraph({
+                spacing: { before: 40, after: 120 },
+                children: [new TextRun({ text: interp, italics: true, size: 20 })],
+              }));
+            }
+
+            tableNum++;
+            sections.push(new Paragraph({ children: [] }));
+          }
+        }
+
+        // Correlations
+        if (result.correlations && result.correlations.length > 0) {
+          sections.push(new Paragraph({
+            spacing: { before: 200, after: 80 },
+            children: [
+              new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+              new TextRun({ text: "Correlations", bold: true, size: 22 }),
+            ],
+          }));
+          const corrRows = result.correlations.map(c => makeRow([
+            `${c.var1} × ${c.var2}`,
+            formatCorrelation(c.r, c.pValue, c.n, "pearson", opts),
+          ], [3120, 6240]));
+          sections.push(new Table({
+            width: { size: 9360, type: WidthType.DXA },
+            columnWidths: [3120, 6240],
+            rows: [makeTableHeader(["Variables", "Result"]), ...corrRows],
+          }));
+          tableNum++;
+          sections.push(new Paragraph({ children: [] }));
+        }
+
+        // T-tests
+        if (result.tTests && result.tTests.length > 0) {
+          for (const tt of result.tTests) {
+            sections.push(new Paragraph({
+              spacing: { before: 200, after: 80 },
+              children: [
+                new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+                new TextRun({ text: `T-test — ${tt.variable}`, bold: true, size: 22 }),
+              ],
+            }));
+            const rows = tt.groups.map((g, i) => makeRow([g, tt.means[i].toFixed(3)], [4680, 4680]));
+            rows.push(makeRow(["Result", formatTTest(tt.tStat, tt.df, tt.pValue, opts)], [4680, 4680]));
+            sections.push(new Table({
+              width: { size: 9360, type: WidthType.DXA },
+              columnWidths: [4680, 4680],
+              rows: [makeTableHeader(["Group", "Mean"]), ...rows],
+            }));
+            tableNum++;
+            sections.push(new Paragraph({ children: [] }));
+          }
+        }
+
+        // ANOVA
+        if (result.anovas && result.anovas.length > 0) {
+          for (const a of result.anovas) {
+            sections.push(new Paragraph({
+              spacing: { before: 200, after: 80 },
+              children: [
+                new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+                new TextRun({ text: `ANOVA — ${a.dependent} × ${a.factor}`, bold: true, size: 22 }),
+              ],
+            }));
+            const rows = a.groups.map(g => makeRow([g.name, String(g.n), g.mean.toFixed(3), g.std.toFixed(3)]));
+            rows.push(makeRow(["Result", "", formatAnova(a.fStat, a.dfBetween, a.dfWithin, a.pValue, opts), ""]));
+            sections.push(new Table({
+              width: { size: 9360, type: WidthType.DXA },
+              columnWidths: [2340, 2340, 2340, 2340],
+              rows: [makeTableHeader(["Group", "N", "Mean", "Std. Dev."]), ...rows],
+            }));
+            tableNum++;
+            sections.push(new Paragraph({ children: [] }));
+          }
+        }
+
+        // Regression
+        if (result.regressions && result.regressions.length > 0) {
+          for (const reg of result.regressions) {
+            sections.push(new Paragraph({
+              spacing: { before: 200, after: 80 },
+              children: [
+                new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+                new TextRun({ text: `Regression — ${reg.dependent}`, bold: true, size: 22 }),
+              ],
+            }));
+            const rows = reg.coefficients.map(c => makeRow([
+              c.variable, c.b.toFixed(4), c.se.toFixed(4), c.t.toFixed(3), formatPValue(c.p, opts),
+            ]));
+            sections.push(new Table({
+              width: { size: 9360, type: WidthType.DXA },
+              columnWidths: [1872, 1872, 1872, 1872, 1872],
+              rows: [makeTableHeader(["Variable", "B", "SE", "t", "p"]), ...rows],
+            }));
+            sections.push(new Paragraph({
+              spacing: { before: 60, after: 120 },
+              children: [new TextRun({ text: formatRSquared(reg.rSquared, reg.adjustedR2, opts), italics: true, size: 20 })],
+            }));
+            tableNum++;
+            sections.push(new Paragraph({ children: [] }));
+          }
+        }
+      }
+    }
+
+    // Legacy test results fallback (if no analysisResults)
+    if ((!data.analysisResults || data.analysisResults.length === 0) && data.testResults.length > 0) {
+      const cellBorder = { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" };
+      const borders = { top: cellBorder, bottom: cellBorder, left: cellBorder, right: cellBorder };
       sections.push(new Paragraph({
         spacing: { before: 200, after: 80 },
         children: [
@@ -427,9 +679,6 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
           new TextRun({ text: t.testResults, bold: true, size: 22 }),
         ],
       }));
-
-      const cellBorder = { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" };
-      const borders = { top: cellBorder, bottom: cellBorder, left: cellBorder, right: cellBorder };
       const headerRow = new TableRow({
         children: ["Test", t.variable.charAt(0).toUpperCase() + t.variable.slice(1)].map(h => new TableCell({
           borders,
@@ -445,15 +694,11 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
           children: [new Paragraph({ children: [new TextRun({ text: v, size: 20 })] })],
         })),
       }));
-
       sections.push(new Table({
         width: { size: 9360, type: WidthType.DXA },
         columnWidths: [4680, 4680],
         rows: [headerRow, ...testRows],
       }));
-
-      sections.push(new Paragraph({ spacing: { before: 60, after: 120 }, children: [] }));
-
       tableNum++;
       sections.push(new Paragraph({ children: [] }));
     }
