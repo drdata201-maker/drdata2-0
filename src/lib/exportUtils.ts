@@ -124,6 +124,9 @@ export function formatTestResultsAdaptive(analysisResults: AnalysisResultItem[],
     if (result.pca) {
       results.push({ label: `PCA`, value: `${result.pca.components.length} components, KMO = ${result.pca.kmo?.toFixed(3) || "N/A"}` });
     }
+    if (result.factorAnalysis) {
+      results.push({ label: `Factor Analysis`, value: `${result.factorAnalysis.factors.length} factors (${result.factorAnalysis.rotation})` });
+    }
   }
 
   return results;
