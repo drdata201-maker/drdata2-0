@@ -988,5 +988,21 @@
   "export.controlVars": "Variables de control",
   "export.mediatorVars": "Variables mediadoras",
   "export.moderatorVars": "Variables moderadoras",
-  "common.sessionExpired": "Sesión expirada, inicie sesión de nuevo"
+  "common.sessionExpired": "Sesión expirada, inicie sesión de nuevo",
+  "results.pairedTTest": "Prueba t pareada",
+  "results.meanDiff": "Diferencia de medias",
+  "results.spearman": "Correlación de Spearman",
+  "results.kendall": "Tau-b de Kendall",
+  "results.mannWhitney": "Prueba U de Mann-Whitney",
+  "results.wilcoxon": "Prueba de Wilcoxon",
+  "results.kruskalWallis": "Prueba de Kruskal-Wallis",
+  "results.shapiroWilk": "Prueba de normalidad de Shapiro-Wilk",
+  "results.cronbachAlpha": "Alfa de Cronbach",
+  "results.meanRank": "Rango medio",
+  "results.normality": "Normalidad",
+  "results.reliability": "Fiabilidad",
+  "results.itemCount": "Número de ítems",
+  "results.variables": "Variables",
+  "results.yes": "Sí",
+  "results.no": "No"
 }

@@ -988,5 +988,21 @@
   "export.controlVars": "Control Variables",
   "export.mediatorVars": "Mediator Variables",
   "export.moderatorVars": "Moderator Variables",
-  "common.sessionExpired": "Session expired, please log in again"
+  "common.sessionExpired": "Session expired, please log in again",
+  "results.pairedTTest": "Paired t-Test",
+  "results.meanDiff": "Mean Difference",
+  "results.spearman": "Spearman Correlation",
+  "results.kendall": "Kendall Tau-b",
+  "results.mannWhitney": "Mann-Whitney U Test",
+  "results.wilcoxon": "Wilcoxon Signed-Rank Test",
+  "results.kruskalWallis": "Kruskal-Wallis Test",
+  "results.shapiroWilk": "Shapiro-Wilk Normality Test",
+  "results.cronbachAlpha": "Cronbach's Alpha",
+  "results.meanRank": "Mean Rank",
+  "results.normality": "Normality",
+  "results.reliability": "Reliability",
+  "results.itemCount": "Number of Items",
+  "results.variables": "Variables",
+  "results.yes": "Yes",
+  "results.no": "No"
 }
