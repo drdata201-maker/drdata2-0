@@ -933,27 +933,162 @@ export function exportPdf(data: ExportData, content: ExportContent) {
     tableNum++;
     y += 4;
 
-    addH2(t.testResults);
+    // Per-analysis sequential tables (matching Word structure)
+    if (data.analysisResults && data.analysisResults.length > 0) {
+      const sw = data.software || "" as StatSoftware;
+      const opts = { software: sw };
 
-    // Academic table title for test results
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text(`${tableLabel} ${tableNum}: ${t.testResults}`, 14, y);
-    y += 6;
+      for (const result of data.analysisResults) {
+        // Chi-square with contingency table
+        if (result.chiSquares) {
+          for (const chi of result.chiSquares) {
+            if (y > 200) { doc.addPage(); y = 20; }
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${tableLabel} ${tableNum}: Chi² — ${chi.var1} × ${chi.var2}`, 14, y);
+            y += 6;
 
-    autoTable(doc, {
-      startY: y,
-      head: [["Test", t.variable]],
-      body: data.testResults.map(r => [r.label, r.value]),
-      theme: "grid",
-      headStyles: { fillColor: [37, 99, 235] },
-      margin: { left: 14 },
-    });
-    y = (doc as any).lastAutoTable.finalY + 4;
+            if (chi.contingencyTable) {
+              const ct = chi.contingencyTable;
+              const ctHead = [["", ...ct.colLabels, "Total"]];
+              const ctBody = ct.rowLabels.map((rl, ri) => [
+                rl,
+                ...ct.observed[ri].map((o, ci) => `${o} (${ct.expected[ri][ci].toFixed(1)})`),
+                String(ct.rowTotals[ri]),
+              ]);
+              ctBody.push(["Total", ...ct.colTotals.map(String), String(ct.grandTotal)]);
 
-    y += 4;
-    doc.setFont("helvetica", "normal");
-  }
+              autoTable(doc, {
+                startY: y, head: ctHead, body: ctBody, theme: "grid",
+                headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+              });
+              y = (doc as any).lastAutoTable.finalY + 4;
+            }
+
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "italic");
+            doc.text(formatChiSquare(chi.chiSquare, chi.df, chi.pValue, opts), 14, y);
+            y += 5;
+            doc.text(`Cramér's V = ${chi.cramersV.toFixed(3)}`, 14, y);
+            y += 5;
+
+            const interp = generateTableInterpretation(result, data.lang, data.level);
+            if (interp) {
+              const interpLines = doc.splitTextToSize(interp, 180);
+              doc.text(interpLines, 14, y);
+              y += interpLines.length * 5 + 4;
+            }
+            doc.setFont("helvetica", "normal");
+            tableNum++;
+            y += 4;
+          }
+        }
+
+        // Correlations
+        if (result.correlations && result.correlations.length > 0) {
+          if (y > 220) { doc.addPage(); y = 20; }
+          doc.setFontSize(11);
+          doc.setFont("helvetica", "bold");
+          doc.text(`${tableLabel} ${tableNum}: Correlations`, 14, y);
+          y += 6;
+
+          autoTable(doc, {
+            startY: y,
+            head: [["Variables", "r", "p", "N"]],
+            body: result.correlations.map(c => [`${c.var1} × ${c.var2}`, c.r.toFixed(3), c.pValue.toFixed(4), String(c.n)]),
+            theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+          });
+          y = (doc as any).lastAutoTable.finalY + 8;
+          tableNum++;
+        }
+
+        // T-tests
+        if (result.tTests && result.tTests.length > 0) {
+          for (const tt of result.tTests) {
+            if (y > 220) { doc.addPage(); y = 20; }
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${tableLabel} ${tableNum}: T-test — ${tt.variable}`, 14, y);
+            y += 6;
+
+            const rows = tt.groups.map((g, i) => [g, tt.means[i].toFixed(3)]);
+            rows.push(["Result", formatTTest(tt.tStat, tt.df, tt.pValue, opts)]);
+            autoTable(doc, {
+              startY: y, head: [["Group", "Mean"]], body: rows,
+              theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 8;
+            tableNum++;
+          }
+        }
+
+        // ANOVA
+        if (result.anovas && result.anovas.length > 0) {
+          for (const a of result.anovas) {
+            if (y > 200) { doc.addPage(); y = 20; }
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${tableLabel} ${tableNum}: ANOVA — ${a.dependent} × ${a.factor}`, 14, y);
+            y += 6;
+
+            const rows = a.groups.map(g => [g.name, String(g.n), g.mean.toFixed(3), g.std.toFixed(3)]);
+            rows.push(["Result", "", formatAnova(a.fStat, a.dfBetween, a.dfWithin, a.pValue, opts), ""]);
+            autoTable(doc, {
+              startY: y, head: [["Group", "N", "Mean", "Std. Dev."]], body: rows,
+              theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 8;
+            tableNum++;
+          }
+        }
+
+        // Regression
+        if (result.regressions && result.regressions.length > 0) {
+          for (const reg of result.regressions) {
+            if (y > 200) { doc.addPage(); y = 20; }
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${tableLabel} ${tableNum}: Regression — ${reg.dependent}`, 14, y);
+            y += 6;
+
+            const rows = reg.coefficients.map(c => [c.variable, c.b.toFixed(4), c.se.toFixed(4), c.t.toFixed(3), formatPValue(c.p, opts)]);
+            autoTable(doc, {
+              startY: y, head: [["Variable", "B", "SE", "t", "p"]], body: rows,
+              theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 4;
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "italic");
+            doc.text(formatRSquared(reg.rSquared, reg.adjustedR2, opts), 14, y);
+            y += 5;
+            doc.setFont("helvetica", "normal");
+            y += 4;
+            tableNum++;
+          }
+        }
+      }
+    }
+
+    // Legacy test results fallback
+    if ((!data.analysisResults || data.analysisResults.length === 0) && data.testResults.length > 0) {
+      addH2(t.testResults);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.text(`${tableLabel} ${tableNum}: ${t.testResults}`, 14, y);
+      y += 6;
+
+      autoTable(doc, {
+        startY: y,
+        head: [["Test", t.variable]],
+        body: data.testResults.map(r => [r.label, r.value]),
+        theme: "grid",
+        headStyles: { fillColor: [37, 99, 235] },
+        margin: { left: 14 },
+      });
+      y = (doc as any).lastAutoTable.finalY + 4;
+      y += 4;
+      doc.setFont("helvetica", "normal");
+    }
 
   // Charts in PDF with academic formatting
   if ((content === "full" || content === "results") && data.chartImages && data.chartImages.length > 0) {
