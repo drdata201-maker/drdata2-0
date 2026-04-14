@@ -1107,6 +1107,48 @@ Keep under 120 words. Use academic language.`);
           </div>
         )}
 
+        {/* Validation warnings */}
+        {phase === "validation" && !isStreaming && validationResults.length > 0 && (
+          <div className="mt-2 space-y-3">
+            {validationResults.map((vr, vi) => (
+              <div key={vi} className={`rounded-lg border p-3 space-y-2 ${vr.valid ? "border-green-500/30 bg-green-500/5" : "border-yellow-500/30 bg-yellow-500/5"}`}>
+                <div className="flex items-center gap-2">
+                  {vr.valid
+                    ? <ShieldCheck className="h-4 w-4 text-green-600" />
+                    : <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                  }
+                  <span className="text-xs font-semibold text-foreground">{vr.analysisType}</span>
+                  <Badge variant={vr.valid ? "default" : "outline"} className={`text-[9px] ${vr.valid ? "bg-green-600" : "border-yellow-500 text-yellow-700"}`}>
+                    {vr.valid ? t("joel.validation.passed") : t("joel.validation.warning")}
+                  </Badge>
+                </div>
+                {vr.checks.filter(c => !c.passed).map((check, ci) => (
+                  <div key={ci} className="text-xs text-muted-foreground pl-6 space-y-0.5">
+                    <p>⚠ <strong>{check.assumption}</strong>: {check.detail}</p>
+                    {check.suggestion && <p className="text-yellow-700 dark:text-yellow-400 italic">{check.suggestion}</p>}
+                  </div>
+                ))}
+                {vr.alternativeSuggestion && !vr.valid && (
+                  <p className="text-xs text-primary pl-6 font-medium">💡 {vr.alternativeSuggestion}</p>
+                )}
+                {vr.valid && (
+                  <p className="text-xs text-green-700 dark:text-green-400 pl-6">{t("joel.validation.allPassed")}</p>
+                )}
+              </div>
+            ))}
+            <div className="flex gap-2">
+              <Button size="sm" onClick={() => executeAnalyses()} className="gap-1.5">
+                <Sparkles className="h-3.5 w-3.5" />
+                {t("joel.validation.proceedAnyway")}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => { setPhase("analysis"); setValidationResults([]); }} className="gap-1.5">
+                <RotateCcw className="h-3.5 w-3.5" />
+                {t("joel.validation.changeAnalysis")}
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Quick action buttons after analysis */}
         {phase === "ready" && !isStreaming && (
           <div className="mt-3 space-y-2">
