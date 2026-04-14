@@ -244,6 +244,7 @@ export function JoelChat({ projectId, projectTitle, projectType, projectDomain, 
   const [isStreaming, setIsStreaming] = useState(false);
   const [selectedDepVar, setSelectedDepVar] = useState("");
   const [selectedIndVars, setSelectedIndVars] = useState<string[]>([]);
+  const [validationResults, setValidationResults] = useState<ValidationResult[]>([]);
   const analyticalGraphMode = chatState.analyticalGraphMode;
   const setAnalyticalGraphMode = useCallback((v: "standard" | "advanced" | "presentation") => {
     setChatState(prev => ({ ...prev, analyticalGraphMode: v }));
