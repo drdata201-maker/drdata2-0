@@ -1089,6 +1089,8 @@ export function exportPdf(data: ExportData, content: ExportContent) {
       y += 4;
       doc.setFont("helvetica", "normal");
     }
+    y += 2;
+  }
 
   // Charts in PDF with academic formatting
   if ((content === "full" || content === "results") && data.chartImages && data.chartImages.length > 0) {
