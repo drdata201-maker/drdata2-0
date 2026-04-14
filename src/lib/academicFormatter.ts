@@ -626,4 +626,317 @@ export function generateFigureInterpretation(
   return "";
 }
 
+// ─── Academic Report Structure (Sections 3.1–3.9) for Licence ───
+
+export interface AcademicSection {
+  number: string;
+  title: string;
+  content: string;
+  tables?: { label: string; title: string; data: string[][] ; headers: string[] }[];
+}
+
+export interface AcademicReport {
+  sections: AcademicSection[];
+  level: string;
+  lang: string;
+}
+
+const SECTION_TITLES: Record<string, Record<string, string>> = {
+  fr: {
+    "3.1": "Statistiques descriptives",
+    "3.2": "Tableaux de fréquences",
+    "3.3": "Tableaux croisés et test du Chi-carré",
+    "3.4": "Corrélations",
+    "3.5": "Comparaison de moyennes (T-test)",
+    "3.6": "Analyse de variance (ANOVA)",
+    "3.7": "Régression",
+    "3.8": "Interprétation générale des résultats",
+    "3.9": "Conclusion et recommandations",
+  },
+  en: {
+    "3.1": "Descriptive Statistics",
+    "3.2": "Frequency Tables",
+    "3.3": "Cross-tabulation and Chi-Square Test",
+    "3.4": "Correlations",
+    "3.5": "Comparison of Means (T-test)",
+    "3.6": "Analysis of Variance (ANOVA)",
+    "3.7": "Regression",
+    "3.8": "General Interpretation of Results",
+    "3.9": "Conclusion and Recommendations",
+  },
+  es: {
+    "3.1": "Estadísticas descriptivas",
+    "3.2": "Tablas de frecuencias",
+    "3.3": "Tablas cruzadas y prueba Chi-cuadrado",
+    "3.4": "Correlaciones",
+    "3.5": "Comparación de medias (T-test)",
+    "3.6": "Análisis de varianza (ANOVA)",
+    "3.7": "Regresión",
+    "3.8": "Interpretación general de los resultados",
+    "3.9": "Conclusión y recomendaciones",
+  },
+  de: {
+    "3.1": "Deskriptive Statistik",
+    "3.2": "Häufigkeitstabellen",
+    "3.3": "Kreuztabellen und Chi-Quadrat-Test",
+    "3.4": "Korrelationen",
+    "3.5": "Mittelwertvergleich (T-Test)",
+    "3.6": "Varianzanalyse (ANOVA)",
+    "3.7": "Regression",
+    "3.8": "Allgemeine Interpretation der Ergebnisse",
+    "3.9": "Schlussfolgerung und Empfehlungen",
+  },
+  pt: {
+    "3.1": "Estatísticas descritivas",
+    "3.2": "Tabelas de frequências",
+    "3.3": "Tabelas cruzadas e teste Qui-quadrado",
+    "3.4": "Correlações",
+    "3.5": "Comparação de médias (T-test)",
+    "3.6": "Análise de variância (ANOVA)",
+    "3.7": "Regressão",
+    "3.8": "Interpretação geral dos resultados",
+    "3.9": "Conclusão e recomendações",
+  },
+};
+
+function sectionTitle(num: string, lang: string): string {
+  return (SECTION_TITLES[lang] || SECTION_TITLES.en)[num] || "";
+}
+
+/**
+ * Generate a structured academic report (sections 3.1–3.9) from analysis results.
+ * Designed for Licence level — clean, sequential, with inline interpretations.
+ */
+export function generateAcademicReport(
+  results: AnalysisResultItem[],
+  lang: string,
+  level: string,
+  ctx?: ProjectContext,
+  globalInterpretation?: string,
+  globalConclusion?: string,
+  globalRecommendations?: string,
+): AcademicReport {
+  const sections: AcademicSection[] = [];
+  const tableLabel = getTableLabel(lang);
+  let tableNum = 0;
+
+  // Helper: no-data message
+  const noData: Record<string, string> = {
+    fr: "Aucune analyse de ce type n'a été réalisée dans ce projet.",
+    en: "No analysis of this type was performed in this project.",
+    es: "No se realizó ningún análisis de este tipo en este proyecto.",
+    de: "Für dieses Projekt wurde keine Analyse dieses Typs durchgeführt.",
+    pt: "Nenhuma análise deste tipo foi realizada neste projeto.",
+  };
+
+  // 3.1 Descriptive Statistics
+  const descriptives = results.flatMap(r => (r.descriptive || []).filter(d => !isIdentifierVariable(d.variable)));
+  {
+    const interps: string[] = [];
+    if (descriptives.length > 0) {
+      for (const d of descriptives) {
+        interps.push(interpDescriptive(d, lang));
+      }
+      tableNum++;
+    }
+    sections.push({
+      number: "3.1",
+      title: sectionTitle("3.1", lang),
+      content: descriptives.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en),
+    });
+  }
+
+  // 3.2 Frequency Tables
+  const frequencies = results.flatMap(r => (r.frequencies || []).filter(f => !isIdentifierVariable(f.variable)));
+  {
+    const interps: string[] = [];
+    if (frequencies.length > 0) {
+      for (const f of frequencies) {
+        tableNum++;
+        const sorted = [...f.counts].sort((a, b) => b.count - a.count);
+        const topCat = sorted[0];
+        const total = sorted.reduce((s, c) => s + c.count, 0);
+        const topPct = total > 0 ? ((topCat.count / total) * 100).toFixed(1) : "0";
+        const freqInterp: Record<string, string> = {
+          fr: `La distribution de « ${f.variable} » montre que la modalité « ${topCat.value} » est la plus fréquente avec ${topCat.count} occurrences (${topPct}%). ${sorted.length} modalités ont été identifiées au total.`,
+          en: `The distribution of "${f.variable}" shows that "${topCat.value}" is the most frequent category with ${topCat.count} occurrences (${topPct}%). ${sorted.length} categories were identified in total.`,
+          es: `La distribución de "${f.variable}" muestra que "${topCat.value}" es la categoría más frecuente con ${topCat.count} ocurrencias (${topPct}%). Se identificaron ${sorted.length} categorías en total.`,
+          de: `Die Verteilung von "${f.variable}" zeigt, dass "${topCat.value}" mit ${topCat.count} Vorkommen (${topPct}%) die häufigste Kategorie ist. Insgesamt wurden ${sorted.length} Kategorien identifiziert.`,
+          pt: `A distribuição de "${f.variable}" mostra que "${topCat.value}" é a categoria mais frequente com ${topCat.count} ocorrências (${topPct}%). ${sorted.length} categorias foram identificadas no total.`,
+        };
+        interps.push(freqInterp[lang] || freqInterp.en);
+      }
+    }
+    sections.push({
+      number: "3.2",
+      title: sectionTitle("3.2", lang),
+      content: frequencies.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en),
+    });
+  }
+
+  // 3.3 Cross-tab / Chi-Square
+  const chiSquares = results.flatMap(r => r.chiSquares ? r.chiSquares.map(c => ({ chi: c, result: r })) : []);
+  {
+    const interps: string[] = [];
+    for (const { chi, result } of chiSquares) {
+      tableNum++;
+      interps.push(interpChi(chi, lang, "licence"));
+    }
+    sections.push({
+      number: "3.3",
+      title: sectionTitle("3.3", lang),
+      content: chiSquares.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en),
+    });
+  }
+
+  // 3.4 Correlations
+  const correlations = results.flatMap(r => (r.correlations || []).concat(
+    (r.spearmanCorrelations || []).map(s => ({ var1: s.var1, var2: s.var2, r: s.rho, pValue: s.pValue, n: s.n }))
+  ));
+  {
+    const interps: string[] = [];
+    if (correlations.length > 0) {
+      tableNum++;
+      for (const c of correlations) {
+        interps.push(interpCorrelation(c, lang, "licence"));
+      }
+    }
+    sections.push({
+      number: "3.4",
+      title: sectionTitle("3.4", lang),
+      content: correlations.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en),
+    });
+  }
+
+  // 3.5 T-test
+  const tTests = results.flatMap(r => (r.tTests || []).map(tt => ({ tt, result: r })));
+  const pairedTTests = results.flatMap(r => (r.pairedTTests || []).map(pt => ({ pt, result: r })));
+  {
+    const interps: string[] = [];
+    for (const { tt } of tTests) {
+      tableNum++;
+      interps.push(interpTTest(tt, lang));
+    }
+    for (const { pt } of pairedTTests) {
+      tableNum++;
+      const sig = pt.pValue < 0.05;
+      const ptInterp: Record<string, string> = {
+        fr: `Le test T apparié entre ${pt.var1} et ${pt.var2} ${sig ? "révèle une différence significative" : "ne révèle pas de différence significative"} (t(${pt.df}) = ${pt.tStat.toFixed(3)}, p = ${pt.pValue.toFixed(4)}, différence moyenne = ${pt.meanDiff.toFixed(3)}).`,
+        en: `The paired T-test between ${pt.var1} and ${pt.var2} ${sig ? "reveals a significant difference" : "reveals no significant difference"} (t(${pt.df}) = ${pt.tStat.toFixed(3)}, p = ${pt.pValue.toFixed(4)}, mean difference = ${pt.meanDiff.toFixed(3)}).`,
+        es: `La prueba T pareada entre ${pt.var1} y ${pt.var2} ${sig ? "revela una diferencia significativa" : "no revela diferencia significativa"} (t(${pt.df}) = ${pt.tStat.toFixed(3)}, p = ${pt.pValue.toFixed(4)}, diferencia media = ${pt.meanDiff.toFixed(3)}).`,
+        de: `Der gepaarte T-Test zwischen ${pt.var1} und ${pt.var2} ${sig ? "zeigt einen signifikanten Unterschied" : "zeigt keinen signifikanten Unterschied"} (t(${pt.df}) = ${pt.tStat.toFixed(3)}, p = ${pt.pValue.toFixed(4)}, mittlere Differenz = ${pt.meanDiff.toFixed(3)}).`,
+        pt: `O teste T pareado entre ${pt.var1} e ${pt.var2} ${sig ? "revela uma diferença significativa" : "não revela diferença significativa"} (t(${pt.df}) = ${pt.tStat.toFixed(3)}, p = ${pt.pValue.toFixed(4)}, diferença média = ${pt.meanDiff.toFixed(3)}).`,
+      };
+      interps.push(ptInterp[lang] || ptInterp.en);
+    }
+    sections.push({
+      number: "3.5",
+      title: sectionTitle("3.5", lang),
+      content: (tTests.length + pairedTTests.length) > 0 ? interps.join("\n\n") : (noData[lang] || noData.en),
+    });
+  }
+
+  // 3.6 ANOVA
+  const anovas = results.flatMap(r => (r.anovas || []).map(a => ({ anova: a, result: r })));
+  {
+    const interps: string[] = [];
+    for (const { anova } of anovas) {
+      tableNum++;
+      interps.push(interpAnova(anova, lang));
+    }
+    sections.push({
+      number: "3.6",
+      title: sectionTitle("3.6", lang),
+      content: anovas.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en),
+    });
+  }
+
+  // 3.7 Regression
+  const regressions = results.flatMap(r => (r.regressions || []).map(reg => ({ reg, result: r })));
+  {
+    const interps: string[] = [];
+    for (const { reg } of regressions) {
+      tableNum++;
+      interps.push(interpRegression(reg, lang, "licence"));
+    }
+    sections.push({
+      number: "3.7",
+      title: sectionTitle("3.7", lang),
+      content: regressions.length > 0 ? interps.join("\n\n") : (noData[lang] || noData.en),
+    });
+  }
+
+  // 3.8 General Interpretation
+  {
+    const allInterps: string[] = [];
+    for (const result of results) {
+      const interp = generateTableInterpretation(result, lang, level);
+      if (interp) allInterps.push(interp);
+    }
+    const globalContent = globalInterpretation || allInterps.join("\n\n");
+    sections.push({
+      number: "3.8",
+      title: sectionTitle("3.8", lang),
+      content: globalContent || (noData[lang] || noData.en),
+    });
+  }
+
+  // 3.9 Conclusion & Recommendations
+  {
+    const conclusionContent: string[] = [];
+    if (globalConclusion) conclusionContent.push(globalConclusion);
+    if (globalRecommendations) conclusionContent.push(globalRecommendations);
+
+    if (conclusionContent.length === 0) {
+      // Auto-generate from significant results
+      const sigResults: string[] = [];
+      const nonSigResults: string[] = [];
+      for (const r of results) {
+        for (const c of r.chiSquares || []) {
+          (c.pValue < 0.05 ? sigResults : nonSigResults).push(`${c.var1} × ${c.var2}`);
+        }
+        for (const c of r.correlations || []) {
+          (c.pValue < 0.05 ? sigResults : nonSigResults).push(`${c.var1} × ${c.var2}`);
+        }
+        for (const tt of r.tTests || []) {
+          (tt.pValue < 0.05 ? sigResults : nonSigResults).push(`${tt.variable}`);
+        }
+        for (const a of r.anovas || []) {
+          (a.pValue < 0.05 ? sigResults : nonSigResults).push(`${a.dependent} × ${a.factor}`);
+        }
+        for (const reg of r.regressions || []) {
+          (reg.fPValue < 0.05 ? sigResults : nonSigResults).push(`${reg.dependent}`);
+        }
+      }
+
+      const concTemplates: Record<string, string> = {
+        fr: `${sigResults.length > 0 ? `Les résultats montrent des associations significatives pour : ${sigResults.join(", ")}.` : "Aucune association significative n'a été identifiée."} ${nonSigResults.length > 0 ? `Les variables suivantes n'ont pas montré d'association significative : ${nonSigResults.join(", ")}.` : ""}`,
+        en: `${sigResults.length > 0 ? `Results show significant associations for: ${sigResults.join(", ")}.` : "No significant associations were identified."} ${nonSigResults.length > 0 ? `The following variables showed no significant association: ${nonSigResults.join(", ")}.` : ""}`,
+        es: `${sigResults.length > 0 ? `Los resultados muestran asociaciones significativas para: ${sigResults.join(", ")}.` : "No se identificaron asociaciones significativas."} ${nonSigResults.length > 0 ? `Las siguientes variables no mostraron asociación significativa: ${nonSigResults.join(", ")}.` : ""}`,
+        de: `${sigResults.length > 0 ? `Die Ergebnisse zeigen signifikante Zusammenhänge für: ${sigResults.join(", ")}.` : "Es wurden keine signifikanten Zusammenhänge identifiziert."} ${nonSigResults.length > 0 ? `Die folgenden Variablen zeigten keinen signifikanten Zusammenhang: ${nonSigResults.join(", ")}.` : ""}`,
+        pt: `${sigResults.length > 0 ? `Os resultados mostram associações significativas para: ${sigResults.join(", ")}.` : "Nenhuma associação significativa foi identificada."} ${nonSigResults.length > 0 ? `As seguintes variáveis não mostraram associação significativa: ${nonSigResults.join(", ")}.` : ""}`,
+      };
+
+      const recTemplates: Record<string, string> = {
+        fr: "Il est recommandé d'approfondir l'analyse avec un échantillon plus large et d'explorer les variables médiatrices potentielles.",
+        en: "It is recommended to deepen the analysis with a larger sample and explore potential mediating variables.",
+        es: "Se recomienda profundizar el análisis con una muestra más grande y explorar variables mediadoras potenciales.",
+        de: "Es wird empfohlen, die Analyse mit einer größeren Stichprobe zu vertiefen und potenzielle Mediatorvariablen zu untersuchen.",
+        pt: "Recomenda-se aprofundar a análise com uma amostra maior e explorar variáveis mediadoras potenciais.",
+      };
+
+      conclusionContent.push(concTemplates[lang] || concTemplates.en);
+      conclusionContent.push(recTemplates[lang] || recTemplates.en);
+    }
+
+    sections.push({
+      number: "3.9",
+      title: sectionTitle("3.9", lang),
+      content: conclusionContent.join("\n\n"),
+    });
+  }
+
+  return { sections, level, lang };
+}
+
 export { getTableLabel, getFigureLabel };
