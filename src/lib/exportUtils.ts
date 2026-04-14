@@ -718,12 +718,17 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
                 new TextRun({ text: `Mann-Whitney — ${mw.variable}`, bold: true, size: 22 }),
               ],
             }));
-            const rows = mw.groups.map((g, i) => makeRow([g, mw.meanRanks[i].toFixed(2)], [4680, 4680]));
-            rows.push(makeRow(["Result", `U = ${mw.U.toFixed(3)}, ${formatPValue(mw.pValue, opts)}`], [4680, 4680]));
             sections.push(new Table({
               width: { size: 9360, type: WidthType.DXA },
               columnWidths: [4680, 4680],
-              rows: [makeTableHeader(["Group", "Mean Rank"]), ...rows],
+              rows: [
+                makeTableHeader(["Statistic", "Value"]),
+                makeRow(["Groups", mw.groups.join(" vs ")], [4680, 4680]),
+                makeRow(["U", mw.U.toFixed(3)], [4680, 4680]),
+                makeRow(["z", mw.z.toFixed(3)], [4680, 4680]),
+                makeRow(["p-value", formatPValue(mw.pValue, opts)], [4680, 4680]),
+                makeRow(["n₁ / n₂", `${mw.n1} / ${mw.n2}`], [4680, 4680]),
+              ],
             }));
             tableNum++;
             sections.push(new Paragraph({ children: [] }));

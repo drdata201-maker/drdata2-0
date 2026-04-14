@@ -647,21 +647,19 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                                   <Table>
                                     <TableHeader>
                                       <TableRow>
-                                        <TableHead>Group</TableHead>
-                                        <TableHead className="text-right">Mean Rank</TableHead>
+                                        <TableHead>Statistic</TableHead>
+                                        <TableHead className="text-right">Value</TableHead>
                                       </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                      {mw.groups.map((g, i) => (
-                                        <TableRow key={g}>
-                                          <TableCell className="font-medium">{g}</TableCell>
-                                          <TableCell className="text-right">{mw.meanRanks[i].toFixed(2)}</TableCell>
-                                        </TableRow>
-                                      ))}
+                                      <TableRow><TableCell className="font-medium">Groups</TableCell><TableCell className="text-right">{mw.groups.join(" vs ")}</TableCell></TableRow>
+                                      <TableRow><TableCell className="font-medium">U</TableCell><TableCell className="text-right">{mw.U.toFixed(3)}</TableCell></TableRow>
+                                      <TableRow><TableCell className="font-medium">z</TableCell><TableCell className="text-right">{mw.z.toFixed(3)}</TableCell></TableRow>
+                                      <TableRow><TableCell className="font-medium">p-value</TableCell><TableCell className="text-right">{mw.pValue.toFixed(4)}</TableCell></TableRow>
+                                      <TableRow><TableCell className="font-medium">n₁ / n₂</TableCell><TableCell className="text-right">{mw.n1} / {mw.n2}</TableCell></TableRow>
                                     </TableBody>
                                   </Table>
                                 </div>
-                                <p className="text-xs italic text-muted-foreground">U = {mw.U.toFixed(3)}, p = {mw.pValue.toFixed(4)}</p>
                               </div>
                             );
                           }
