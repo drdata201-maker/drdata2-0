@@ -521,9 +521,38 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     if (analysisKey === "pca" && numVars.length >= 2) result.pca = computePCA(rows, numVars);
     if (analysisKey === "factor_analysis" && numVars.length >= 2) result.factorAnalysis = computeFactorAnalysis(rows, numVars);
     if (analysisKey === "cluster_analysis" && numVars.length >= 2) result.clusterAnalysis = computeClusterAnalysis(rows, numVars);
-    if (analysisKey === "cronbach_alpha") {
-      if (numVars.length) result.descriptive = computeDescriptive(rows, numVars);
-      if (numVars.length >= 2) result.correlations = computeCorrelations(rows, numVars);
+    if (analysisKey === "cronbach_alpha" && numVars.length >= 2) {
+      result.cronbachAlpha = computeCronbachAlpha(rows, numVars);
+    }
+    if (analysisKey === "paired_t_test") {
+      const v1 = depVar || numVars[0];
+      const v2 = indVars?.[0] || numVars[1];
+      if (v1 && v2 && v1 !== v2) result.pairedTTests = [computePairedTTest(rows, v1, v2)];
+    }
+    if (analysisKey === "spearman") {
+      const corrVars = indVars && indVars.length >= 2 ? indVars.filter(v => numVars.includes(v)) : numVars;
+      if (corrVars.length >= 2) result.spearmanCorrelations = computeSpearman(rows, corrVars);
+    }
+    if (analysisKey === "kendall") {
+      const corrVars = indVars && indVars.length >= 2 ? indVars.filter(v => numVars.includes(v)) : numVars;
+      if (corrVars.length >= 2) result.kendallCorrelations = computeKendall(rows, corrVars);
+    }
+    if (analysisKey === "mann_whitney" && effectiveDepVar) {
+      const groupVar = indVars?.[0] || catVars[0];
+      if (groupVar) { const mw = computeMannWhitney(rows, effectiveDepVar, groupVar); if (mw) result.mannWhitney = [mw]; }
+    }
+    if (analysisKey === "wilcoxon") {
+      const v1 = depVar || numVars[0];
+      const v2 = indVars?.[0] || numVars[1];
+      if (v1 && v2 && v1 !== v2) result.wilcoxon = [computeWilcoxon(rows, v1, v2)];
+    }
+    if (analysisKey === "kruskal_wallis" && effectiveDepVar) {
+      const factorVar = indVars?.[0] || catVars[0];
+      if (factorVar) result.kruskalWallis = [computeKruskalWallis(rows, effectiveDepVar, factorVar)];
+    }
+    if (analysisKey === "shapiro_wilk") {
+      const testVars = indVars && indVars.length > 0 ? indVars.filter(v => numVars.includes(v)) : numVars.slice(0, 5);
+      result.shapiroWilk = testVars.map(v => computeShapiroWilk(rows, v));
     }
 
     setAnalysisResults(prev => prev.map(r => r.id === id ? result : r));
