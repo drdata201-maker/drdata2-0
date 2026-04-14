@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Table2, MessageSquare, BookOpen, Download, Loader2, Upload, Eye } from "lucide-react";
-import { exportDocx, exportPdf, exportXlsx, type ExportData } from "@/lib/exportUtils";
+import { exportDocx, exportPdf, exportXlsx, formatTestResultsAdaptive, type ExportData } from "@/lib/exportUtils";
 import type { StatSoftware } from "@/lib/softwareFormatter";
 import { buildChartData, type ChartItem } from "@/lib/chartDataBuilder";
 import { renderChartsToImages } from "@/lib/chartImageRenderer";
@@ -114,10 +114,7 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
 
     // Use adaptive software formatting for test results
     const sw = (selectedSoftware || "").toLowerCase() as StatSoftware;
-    const { formatTestResultsAdaptive } = require("@/lib/exportUtils");
-    const testResults = typeof formatTestResultsAdaptive === "function"
-      ? formatTestResultsAdaptive(analysisResults, sw)
-      : [];
+    const testResults = formatTestResultsAdaptive(analysisResults, sw);
 
     let interpretation = "";
     let conclusion = "";
