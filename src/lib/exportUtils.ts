@@ -1047,20 +1047,42 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
     }
   }
 
-  // Interpretation
-  if (content === "full" || content === "interpretation") {
-    addHeading(t.interpretation);
-    addText(stripLatex(data.interpretation || t.noData));
-    sections.push(new Paragraph({ children: [] }));
-  }
+  // Academic Report Structure (Sections 3.1–3.9) when available
+  if (data.academicReport && (content === "full" || content === "interpretation" || content === "conclusion")) {
+    sections.push(new Paragraph({ children: [new PageBreak()] }));
+    for (const sec of data.academicReport.sections) {
+      sections.push(new Paragraph({
+        heading: HeadingLevel.HEADING_2,
+        spacing: { before: 300, after: 120 },
+        children: [new TextRun({ text: `${sec.number} ${sec.title}`, bold: true, size: 26 })],
+      }));
+      // Split content by paragraphs
+      const paragraphs = sec.content.split(/\n\n+/);
+      for (const para of paragraphs) {
+        if (para.trim()) {
+          sections.push(new Paragraph({
+            children: [new TextRun({ text: para.trim(), size: 24 })],
+            spacing: { after: 120 },
+          }));
+        }
+      }
+      sections.push(new Paragraph({ children: [] }));
+    }
+  } else {
+    // Fallback: legacy interpretation/conclusion
+    if (content === "full" || content === "interpretation") {
+      addHeading(t.interpretation);
+      addText(stripLatex(data.interpretation || t.noData));
+      sections.push(new Paragraph({ children: [] }));
+    }
 
-  // Conclusion
-  if (content === "full" || content === "conclusion") {
-    addHeading(t.conclusion);
-    addText(data.conclusion || t.noData);
-    sections.push(new Paragraph({ children: [] }));
-    addHeading(t.recommendations);
-    addText(data.recommendations || t.noData);
+    if (content === "full" || content === "conclusion") {
+      addHeading(t.conclusion);
+      addText(data.conclusion || t.noData);
+      sections.push(new Paragraph({ children: [] }));
+      addHeading(t.recommendations);
+      addText(data.recommendations || t.noData);
+    }
   }
 
   const doc = new Document({
