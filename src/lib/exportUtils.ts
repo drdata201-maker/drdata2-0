@@ -35,6 +35,7 @@ export interface ExportData {
   recommendations: string;
   chartImages?: ChartImage[];
   analysisResults?: AnalysisResultItem[];
+  academicReport?: import("@/lib/academicFormatter").AcademicReport;
   // Academic metadata
   objective?: string;
   specificObjectives?: string[];
