@@ -5,6 +5,15 @@
 
 import { computeShapiroWilk } from "./statsEngine";
 
+// Internal helper to run Shapiro-Wilk on raw values
+function shapiroWilkRaw(values: number[]): { W: number; pValue: number } {
+  // Create fake rows for the engine function
+  const fakeVar = "__sw_check__";
+  const fakeRows = values.map(v => ({ [fakeVar]: v }));
+  const result = computeShapiroWilk(fakeRows, fakeVar);
+  return { W: result.W, pValue: result.pValue };
+}
+
 export interface AssumptionCheck {
   test: string;
   assumption: string;
@@ -61,7 +70,7 @@ function checkNormality(values: number[], varName: string, alpha = 0.05): Assump
       detail: values.length < 3 ? `Too few values (n=${values.length})` : `Large sample (n=${values.length}), CLT applies`,
     };
   }
-  const sw = computeShapiroWilk(values);
+  const sw = shapiroWilkRaw(values);
   return {
     test: "Shapiro-Wilk",
     assumption: "normality",
