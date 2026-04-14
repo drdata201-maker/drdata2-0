@@ -1274,10 +1274,15 @@ export function exportPdf(data: ExportData, content: ExportContent) {
             doc.setFont("helvetica", "bold");
             doc.text(`${tableLabel} ${tableNum}: Mann-Whitney — ${mw.variable}`, 14, y);
             y += 6;
-            const rows = mw.groups.map((g, i) => [g, mw.meanRanks[i].toFixed(2)]);
-            rows.push(["Result", `U = ${mw.U.toFixed(3)}, p = ${mw.pValue.toFixed(4)}`]);
+            const rows: string[][] = [
+              ["Groups", mw.groups.join(" vs ")],
+              ["U", mw.U.toFixed(3)],
+              ["z", mw.z.toFixed(3)],
+              ["p-value", mw.pValue.toFixed(4)],
+              ["n₁ / n₂", `${mw.n1} / ${mw.n2}`],
+            ];
             autoTable(doc, {
-              startY: y, head: [["Group", "Mean Rank"]], body: rows,
+              startY: y, head: [["Statistic", "Value"]], body: rows,
               theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
             });
             y = (doc as any).lastAutoTable.finalY + 8;
