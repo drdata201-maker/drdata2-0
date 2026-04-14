@@ -404,3 +404,96 @@ describe("Reference: Edge Cases", () => {
     expect(res.coefficients[1].b).toBeCloseTo(1, 2);
   });
 });
+
+// ─── Chi-square cross-tab reference values ───
+
+describe("Chi-square cross-tab (scipy reference)", () => {
+  // scipy.stats.chi2_contingency([[10,20],[20,10]]) → χ²=6.6667, df=1, p=0.0098
+  it("matches scipy 2×2 table", () => {
+    const rows: Record<string, unknown>[] = [];
+    for (let i = 0; i < 10; i++) rows.push({ group: "A", outcome: "yes" });
+    for (let i = 0; i < 20; i++) rows.push({ group: "A", outcome: "no" });
+    for (let i = 0; i < 20; i++) rows.push({ group: "B", outcome: "yes" });
+    for (let i = 0; i < 10; i++) rows.push({ group: "B", outcome: "no" });
+
+    const result = computeChiSquare(rows, "group", "outcome");
+    expect(result.chiSquare).toBeCloseTo(6.6667, 2);
+    expect(result.df).toBe(1);
+    expect(result.pValue).toBeCloseTo(0.0098, 2);
+    expect(result.contingencyTable!.grandTotal).toBe(60);
+  });
+});
+
+// ─── Assumption validation engine tests ───
+
+import {
+  validateTTest,
+  validateAnova,
+  validateCorrelation,
+  validateRegression,
+  validateChiSquare,
+  validatePCA,
+} from "../lib/assumptionValidator";
+
+describe("Statistical assumption validation", () => {
+  const makeNormalRows = (n: number) => {
+    const rows: Record<string, unknown>[] = [];
+    for (let i = 0; i < n; i++) {
+      const u1 = (i + 1) / (n + 1);
+      const u2 = ((i * 7 + 3) % n + 1) / (n + 1);
+      const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+      rows.push({ value: 50 + 10 * z, group: i < n / 2 ? "A" : "B" });
+    }
+    return rows;
+  };
+
+  it("validates t-test with sufficient data", () => {
+    const rows = makeNormalRows(60);
+    const result = validateTTest(rows, "value", "group");
+    expect(result.checks.find(c => c.assumption === "two_groups")?.passed).toBe(true);
+    expect(result.checks.find(c => c.assumption === "sample_size")?.passed).toBe(true);
+  });
+
+  it("rejects t-test with 3+ groups", () => {
+    const rows = [
+      ...Array(10).fill(null).map(() => ({ value: 1, group: "A" })),
+      ...Array(10).fill(null).map(() => ({ value: 2, group: "B" })),
+      ...Array(10).fill(null).map(() => ({ value: 3, group: "C" })),
+    ];
+    const result = validateTTest(rows, "value", "group");
+    expect(result.valid).toBe(false);
+  });
+
+  it("validates ANOVA assumptions", () => {
+    const rows = makeNormalRows(90);
+    rows.slice(60).forEach(r => (r as Record<string, unknown>).group = "C");
+    const result = validateAnova(rows, "value", "group");
+    expect(result.checks.find(c => c.assumption === "multiple_groups")?.passed).toBe(true);
+  });
+
+  it("detects regression multicollinearity", () => {
+    const rows: Record<string, unknown>[] = [];
+    for (let i = 0; i < 50; i++) rows.push({ y: i * 2, x1: i, x2: i + 0.001 });
+    const result = validateRegression(rows, "y", ["x1", "x2"]);
+    expect(result.checks.find(c => c.assumption === "no_multicollinearity")?.passed).toBe(false);
+  });
+
+  it("validates chi-square expected frequencies", () => {
+    const rows: Record<string, unknown>[] = [];
+    for (let i = 0; i < 100; i++) rows.push({ a: i % 2 === 0 ? "X" : "Y", b: i % 3 === 0 ? "P" : "Q" });
+    const result = validateChiSquare(rows, "a", "b");
+    expect(result.checks.find(c => c.assumption === "min_expected_5")?.passed).toBe(true);
+  });
+
+  it("validates PCA with sufficient variables", () => {
+    const rows: Record<string, unknown>[] = [];
+    for (let i = 0; i < 100; i++) rows.push({ v1: i, v2: i * 2, v3: i * 3, v4: i + 1 });
+    expect(validatePCA(rows, ["v1", "v2", "v3", "v4"]).valid).toBe(true);
+  });
+
+  it("rejects PCA with < 3 variables", () => {
+    const rows: Record<string, unknown>[] = [];
+    for (let i = 0; i < 100; i++) rows.push({ v1: i, v2: i * 2 });
+    expect(validatePCA(rows, ["v1", "v2"]).valid).toBe(false);
+  });
+});

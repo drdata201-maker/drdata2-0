@@ -832,6 +832,8 @@
   "charts.regression": "Regresión",
   "charts.varianceExplained": "Varianza explicada",
   "charts.clusterScatter": "Dispersión por clusters",
+  "charts.groupedBar": "Tabla cruzada",
+  "charts.residualPlot": "Residuos",
   "charts.regenerateAll": "Regenerar todos los gráficos",
   "notifications.title": "Notificaciones",
   "notifications.empty": "Sin notificaciones",
