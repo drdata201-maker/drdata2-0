@@ -456,19 +456,21 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
       const cellBorder = { style: BorderStyle.SINGLE, size: 1, color: "CCCCCC" };
       const borders = { top: cellBorder, bottom: cellBorder, left: cellBorder, right: cellBorder };
       const headers = getDescriptiveHeaders(data.lang);
+      const colCount = headers.length;
+      const colWidth = Math.floor(9360 / colCount);
       const headerRow = new TableRow({
         children: headers.map(h => new TableCell({
           borders,
           shading: { fill: "2563EB", type: ShadingType.CLEAR },
-          width: { size: 1560, type: WidthType.DXA },
+          width: { size: colWidth, type: WidthType.DXA },
           children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, color: "FFFFFF", size: 20 })] })],
         })),
       });
       const dataRows = data.statsTable.map(row => new TableRow({
-        children: [row.variable, String(row.n), String(row.mean), String(row.std), String(row.min), String(row.max)].map(v =>
+        children: [row.variable, String(row.n), String(row.mean), String(row.std), String(row.min), String(row.q1), String(row.median), String(row.q3), String(row.max)].map(v =>
           new TableCell({
             borders,
-            width: { size: 1560, type: WidthType.DXA },
+            width: { size: colWidth, type: WidthType.DXA },
             children: [new Paragraph({ children: [new TextRun({ text: v, size: 20 })] })],
           })
         ),
@@ -476,7 +478,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
 
       sections.push(new Table({
         width: { size: 9360, type: WidthType.DXA },
-        columnWidths: [1560, 1560, 1560, 1560, 1560, 1560],
+        columnWidths: Array(colCount).fill(colWidth),
         rows: [headerRow, ...dataRows],
       }));
 
@@ -1245,12 +1247,14 @@ export function exportPdf(data: ExportData, content: ExportContent) {
     doc.text(`${tableLabel} ${tableNum}: ${t.descriptiveStats}`, 14, y);
     y += 6;
 
+    const descHeaders = getDescriptiveHeaders(data.lang);
     autoTable(doc, {
       startY: y,
-      head: [[t.variable, "N", t.mean, t.std, "Min", "Max"]],
-      body: data.statsTable.map(r => [r.variable, r.n, r.mean, r.std, r.min, r.max]),
+      head: [descHeaders],
+      body: data.statsTable.map(r => [r.variable, r.n, r.mean, r.std, r.min, r.q1, r.median, r.q3, r.max]),
       theme: "grid",
-      headStyles: { fillColor: [37, 99, 235] },
+      headStyles: { fillColor: [37, 99, 235], fontSize: 8 },
+      styles: { fontSize: 8 },
       margin: { left: 14 },
     });
     y = (doc as any).lastAutoTable.finalY + 4;
@@ -1825,12 +1829,13 @@ export function exportXlsx(data: ExportData, content: ExportContent) {
     infoSheet["!cols"] = [{ wch: 30 }, { wch: 60 }];
     XLSX.utils.book_append_sheet(wb, infoSheet, t.projectInfo.substring(0, 31));
 
+    const descHeaders = getDescriptiveHeaders(data.lang);
     const statsData = [
-      [t.variable, "N", t.mean, t.std, "Min", "Max"],
-      ...data.statsTable.map(r => [r.variable, r.n, r.mean, r.std, r.min, r.max]),
+      descHeaders,
+      ...data.statsTable.map(r => [r.variable, r.n, r.mean, r.std, r.min, r.q1, r.median, r.q3, r.max]),
     ];
     const statsSheet = XLSX.utils.aoa_to_sheet(statsData);
-    statsSheet["!cols"] = [{ wch: 15 }, { wch: 8 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 10 }];
+    statsSheet["!cols"] = [{ wch: 15 }, { wch: 8 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 10 }];
     XLSX.utils.book_append_sheet(wb, statsSheet, t.descriptiveStats.substring(0, 31));
 
     const testData = [[t.testResults, ""], ...data.testResults.map(r => [r.label, r.value])];
