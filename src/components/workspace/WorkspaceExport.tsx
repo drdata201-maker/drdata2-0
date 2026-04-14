@@ -154,8 +154,9 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
       mediatorVars: localizedProjectContext?.mediatorVars,
       moderatorVars: localizedProjectContext?.moderatorVars,
       conceptualModel: localizedProjectContext?.conceptualModel,
+      software: sw,
     };
-  }, [dataset, analysisResults, interpretationData, projectTitle, projectType, projectDomain, projectDescription, level, lang, t]);
+  }, [dataset, analysisResults, interpretationData, projectTitle, projectType, projectDomain, projectDescription, level, lang, t, selectedSoftware]);
 
   const handleExport = async (content: ContentType, format: FormatType) => {
     const key = `${content}-${format}`;
