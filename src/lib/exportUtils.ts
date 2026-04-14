@@ -665,6 +665,171 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
             sections.push(new Paragraph({ children: [] }));
           }
         }
+
+        // Spearman Correlations
+        if (result.spearmanCorrelations && result.spearmanCorrelations.length > 0) {
+          sections.push(new Paragraph({
+            spacing: { before: 200, after: 80 },
+            children: [
+              new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+              new TextRun({ text: "Spearman Correlations", bold: true, size: 22 }),
+            ],
+          }));
+          const rows = result.spearmanCorrelations.map(s => makeRow([
+            `${s.var1} × ${s.var2}`, s.rho.toFixed(3), formatPValue(s.pValue, opts), String(s.n),
+          ]));
+          sections.push(new Table({
+            width: { size: 9360, type: WidthType.DXA },
+            columnWidths: [2340, 2340, 2340, 2340],
+            rows: [makeTableHeader(["Variables", "ρ", "p", "N"]), ...rows],
+          }));
+          tableNum++;
+          sections.push(new Paragraph({ children: [] }));
+        }
+
+        // Kendall Correlations
+        if (result.kendallCorrelations && result.kendallCorrelations.length > 0) {
+          sections.push(new Paragraph({
+            spacing: { before: 200, after: 80 },
+            children: [
+              new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+              new TextRun({ text: "Kendall Correlations", bold: true, size: 22 }),
+            ],
+          }));
+          const rows = result.kendallCorrelations.map(k => makeRow([
+            `${k.var1} × ${k.var2}`, k.tau.toFixed(3), formatPValue(k.pValue, opts), String(k.n),
+          ]));
+          sections.push(new Table({
+            width: { size: 9360, type: WidthType.DXA },
+            columnWidths: [2340, 2340, 2340, 2340],
+            rows: [makeTableHeader(["Variables", "τ", "p", "N"]), ...rows],
+          }));
+          tableNum++;
+          sections.push(new Paragraph({ children: [] }));
+        }
+
+        // Mann-Whitney
+        if (result.mannWhitney && result.mannWhitney.length > 0) {
+          for (const mw of result.mannWhitney) {
+            sections.push(new Paragraph({
+              spacing: { before: 200, after: 80 },
+              children: [
+                new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+                new TextRun({ text: `Mann-Whitney — ${mw.variable}`, bold: true, size: 22 }),
+              ],
+            }));
+            sections.push(new Table({
+              width: { size: 9360, type: WidthType.DXA },
+              columnWidths: [4680, 4680],
+              rows: [
+                makeTableHeader(["Statistic", "Value"]),
+                makeRow(["Groups", mw.groups.join(" vs ")], [4680, 4680]),
+                makeRow(["U", mw.U.toFixed(3)], [4680, 4680]),
+                makeRow(["z", mw.z.toFixed(3)], [4680, 4680]),
+                makeRow(["p-value", formatPValue(mw.pValue, opts)], [4680, 4680]),
+                makeRow(["n₁ / n₂", `${mw.n1} / ${mw.n2}`], [4680, 4680]),
+              ],
+            }));
+            tableNum++;
+            sections.push(new Paragraph({ children: [] }));
+          }
+        }
+
+        // Wilcoxon
+        if (result.wilcoxon && result.wilcoxon.length > 0) {
+          for (const w of result.wilcoxon) {
+            sections.push(new Paragraph({
+              spacing: { before: 200, after: 80 },
+              children: [
+                new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+                new TextRun({ text: `Wilcoxon — ${w.var1} × ${w.var2}`, bold: true, size: 22 }),
+              ],
+            }));
+            sections.push(new Table({
+              width: { size: 9360, type: WidthType.DXA },
+              columnWidths: [4680, 4680],
+              rows: [
+                makeTableHeader(["Statistic", "Value"]),
+                makeRow(["W", w.W.toFixed(3)], [4680, 4680]),
+                makeRow(["p-value", formatPValue(w.pValue, opts)], [4680, 4680]),
+              ],
+            }));
+            tableNum++;
+            sections.push(new Paragraph({ children: [] }));
+          }
+        }
+
+        // Kruskal-Wallis
+        if (result.kruskalWallis && result.kruskalWallis.length > 0) {
+          for (const kw of result.kruskalWallis) {
+            sections.push(new Paragraph({
+              spacing: { before: 200, after: 80 },
+              children: [
+                new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+                new TextRun({ text: `Kruskal-Wallis — ${kw.dependent}`, bold: true, size: 22 }),
+              ],
+            }));
+            const rows = kw.groups.map(g => makeRow([g.name, g.meanRank.toFixed(2)], [4680, 4680]));
+            rows.push(makeRow(["Result", `H(${kw.df}) = ${kw.H.toFixed(3)}, ${formatPValue(kw.pValue, opts)}`], [4680, 4680]));
+            sections.push(new Table({
+              width: { size: 9360, type: WidthType.DXA },
+              columnWidths: [4680, 4680],
+              rows: [makeTableHeader(["Group", "Mean Rank"]), ...rows],
+            }));
+            tableNum++;
+            sections.push(new Paragraph({ children: [] }));
+          }
+        }
+
+        // Shapiro-Wilk
+        if (result.shapiroWilk && result.shapiroWilk.length > 0) {
+          sections.push(new Paragraph({
+            spacing: { before: 200, after: 80 },
+            children: [
+              new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+              new TextRun({ text: "Shapiro-Wilk Normality Test", bold: true, size: 22 }),
+            ],
+          }));
+          const rows = result.shapiroWilk.map(sw => makeRow([
+            sw.variable, sw.W.toFixed(4), formatPValue(sw.pValue, opts), sw.isNormal ? "Yes" : "No",
+          ]));
+          sections.push(new Table({
+            width: { size: 9360, type: WidthType.DXA },
+            columnWidths: [2340, 2340, 2340, 2340],
+            rows: [makeTableHeader(["Variable", "W", "p", "Normal"]), ...rows],
+          }));
+          tableNum++;
+          sections.push(new Paragraph({ children: [] }));
+        }
+
+        // Cronbach's Alpha
+        if (result.cronbachAlpha) {
+          const ca = result.cronbachAlpha;
+          sections.push(new Paragraph({
+            spacing: { before: 200, after: 80 },
+            children: [
+              new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+              new TextRun({ text: "Cronbach's Alpha", bold: true, size: 22 }),
+            ],
+          }));
+          const rows = [
+            makeRow(["Alpha (α)", ca.alpha.toFixed(4)], [4680, 4680]),
+            makeRow(["Items", String(ca.itemCount)], [4680, 4680]),
+          ];
+          if (ca.variables) rows.push(makeRow(["Variables", ca.variables.join(", ")], [4680, 4680]));
+          sections.push(new Table({
+            width: { size: 9360, type: WidthType.DXA },
+            columnWidths: [4680, 4680],
+            rows: [makeTableHeader(["Statistic", "Value"]), ...rows],
+          }));
+          const reliability = ca.alpha >= 0.9 ? "Excellent" : ca.alpha >= 0.8 ? "Good" : ca.alpha >= 0.7 ? "Acceptable" : ca.alpha >= 0.6 ? "Questionable" : "Poor";
+          sections.push(new Paragraph({
+            spacing: { before: 60, after: 120 },
+            children: [new TextRun({ text: `${reliability} reliability`, italics: true, size: 20 })],
+          }));
+          tableNum++;
+          sections.push(new Paragraph({ children: [] }));
+        }
       }
     }
 
@@ -1063,8 +1228,144 @@ export function exportPdf(data: ExportData, content: ExportContent) {
             y += 5;
             doc.setFont("helvetica", "normal");
             y += 4;
+          tableNum++;
+          }
+        }
+
+        // Spearman Correlations
+        if (result.spearmanCorrelations && result.spearmanCorrelations.length > 0) {
+          if (y > 220) { doc.addPage(); y = 20; }
+          doc.setFontSize(11);
+          doc.setFont("helvetica", "bold");
+          doc.text(`${tableLabel} ${tableNum}: Spearman Correlations`, 14, y);
+          y += 6;
+          autoTable(doc, {
+            startY: y,
+            head: [["Variables", "ρ", "p", "N"]],
+            body: result.spearmanCorrelations.map(s => [`${s.var1} × ${s.var2}`, s.rho.toFixed(3), s.pValue.toFixed(4), String(s.n)]),
+            theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+          });
+          y = (doc as any).lastAutoTable.finalY + 8;
+          tableNum++;
+        }
+
+        // Kendall Correlations
+        if (result.kendallCorrelations && result.kendallCorrelations.length > 0) {
+          if (y > 220) { doc.addPage(); y = 20; }
+          doc.setFontSize(11);
+          doc.setFont("helvetica", "bold");
+          doc.text(`${tableLabel} ${tableNum}: Kendall Correlations`, 14, y);
+          y += 6;
+          autoTable(doc, {
+            startY: y,
+            head: [["Variables", "τ", "p", "N"]],
+            body: result.kendallCorrelations.map(k => [`${k.var1} × ${k.var2}`, k.tau.toFixed(3), k.pValue.toFixed(4), String(k.n)]),
+            theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+          });
+          y = (doc as any).lastAutoTable.finalY + 8;
+          tableNum++;
+        }
+
+        // Mann-Whitney
+        if (result.mannWhitney && result.mannWhitney.length > 0) {
+          for (const mw of result.mannWhitney) {
+            if (y > 220) { doc.addPage(); y = 20; }
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${tableLabel} ${tableNum}: Mann-Whitney — ${mw.variable}`, 14, y);
+            y += 6;
+            const rows: string[][] = [
+              ["Groups", mw.groups.join(" vs ")],
+              ["U", mw.U.toFixed(3)],
+              ["z", mw.z.toFixed(3)],
+              ["p-value", mw.pValue.toFixed(4)],
+              ["n₁ / n₂", `${mw.n1} / ${mw.n2}`],
+            ];
+            autoTable(doc, {
+              startY: y, head: [["Statistic", "Value"]], body: rows,
+              theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 8;
             tableNum++;
           }
+        }
+
+        // Wilcoxon
+        if (result.wilcoxon && result.wilcoxon.length > 0) {
+          for (const w of result.wilcoxon) {
+            if (y > 220) { doc.addPage(); y = 20; }
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${tableLabel} ${tableNum}: Wilcoxon — ${w.var1} × ${w.var2}`, 14, y);
+            y += 6;
+            autoTable(doc, {
+              startY: y, head: [["Statistic", "Value"]], body: [["W", w.W.toFixed(3)], ["p-value", w.pValue.toFixed(4)]],
+              theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 8;
+            tableNum++;
+          }
+        }
+
+        // Kruskal-Wallis
+        if (result.kruskalWallis && result.kruskalWallis.length > 0) {
+          for (const kw of result.kruskalWallis) {
+            if (y > 200) { doc.addPage(); y = 20; }
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${tableLabel} ${tableNum}: Kruskal-Wallis — ${kw.dependent}`, 14, y);
+            y += 6;
+            const rows = kw.groups.map(g => [g.name, g.meanRank.toFixed(2)]);
+            rows.push(["Result", `H(${kw.df}) = ${kw.H.toFixed(3)}, p = ${kw.pValue.toFixed(4)}`]);
+            autoTable(doc, {
+              startY: y, head: [["Group", "Mean Rank"]], body: rows,
+              theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 8;
+            tableNum++;
+          }
+        }
+
+        // Shapiro-Wilk
+        if (result.shapiroWilk && result.shapiroWilk.length > 0) {
+          if (y > 220) { doc.addPage(); y = 20; }
+          doc.setFontSize(11);
+          doc.setFont("helvetica", "bold");
+          doc.text(`${tableLabel} ${tableNum}: Shapiro-Wilk`, 14, y);
+          y += 6;
+          autoTable(doc, {
+            startY: y,
+            head: [["Variable", "W", "p", "Normal"]],
+            body: result.shapiroWilk.map(sw => [sw.variable, sw.W.toFixed(4), sw.pValue.toFixed(4), sw.isNormal ? "Yes" : "No"]),
+            theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+          });
+          y = (doc as any).lastAutoTable.finalY + 8;
+          tableNum++;
+        }
+
+        // Cronbach's Alpha
+        if (result.cronbachAlpha) {
+          if (y > 220) { doc.addPage(); y = 20; }
+          const ca = result.cronbachAlpha;
+          doc.setFontSize(11);
+          doc.setFont("helvetica", "bold");
+          doc.text(`${tableLabel} ${tableNum}: Cronbach's Alpha`, 14, y);
+          y += 6;
+          const caRows: string[][] = [["Alpha (α)", ca.alpha.toFixed(4)], ["Items", String(ca.itemCount)]];
+          if (ca.variables) caRows.push(["Variables", ca.variables.join(", ")]);
+          autoTable(doc, {
+            startY: y, head: [["Statistic", "Value"]], body: caRows,
+            theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
+          });
+          y = (doc as any).lastAutoTable.finalY + 4;
+          const reliability = ca.alpha >= 0.9 ? "Excellent" : ca.alpha >= 0.8 ? "Good" : ca.alpha >= 0.7 ? "Acceptable" : ca.alpha >= 0.6 ? "Questionable" : "Poor";
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "italic");
+          doc.text(`${reliability} reliability`, 14, y);
+          y += 5;
+          doc.setFont("helvetica", "normal");
+          y += 4;
+          tableNum++;
         }
       }
     }
