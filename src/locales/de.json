@@ -832,6 +832,8 @@
   "charts.regression": "Regression",
   "charts.varianceExplained": "Erklärte Varianz",
   "charts.clusterScatter": "Cluster-Streudiagramm",
+  "charts.groupedBar": "Kreuztabelle",
+  "charts.residualPlot": "Residuen",
   "charts.regenerateAll": "Alle Diagramme neu generieren",
   "notifications.title": "Benachrichtigungen",
   "notifications.empty": "Keine Benachrichtigungen",

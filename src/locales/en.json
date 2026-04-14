@@ -832,6 +832,8 @@
   "charts.regression": "Regression",
   "charts.varianceExplained": "Variance Explained",
   "charts.clusterScatter": "Cluster Scatter",
+  "charts.groupedBar": "Cross-tab",
+  "charts.residualPlot": "Residuals",
   "charts.regenerateAll": "Regenerate All Charts",
   "notifications.title": "Notifications",
   "notifications.empty": "No notifications",
