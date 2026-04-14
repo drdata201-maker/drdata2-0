@@ -228,7 +228,7 @@ async function streamChat({
 
 export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, projectObjective, level, onAnalysisComplete, projectMetadata }: JoelChatProps) {
   const { t, lang } = useLanguage();
-  const { processFile, dataset, runAnalyses, analysisResults, chatState, setChatState } = useDataset();
+  const { processFile, dataset, runAnalyses, analysisResults, chatState, setChatState, interpretationData, setInterpretationData } = useDataset();
 
   // Destructure persisted state
   const messages = chatState.messages;
@@ -640,6 +640,41 @@ Keep under 80 words. Do NOT display tables or results in chat.`;
       } catch { /* ignore */ }
     }
 
+    // Generate academic report structure (sections 3.1–3.9) for Licence level
+    if (level === "student_license" || level === "student_master" || level === "student_doctorat") {
+      const { generateAcademicReport } = await import("@/lib/academicFormatter");
+      const existingInterp = interpretationData;
+      const academicReport = generateAcademicReport(
+        analysisResults,
+        lang,
+        level,
+        localizedProjectContext,
+        existingInterp?.sections.map(s => s.interpretation).join("\n\n"),
+        existingInterp?.globalConclusion,
+        existingInterp?.globalRecommendations,
+      );
+
+      // Build interpretation data with academic report attached
+      const interpSections = academicReport.sections
+        .filter(s => s.number !== "3.8" && s.number !== "3.9")
+        .map(s => ({
+          analysisType: `${s.number} ${s.title}`,
+          interpretation: s.content,
+          conclusion: "",
+          recommendations: "",
+        }));
+
+      const sec38 = academicReport.sections.find(s => s.number === "3.8");
+      const sec39 = academicReport.sections.find(s => s.number === "3.9");
+
+      setInterpretationData({
+        sections: interpSections,
+        globalConclusion: sec38?.content || existingInterp?.globalConclusion || "",
+        globalRecommendations: sec39?.content || existingInterp?.globalRecommendations || "",
+        academicReport,
+      });
+    }
+
     // Build a summary of all analyses for the AI to generate global interpretation
     const analysisSummary = analysisResults.map((r, i) => `Analysis ${i + 1}: ${r.type}`).join(", ");
     const significantResults = analysisResults
@@ -655,7 +690,7 @@ Generate a brief academic summary that includes:
 2. A scientific conclusion listing associated and non-associated factors
 3. Research recommendations based on findings
 
-Then remind the student to check the **Export** tab for their professional report.
+Then remind the student to check the **Export** tab for their professional report with the complete academic structure (sections 3.1 to 3.9).
 Keep under 120 words. Use academic language.`);
   };
 

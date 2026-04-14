@@ -35,6 +35,7 @@ export interface ExportData {
   recommendations: string;
   chartImages?: ChartImage[];
   analysisResults?: AnalysisResultItem[];
+  academicReport?: import("@/lib/academicFormatter").AcademicReport;
   // Academic metadata
   objective?: string;
   specificObjectives?: string[];
@@ -1046,20 +1047,42 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
     }
   }
 
-  // Interpretation
-  if (content === "full" || content === "interpretation") {
-    addHeading(t.interpretation);
-    addText(stripLatex(data.interpretation || t.noData));
-    sections.push(new Paragraph({ children: [] }));
-  }
+  // Academic Report Structure (Sections 3.1–3.9) when available
+  if (data.academicReport && (content === "full" || content === "interpretation" || content === "conclusion")) {
+    sections.push(new Paragraph({ children: [new PageBreak()] }));
+    for (const sec of data.academicReport.sections) {
+      sections.push(new Paragraph({
+        heading: HeadingLevel.HEADING_2,
+        spacing: { before: 300, after: 120 },
+        children: [new TextRun({ text: `${sec.number} ${sec.title}`, bold: true, size: 26 })],
+      }));
+      // Split content by paragraphs
+      const paragraphs = sec.content.split(/\n\n+/);
+      for (const para of paragraphs) {
+        if (para.trim()) {
+          sections.push(new Paragraph({
+            children: [new TextRun({ text: para.trim(), size: 24 })],
+            spacing: { after: 120 },
+          }));
+        }
+      }
+      sections.push(new Paragraph({ children: [] }));
+    }
+  } else {
+    // Fallback: legacy interpretation/conclusion
+    if (content === "full" || content === "interpretation") {
+      addHeading(t.interpretation);
+      addText(stripLatex(data.interpretation || t.noData));
+      sections.push(new Paragraph({ children: [] }));
+    }
 
-  // Conclusion
-  if (content === "full" || content === "conclusion") {
-    addHeading(t.conclusion);
-    addText(data.conclusion || t.noData);
-    sections.push(new Paragraph({ children: [] }));
-    addHeading(t.recommendations);
-    addText(data.recommendations || t.noData);
+    if (content === "full" || content === "conclusion") {
+      addHeading(t.conclusion);
+      addText(data.conclusion || t.noData);
+      sections.push(new Paragraph({ children: [] }));
+      addHeading(t.recommendations);
+      addText(data.recommendations || t.noData);
+    }
   }
 
   const doc = new Document({
@@ -1665,16 +1688,41 @@ export function exportPdf(data: ExportData, content: ExportContent) {
     }
   }
 
-  if (content === "full" || content === "interpretation") {
-    addH2(t.interpretation);
-    addBody(stripLatex(data.interpretation || t.noData));
-  }
+  // Academic Report Structure (Sections 3.1–3.9) in PDF
+  if (data.academicReport && (content === "full" || content === "interpretation" || content === "conclusion")) {
+    doc.addPage();
+    y = 20;
+    for (const sec of data.academicReport.sections) {
+      if (y > 240) { doc.addPage(); y = 20; }
+      doc.setFontSize(13);
+      doc.setFont("helvetica", "bold");
+      doc.text(`${sec.number} ${sec.title}`, 14, y);
+      y += 8;
 
-  if (content === "full" || content === "conclusion") {
-    addH2(t.conclusion);
-    addBody(data.conclusion || t.noData);
-    addH2(t.recommendations);
-    addBody(data.recommendations || t.noData);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "normal");
+      const paragraphs = sec.content.split(/\n\n+/);
+      for (const para of paragraphs) {
+        if (!para.trim()) continue;
+        if (y > 260) { doc.addPage(); y = 20; }
+        const lines = doc.splitTextToSize(para.trim(), 180);
+        doc.text(lines, 14, y);
+        y += lines.length * 5.5 + 4;
+      }
+      y += 4;
+    }
+  } else {
+    if (content === "full" || content === "interpretation") {
+      addH2(t.interpretation);
+      addBody(stripLatex(data.interpretation || t.noData));
+    }
+
+    if (content === "full" || content === "conclusion") {
+      addH2(t.conclusion);
+      addBody(data.conclusion || t.noData);
+      addH2(t.recommendations);
+      addBody(data.recommendations || t.noData);
+    }
   }
 
   const prefix = filePrefix(data.level);

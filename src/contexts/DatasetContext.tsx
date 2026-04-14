@@ -61,6 +61,7 @@ export interface InterpretationData {
   sections: InterpretationSection[];
   globalConclusion: string;
   globalRecommendations: string;
+  academicReport?: import("@/lib/academicFormatter").AcademicReport;
 }
 
 export interface CachedChart {
