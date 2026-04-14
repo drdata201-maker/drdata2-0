@@ -6,7 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Send, Upload, Sparkles, Bot, Loader2, CheckCircle, Edit3, RotateCcw, CheckCheck, Variable } from "lucide-react";
+import { Send, Upload, Sparkles, Bot, Loader2, CheckCircle, Edit3, RotateCcw, CheckCheck, Variable, AlertTriangle, ShieldCheck } from "lucide-react";
+import {
+  validateTTest,
+  validateAnova,
+  validateCorrelation,
+  validateRegression,
+  validateChiSquare,
+  validatePCA,
+  type ValidationResult,
+} from "@/lib/assumptionValidator";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import joelLicence from "@/assets/assistant_joel_license.png";
 import joelMaster from "@/assets/assistant_joel_master.png";

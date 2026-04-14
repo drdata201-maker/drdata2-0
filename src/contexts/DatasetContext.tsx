@@ -74,7 +74,7 @@ export type ContentOverride = { title?: string; interpretation?: string };
 export type ContentOverrides = Record<string, ContentOverride>;
 
 export type ChatMessage = { role: "assistant" | "user"; content: string; type?: string };
-export type ChatPhase = "confirm" | "upload" | "software" | "analysis" | "variables" | "ready";
+export type ChatPhase = "confirm" | "upload" | "software" | "analysis" | "variables" | "validation" | "ready";
 
 export type AnalyticalGraphMode = "standard" | "advanced" | "presentation";
 
