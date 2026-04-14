@@ -833,6 +833,125 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
           tableNum++;
           sections.push(new Paragraph({ children: [] }));
         }
+
+        // Paired T-tests
+        if (result.pairedTTests && result.pairedTTests.length > 0) {
+          for (const pt of result.pairedTTests) {
+            sections.push(new Paragraph({
+              spacing: { before: 200, after: 80 },
+              children: [
+                new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+                new TextRun({ text: `Paired T-test — ${pt.var1} × ${pt.var2}`, bold: true, size: 22 }),
+              ],
+            }));
+            sections.push(new Table({
+              width: { size: 9360, type: WidthType.DXA },
+              columnWidths: [4680, 4680],
+              rows: [
+                makeTableHeader(["Statistic", "Value"]),
+                makeRow(["Mean Diff", pt.meanDiff.toFixed(4)], [4680, 4680]),
+                makeRow(["t", pt.tStat.toFixed(3)], [4680, 4680]),
+                makeRow(["df", String(pt.df)], [4680, 4680]),
+                makeRow(["p-value", formatPValue(pt.pValue, opts)], [4680, 4680]),
+                makeRow(["N", String(pt.n)], [4680, 4680]),
+              ],
+            }));
+            tableNum++;
+            sections.push(new Paragraph({ children: [] }));
+          }
+        }
+
+        // PCA
+        if (result.pca) {
+          const pca = result.pca;
+          sections.push(new Paragraph({
+            spacing: { before: 200, after: 80 },
+            children: [
+              new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+              new TextRun({ text: "PCA — Variance Explained", bold: true, size: 22 }),
+            ],
+          }));
+          const pcaRows = pca.components.map(c => makeRow([
+            `PC${c.component}`, c.eigenvalue.toFixed(4), `${c.varianceExplained.toFixed(2)}%`, `${c.cumulativeVariance.toFixed(2)}%`,
+          ]));
+          sections.push(new Table({
+            width: { size: 9360, type: WidthType.DXA },
+            columnWidths: [2340, 2340, 2340, 2340],
+            rows: [makeTableHeader(["Component", "Eigenvalue", "% Variance", "Cumulative %"]), ...pcaRows],
+          }));
+          if (pca.kmo !== undefined) {
+            sections.push(new Paragraph({
+              spacing: { before: 60, after: 40 },
+              children: [new TextRun({ text: `KMO = ${pca.kmo.toFixed(3)}`, italics: true, size: 20 })],
+            }));
+          }
+          tableNum++;
+          sections.push(new Paragraph({ children: [] }));
+
+          // PCA Loadings
+          if (pca.loadings && pca.loadings.length > 0) {
+            sections.push(new Paragraph({
+              spacing: { before: 200, after: 80 },
+              children: [
+                new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+                new TextRun({ text: "PCA — Component Loadings", bold: true, size: 22 }),
+              ],
+            }));
+            const loadHeaders = ["Variable", ...pca.components.map(c => `PC${c.component}`)];
+            const loadRows = pca.loadings.map(l => makeRow([l.variable, ...l.components.map(v => v.toFixed(3))]));
+            sections.push(new Table({
+              width: { size: 9360, type: WidthType.DXA },
+              columnWidths: Array(loadHeaders.length).fill(Math.floor(9360 / loadHeaders.length)),
+              rows: [makeTableHeader(loadHeaders), ...loadRows],
+            }));
+            tableNum++;
+            sections.push(new Paragraph({ children: [] }));
+          }
+        }
+
+        // Factor Analysis
+        if (result.factorAnalysis) {
+          const fa = result.factorAnalysis;
+          sections.push(new Paragraph({
+            spacing: { before: 200, after: 80 },
+            children: [
+              new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+              new TextRun({ text: `Factor Analysis — Variance Explained (${fa.rotation})`, bold: true, size: 22 }),
+            ],
+          }));
+          const faRows = fa.factors.map(f => makeRow([
+            `F${f.factor}`, f.eigenvalue.toFixed(4), `${f.varianceExplained.toFixed(2)}%`, `${f.cumulativeVariance.toFixed(2)}%`,
+          ]));
+          sections.push(new Table({
+            width: { size: 9360, type: WidthType.DXA },
+            columnWidths: [2340, 2340, 2340, 2340],
+            rows: [makeTableHeader(["Factor", "Eigenvalue", "% Variance", "Cumulative %"]), ...faRows],
+          }));
+          tableNum++;
+          sections.push(new Paragraph({ children: [] }));
+
+          // Rotated Loadings
+          if (fa.rotatedLoadings && fa.rotatedLoadings.length > 0) {
+            sections.push(new Paragraph({
+              spacing: { before: 200, after: 80 },
+              children: [
+                new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+                new TextRun({ text: `Rotated Factor Loadings (${fa.rotation})`, bold: true, size: 22 }),
+              ],
+            }));
+            const rlHeaders = ["Variable", ...fa.factors.map(f => `F${f.factor}`), "Communality"];
+            const rlRows = fa.rotatedLoadings.map((l, li) => makeRow([
+              l.variable, ...l.factors.map(v => v.toFixed(3)), (fa.communalities[li]?.extraction ?? 0).toFixed(3),
+            ]));
+            sections.push(new Table({
+              width: { size: 9360, type: WidthType.DXA },
+              columnWidths: Array(rlHeaders.length).fill(Math.floor(9360 / rlHeaders.length)),
+              rows: [makeTableHeader(rlHeaders), ...rlRows],
+            }));
+            tableNum++;
+            sections.push(new Paragraph({ children: [] }));
+          }
+        }
       }
     }
 
