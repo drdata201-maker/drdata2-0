@@ -107,7 +107,7 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
     for (const result of analysisResults) {
       if (result.descriptive) {
         for (const d of result.descriptive) {
-          statsTable.push({ variable: d.variable, n: d.n, mean: d.mean, std: d.std, min: d.min, max: d.max });
+          statsTable.push({ variable: d.variable, n: d.n, mean: d.mean, std: d.std, min: d.min, q1: d.q1, median: d.median, q3: d.q3, max: d.max });
         }
       }
     }
@@ -368,6 +368,9 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                                       <TableHead className="text-right">{t("export.mean") || "Mean"}</TableHead>
                                       <TableHead className="text-right">{t("export.std") || "Std"}</TableHead>
                                       <TableHead className="text-right">Min</TableHead>
+                                      <TableHead className="text-right">Q1</TableHead>
+                                      <TableHead className="text-right">{t("export.median") || "Median"}</TableHead>
+                                      <TableHead className="text-right">Q3</TableHead>
                                       <TableHead className="text-right">Max</TableHead>
                                     </TableRow>
                                   </TableHeader>
@@ -379,6 +382,9 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                                         <TableCell className="text-right">{typeof row.mean === "number" ? row.mean.toFixed(3) : row.mean}</TableCell>
                                         <TableCell className="text-right">{typeof row.std === "number" ? row.std.toFixed(3) : row.std}</TableCell>
                                         <TableCell className="text-right">{typeof row.min === "number" ? row.min.toFixed(2) : row.min}</TableCell>
+                                        <TableCell className="text-right">{typeof row.q1 === "number" ? row.q1.toFixed(3) : row.q1}</TableCell>
+                                        <TableCell className="text-right">{typeof row.median === "number" ? row.median.toFixed(3) : row.median}</TableCell>
+                                        <TableCell className="text-right">{typeof row.q3 === "number" ? row.q3.toFixed(3) : row.q3}</TableCell>
                                         <TableCell className="text-right">{typeof row.max === "number" ? row.max.toFixed(2) : row.max}</TableCell>
                                       </TableRow>
                                     ))}
@@ -1005,13 +1011,17 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                 <Separator />
 
                 {/* Academic Report Sections 3.1–3.9 */}
-                {(showInterp(previewContent) || showConc(previewContent)) && interpretationData?.academicReport ? (
+                {(showInterp(previewContent) || showConc(previewContent)) && interpretationData?.academicReport ? (() => {
+                  const allSections = interpretationData.academicReport.sections;
+                  const lastSection = allSections[allSections.length - 1];
+                  const lastNum = lastSection?.number;
+                  return (
                   <section className="space-y-4">
-                    {interpretationData.academicReport.sections
+                    {allSections
                       .filter(sec => {
                         if (showInterp(previewContent) && showConc(previewContent)) return true;
-                        if (showInterp(previewContent)) return sec.number !== "3.9";
-                        if (showConc(previewContent)) return sec.number === "3.9";
+                        if (showInterp(previewContent)) return sec.number !== lastNum;
+                        if (showConc(previewContent)) return sec.number === lastNum;
                         return false;
                       })
                       .map(sec => (
@@ -1021,7 +1031,8 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                         </div>
                       ))}
                   </section>
-                ) : (
+                  );
+                })() : (
                   <>
                     {/* Fallback: legacy interpretation */}
                     {showInterp(previewContent) && (
