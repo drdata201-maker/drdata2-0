@@ -338,57 +338,245 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                 <Separator />
 
                 {/* Results with academic numbering */}
-                {showStats(previewContent) && analysisResults.length > 0 && (
-                  <section className="space-y-4">
-                    <h2 className="text-lg font-semibold text-foreground">{t("export.descriptiveStats") || "Results"}</h2>
-                    {analysisResults.map((result, idx) => {
-                      const tableNum = idx + 1;
-                      const tableLabel = lang === "fr" ? "Tableau" : lang === "es" ? "Tabla" : lang === "de" ? "Tabelle" : lang === "pt" ? "Tabela" : "Table";
-                      const ov = tableOverrides[result.id] || {};
-                      const title = ov.title || generateTableTitle(result, lang, t, localizedProjectContext);
-                      const interpretation = ov.interpretation || generateTableInterpretation(result, lang, level);
+                {showStats(previewContent) && analysisResults.length > 0 && (() => {
+                  let tableNum = 0;
+                  const tableLabel = lang === "fr" ? "Tableau" : lang === "es" ? "Tabla" : lang === "de" ? "Tabelle" : lang === "pt" ? "Tabela" : "Table";
 
-                      return (
-                        <div key={result.id} className="space-y-2">
-                          <p className="text-sm font-semibold text-foreground">
-                            {tableLabel} {tableNum} : {title}
-                          </p>
-                          {result.descriptive && (
-                            <div className="rounded-md border border-border overflow-auto">
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>{t("export.variable") || "Variable"}</TableHead>
-                                    <TableHead className="text-right">N</TableHead>
-                                    <TableHead className="text-right">{t("export.mean") || "Mean"}</TableHead>
-                                    <TableHead className="text-right">{t("export.std") || "Std"}</TableHead>
-                                    <TableHead className="text-right">Min</TableHead>
-                                    <TableHead className="text-right">Max</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {result.descriptive.map((row, i) => (
-                                    <TableRow key={i}>
-                                      <TableCell className="font-medium">{row.variable}</TableCell>
-                                      <TableCell className="text-right">{row.n}</TableCell>
-                                      <TableCell className="text-right">{typeof row.mean === "number" ? row.mean.toFixed(3) : row.mean}</TableCell>
-                                      <TableCell className="text-right">{typeof row.std === "number" ? row.std.toFixed(3) : row.std}</TableCell>
-                                      <TableCell className="text-right">{typeof row.min === "number" ? row.min.toFixed(2) : row.min}</TableCell>
-                                      <TableCell className="text-right">{typeof row.max === "number" ? row.max.toFixed(2) : row.max}</TableCell>
+                  return (
+                    <section className="space-y-4">
+                      <h2 className="text-lg font-semibold text-foreground">{t("export.descriptiveStats") || "Results"}</h2>
+                      {analysisResults.map((result) => {
+                        const ov = tableOverrides[result.id] || {};
+                        const title = ov.title || generateTableTitle(result, lang, t, localizedProjectContext);
+                        const interpretation = ov.interpretation || generateTableInterpretation(result, lang, level);
+
+                        const blocks: React.ReactNode[] = [];
+
+                        {/* Descriptive stats */}
+                        if (result.descriptive && result.descriptive.length > 0) {
+                          tableNum++;
+                          blocks.push(
+                            <div key={`desc-${result.id}`} className="space-y-2">
+                              <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : {title}</p>
+                              <div className="rounded-md border border-border overflow-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>{t("export.variable") || "Variable"}</TableHead>
+                                      <TableHead className="text-right">N</TableHead>
+                                      <TableHead className="text-right">{t("export.mean") || "Mean"}</TableHead>
+                                      <TableHead className="text-right">{t("export.std") || "Std"}</TableHead>
+                                      <TableHead className="text-right">Min</TableHead>
+                                      <TableHead className="text-right">Max</TableHead>
                                     </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {result.descriptive.map((row, i) => (
+                                      <TableRow key={i}>
+                                        <TableCell className="font-medium">{row.variable}</TableCell>
+                                        <TableCell className="text-right">{row.n}</TableCell>
+                                        <TableCell className="text-right">{typeof row.mean === "number" ? row.mean.toFixed(3) : row.mean}</TableCell>
+                                        <TableCell className="text-right">{typeof row.std === "number" ? row.std.toFixed(3) : row.std}</TableCell>
+                                        <TableCell className="text-right">{typeof row.min === "number" ? row.min.toFixed(2) : row.min}</TableCell>
+                                        <TableCell className="text-right">{typeof row.max === "number" ? row.max.toFixed(2) : row.max}</TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                              {interpretation && <p className="text-xs italic text-muted-foreground leading-relaxed">{interpretation}</p>}
                             </div>
-                          )}
-                          {interpretation && (
-                            <p className="text-xs italic text-muted-foreground leading-relaxed">{interpretation}</p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </section>
-                )}
+                          );
+                        }
+
+                        {/* Chi-square with contingency table */}
+                        if (result.chiSquares) {
+                          for (const chi of result.chiSquares) {
+                            tableNum++;
+                            blocks.push(
+                              <div key={`chi-${chi.var1}-${chi.var2}`} className="space-y-2">
+                                <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : Chi² — {chi.var1} × {chi.var2}</p>
+                                {chi.contingencyTable && (
+                                  <div className="rounded-md border border-border overflow-auto">
+                                    <Table>
+                                      <TableHeader>
+                                        <TableRow>
+                                          <TableHead></TableHead>
+                                          {chi.contingencyTable.colLabels.map(cl => <TableHead key={cl} className="text-right">{cl}</TableHead>)}
+                                          <TableHead className="text-right font-bold">Total</TableHead>
+                                        </TableRow>
+                                      </TableHeader>
+                                      <TableBody>
+                                        {chi.contingencyTable.rowLabels.map((rl, ri) => (
+                                          <TableRow key={rl}>
+                                            <TableCell className="font-medium">{rl}</TableCell>
+                                            {chi.contingencyTable!.observed[ri].map((obs, ci) => (
+                                              <TableCell key={ci} className="text-right">
+                                                {obs} <span className="text-muted-foreground text-[10px]">({chi.contingencyTable!.expected[ri][ci].toFixed(1)})</span>
+                                              </TableCell>
+                                            ))}
+                                            <TableCell className="text-right font-medium">{chi.contingencyTable!.rowTotals[ri]}</TableCell>
+                                          </TableRow>
+                                        ))}
+                                        <TableRow>
+                                          <TableCell className="font-bold">Total</TableCell>
+                                          {chi.contingencyTable.colTotals.map((ct, ci) => (
+                                            <TableCell key={ci} className="text-right font-medium">{ct}</TableCell>
+                                          ))}
+                                          <TableCell className="text-right font-bold">{chi.contingencyTable.grandTotal}</TableCell>
+                                        </TableRow>
+                                      </TableBody>
+                                    </Table>
+                                  </div>
+                                )}
+                                <p className="text-xs italic text-muted-foreground">
+                                  χ²({chi.df}) = {chi.chiSquare.toFixed(3)}, p = {chi.pValue.toFixed(4)}, Cramér's V = {chi.cramersV.toFixed(3)}
+                                </p>
+                              </div>
+                            );
+                          }
+                        }
+
+                        {/* Correlations */}
+                        if (result.correlations && result.correlations.length > 0) {
+                          tableNum++;
+                          blocks.push(
+                            <div key={`corr-${result.id}`} className="space-y-2">
+                              <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : Correlations</p>
+                              <div className="rounded-md border border-border overflow-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Variables</TableHead>
+                                      <TableHead className="text-right">r</TableHead>
+                                      <TableHead className="text-right">p</TableHead>
+                                      <TableHead className="text-right">N</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {result.correlations.map((c, i) => (
+                                      <TableRow key={i}>
+                                        <TableCell className="font-medium">{c.var1} × {c.var2}</TableCell>
+                                        <TableCell className="text-right">{c.r.toFixed(3)}</TableCell>
+                                        <TableCell className="text-right">{c.pValue.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{c.n}</TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        {/* T-tests */}
+                        if (result.tTests && result.tTests.length > 0) {
+                          for (const tt of result.tTests) {
+                            tableNum++;
+                            blocks.push(
+                              <div key={`tt-${tt.variable}`} className="space-y-2">
+                                <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : T-test — {tt.variable}</p>
+                                <div className="rounded-md border border-border overflow-auto">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead>Group</TableHead>
+                                        <TableHead className="text-right">Mean</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {tt.groups.map((g, i) => (
+                                        <TableRow key={g}>
+                                          <TableCell className="font-medium">{g}</TableCell>
+                                          <TableCell className="text-right">{tt.means[i].toFixed(3)}</TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                                <p className="text-xs italic text-muted-foreground">t({tt.df}) = {tt.tStat.toFixed(3)}, p = {tt.pValue.toFixed(4)}</p>
+                              </div>
+                            );
+                          }
+                        }
+
+                        {/* ANOVA */}
+                        if (result.anovas && result.anovas.length > 0) {
+                          for (const a of result.anovas) {
+                            tableNum++;
+                            blocks.push(
+                              <div key={`anova-${a.dependent}-${a.factor}`} className="space-y-2">
+                                <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : ANOVA — {a.dependent} × {a.factor}</p>
+                                <div className="rounded-md border border-border overflow-auto">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead>Group</TableHead>
+                                        <TableHead className="text-right">N</TableHead>
+                                        <TableHead className="text-right">Mean</TableHead>
+                                        <TableHead className="text-right">Std</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {a.groups.map(g => (
+                                        <TableRow key={g.name}>
+                                          <TableCell className="font-medium">{g.name}</TableCell>
+                                          <TableCell className="text-right">{g.n}</TableCell>
+                                          <TableCell className="text-right">{g.mean.toFixed(3)}</TableCell>
+                                          <TableCell className="text-right">{g.std.toFixed(3)}</TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                                <p className="text-xs italic text-muted-foreground">F({a.dfBetween}, {a.dfWithin}) = {a.fStat.toFixed(3)}, p = {a.pValue.toFixed(4)}</p>
+                              </div>
+                            );
+                          }
+                        }
+
+                        {/* Regression */}
+                        if (result.regressions && result.regressions.length > 0) {
+                          for (const reg of result.regressions) {
+                            tableNum++;
+                            blocks.push(
+                              <div key={`reg-${reg.dependent}`} className="space-y-2">
+                                <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : Regression — {reg.dependent}</p>
+                                <div className="rounded-md border border-border overflow-auto">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead>Variable</TableHead>
+                                        <TableHead className="text-right">B</TableHead>
+                                        <TableHead className="text-right">SE</TableHead>
+                                        <TableHead className="text-right">t</TableHead>
+                                        <TableHead className="text-right">p</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {reg.coefficients.map(c => (
+                                        <TableRow key={c.variable}>
+                                          <TableCell className="font-medium">{c.variable}</TableCell>
+                                          <TableCell className="text-right">{c.b.toFixed(4)}</TableCell>
+                                          <TableCell className="text-right">{c.se.toFixed(4)}</TableCell>
+                                          <TableCell className="text-right">{c.t.toFixed(3)}</TableCell>
+                                          <TableCell className="text-right">{c.p.toFixed(4)}</TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                                <p className="text-xs italic text-muted-foreground">R² = {reg.rSquared.toFixed(4)}, R² ajusté = {reg.adjustedR2.toFixed(4)}</p>
+                              </div>
+                            );
+                          }
+                        }
+
+                        return blocks.length > 0 ? <div key={result.id} className="space-y-4">{blocks}</div> : null;
+                      })}
+                    </section>
+                  );
+                })()}
 
                 {/* Charts with academic numbering */}
                 {showCharts(previewContent) && charts.length > 0 && (
