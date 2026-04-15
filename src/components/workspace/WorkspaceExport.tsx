@@ -248,7 +248,7 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                 <Eye className="mr-1 h-3 w-3" />
                 {t("export.preview") || "Preview"}
               </Button>
-              {(["docx", "pdf", ...(content === "full" || content === "results" ? ["xlsx"] : [])] as FormatType[]).map(format => {
+              {(["docx", "pdf", ...((content === "full" || content === "results") && !level.includes("license") ? ["xlsx"] : [])] as FormatType[]).map(format => {
                 const key = `${content}-${format}`;
                 const isLoading = loading === key;
                 return (
@@ -396,7 +396,37 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                           );
                         }
 
-                        {/* Chi-square with contingency table */}
+                        {/* Frequencies */}
+                        if (result.frequencies && result.frequencies.length > 0) {
+                          for (const freq of result.frequencies) {
+                            tableNum++;
+                            blocks.push(
+                              <div key={`freq-${freq.variable}`} className="space-y-2">
+                                <p className="text-sm font-semibold text-foreground">{tableLabel} {tableNum} : {freq.variable}</p>
+                                <div className="rounded-md border border-border overflow-auto">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead>{t("export.variable") || "Category"}</TableHead>
+                                        <TableHead className="text-right">N</TableHead>
+                                        <TableHead className="text-right">%</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {freq.categories.map(cat => (
+                                        <TableRow key={cat.value}>
+                                          <TableCell className="font-medium">{cat.value}</TableCell>
+                                          <TableCell className="text-right">{cat.count}</TableCell>
+                                          <TableCell className="text-right">{cat.pct}%</TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              </div>
+                            );
+                          }
+                        }
                         if (result.chiSquares) {
                           for (const chi of result.chiSquares) {
                             tableNum++;

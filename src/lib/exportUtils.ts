@@ -4,7 +4,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { dataUrlToUint8Array } from "./chartImageRenderer";
-import { getTableLabel, getFigureLabel, generateTableInterpretation, generateFigureInterpretation, getDescriptiveHeaders } from "./academicFormatter";
+import { getTableLabel, getFigureLabel, generateTableInterpretation, generateFigureInterpretation, getDescriptiveHeaders, getFrequencyHeaders, isIdentifierVariable } from "./academicFormatter";
 import type { AnalysisResultItem } from "./statsEngine";
 import { stripLatex } from "./latexSanitizer";
 import { formatChiSquare, formatTTest, formatAnova, formatCorrelation, formatRSquared, formatPValue, type StatSoftware } from "./softwareFormatter";
@@ -442,9 +442,8 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
 
     addHeading(t.statsResults);
 
-    // Descriptive stats table
-    if (data.statsTable.length > 0) {
-      // Academic table title
+    // Standalone descriptive fallback (only if no per-analysis results)
+    if ((!data.analysisResults || data.analysisResults.length === 0) && data.statsTable.length > 0) {
       sections.push(new Paragraph({
         spacing: { before: 200, after: 80 },
         children: [
@@ -481,26 +480,6 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
         columnWidths: Array(colCount).fill(colWidth),
         rows: [headerRow, ...dataRows],
       }));
-
-      sections.push(new Paragraph({ spacing: { before: 60, after: 40 }, children: [] }));
-
-      // Interpretation for descriptive stats
-      if (data.analysisResults) {
-        const descResult = data.analysisResults.find(r => r.descriptive && r.descriptive.length > 0);
-        if (descResult) {
-          const interp = generateTableInterpretation(descResult, data.lang, data.level);
-          if (interp) {
-            sections.push(new Paragraph({
-              spacing: { before: 40, after: 120 },
-              children: [
-                new TextRun({ text: t.interpretation + ": ", bold: true, italics: true, size: 20 }),
-                new TextRun({ text: interp, italics: true, size: 20 }),
-              ],
-            }));
-          }
-        }
-      }
-
       tableNum++;
       sections.push(new Paragraph({ children: [] }));
     }
@@ -529,7 +508,84 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
         })),
       });
 
+      const addInterpretation = (result: AnalysisResultItem) => {
+        const interp = generateTableInterpretation(result, data.lang, data.level);
+        if (interp) {
+          sections.push(new Paragraph({
+            spacing: { before: 40, after: 120 },
+            children: [new TextRun({ text: interp, italics: true, size: 20 })],
+          }));
+        }
+      };
+
+      const descHeaders = getDescriptiveHeaders(data.lang);
+      const freqHeaders = getFrequencyHeaders(data.lang);
+
       for (const result of data.analysisResults) {
+        // Descriptive stats (per-analysis, respecting user execution order)
+        if (result.descriptive && result.descriptive.length > 0) {
+          const filtered = result.descriptive.filter(d => !isIdentifierVariable(d.variable));
+          if (filtered.length > 0) {
+            sections.push(new Paragraph({
+              spacing: { before: 200, after: 80 },
+              children: [
+                new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+                new TextRun({ text: t.descriptiveStats, bold: true, size: 22 }),
+              ],
+            }));
+
+            const colCount = descHeaders.length;
+            const colWidth = Math.floor(9360 / colCount);
+            const headerRow = new TableRow({
+              children: descHeaders.map(h => new TableCell({
+                borders,
+                shading: { fill: "2563EB", type: ShadingType.CLEAR },
+                width: { size: colWidth, type: WidthType.DXA },
+                children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, color: "FFFFFF", size: 20 })] })],
+              })),
+            });
+            const dataRows = filtered.map(row => new TableRow({
+              children: [row.variable, String(row.n), String(row.mean), String(row.std), String(row.min), String(row.q1), String(row.median), String(row.q3), String(row.max)].map(v =>
+                new TableCell({
+                  borders,
+                  width: { size: colWidth, type: WidthType.DXA },
+                  children: [new Paragraph({ children: [new TextRun({ text: v, size: 20 })] })],
+                })
+              ),
+            }));
+
+            sections.push(new Table({
+              width: { size: 9360, type: WidthType.DXA },
+              columnWidths: Array(colCount).fill(colWidth),
+              rows: [headerRow, ...dataRows],
+            }));
+            addInterpretation(result);
+            tableNum++;
+            sections.push(new Paragraph({ children: [] }));
+          }
+        }
+
+        // Frequencies (per-analysis)
+        if (result.frequencies && result.frequencies.length > 0) {
+          const filtered = result.frequencies.filter(f => !isIdentifierVariable(f.variable));
+          for (const freq of filtered) {
+            sections.push(new Paragraph({
+              spacing: { before: 200, after: 80 },
+              children: [
+                new TextRun({ text: `${tableLabel} ${tableNum}: `, bold: true, size: 22 }),
+                new TextRun({ text: `${freqHeaders.value} — ${freq.variable}`, bold: true, size: 22 }),
+              ],
+            }));
+            const fRows = freq.categories.map(c => makeRow([c.value, String(c.count), `${c.pct}%`]));
+            sections.push(new Table({
+              width: { size: 9360, type: WidthType.DXA },
+              columnWidths: [3120, 3120, 3120],
+              rows: [makeTableHeader([freqHeaders.value, freqHeaders.count, freqHeaders.pct]), ...fRows],
+            }));
+            tableNum++;
+            sections.push(new Paragraph({ children: [] }));
+          }
+        }
         // Chi-square / Cross-tab
         if (result.chiSquares) {
           for (const chi of result.chiSquares) {
@@ -600,6 +656,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
             columnWidths: [3120, 6240],
             rows: [makeTableHeader(["Variables", "Result"]), ...corrRows],
           }));
+          addInterpretation(result);
           tableNum++;
           sections.push(new Paragraph({ children: [] }));
         }
@@ -621,6 +678,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
               columnWidths: [4680, 4680],
               rows: [makeTableHeader(["Group", "Mean"]), ...rows],
             }));
+            addInterpretation(result);
             tableNum++;
             sections.push(new Paragraph({ children: [] }));
           }
@@ -643,6 +701,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
               columnWidths: [2340, 2340, 2340, 2340],
               rows: [makeTableHeader(["Group", "N", "Mean", "Std. Dev."]), ...rows],
             }));
+            addInterpretation(result);
             tableNum++;
             sections.push(new Paragraph({ children: [] }));
           }
@@ -670,6 +729,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
               spacing: { before: 60, after: 120 },
               children: [new TextRun({ text: formatRSquared(reg.rSquared, reg.adjustedR2, opts), italics: true, size: 20 })],
             }));
+            addInterpretation(result);
             tableNum++;
             sections.push(new Paragraph({ children: [] }));
           }
@@ -1235,57 +1295,102 @@ export function exportPdf(data: ExportData, content: ExportContent) {
     }
     y += 2;
 
-    addH2(t.descriptiveStats);
+    addH2(t.statsResults);
 
     const tableLabel = getTableLabel(data.lang);
+    const freqHeaders = getFrequencyHeaders(data.lang);
     
     let tableNum = 1;
 
-    // Academic table title
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text(`${tableLabel} ${tableNum}: ${t.descriptiveStats}`, 14, y);
-    y += 6;
+    // Standalone descriptive fallback (only if no per-analysis results)
+    if ((!data.analysisResults || data.analysisResults.length === 0) && data.statsTable.length > 0) {
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.text(`${tableLabel} ${tableNum}: ${t.descriptiveStats}`, 14, y);
+      y += 6;
 
-    const descHeaders = getDescriptiveHeaders(data.lang);
-    autoTable(doc, {
-      startY: y,
-      head: [descHeaders],
-      body: data.statsTable.map(r => [r.variable, r.n, r.mean, r.std, r.min, r.q1, r.median, r.q3, r.max]),
-      theme: "grid",
-      headStyles: { fillColor: [37, 99, 235], fontSize: 8 },
-      styles: { fontSize: 8 },
-      margin: { left: 14 },
-    });
-    y = (doc as any).lastAutoTable.finalY + 4;
-
-    y += 4;
-
-    // Interpretation
-    if (data.analysisResults) {
-      const descResult = data.analysisResults.find(r => r.descriptive && r.descriptive.length > 0);
-      if (descResult) {
-        const interp = generateTableInterpretation(descResult, data.lang, data.level);
-        if (interp) {
-          if (y > 250) { doc.addPage(); y = 20; }
-          doc.setFontSize(9);
-          doc.setFont("helvetica", "italic");
-          const interpLines = doc.splitTextToSize(interp, 180);
-          doc.text(interpLines, 14, y);
-          y += interpLines.length * 5 + 4;
-        }
-      }
+      const descHeaders = getDescriptiveHeaders(data.lang);
+      autoTable(doc, {
+        startY: y,
+        head: [descHeaders],
+        body: data.statsTable.map(r => [r.variable, r.n, r.mean, r.std, r.min, r.q1, r.median, r.q3, r.max]),
+        theme: "grid",
+        headStyles: { fillColor: [37, 99, 235], fontSize: 8 },
+        styles: { fontSize: 8 },
+        margin: { left: 14 },
+      });
+      y = (doc as any).lastAutoTable.finalY + 4;
+      tableNum++;
+      y += 4;
     }
-    doc.setFont("helvetica", "normal");
-    tableNum++;
-    y += 4;
+
+    // Helper to add interpretation
+    const addPdfInterp = (result: AnalysisResultItem) => {
+      const interp = generateTableInterpretation(result, data.lang, data.level);
+      if (interp) {
+        if (y > 250) { doc.addPage(); y = 20; }
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "italic");
+        const interpLines = doc.splitTextToSize(interp, 180);
+        doc.text(interpLines, 14, y);
+        y += interpLines.length * 5 + 4;
+        doc.setFont("helvetica", "normal");
+      }
+    };
 
     // Per-analysis sequential tables (matching Word structure)
     if (data.analysisResults && data.analysisResults.length > 0) {
       const sw = data.software || "" as StatSoftware;
       const opts = { software: sw };
+      const descHeaders = getDescriptiveHeaders(data.lang);
 
       for (const result of data.analysisResults) {
+        // Descriptive stats (per-analysis)
+        if (result.descriptive && result.descriptive.length > 0) {
+          const filtered = result.descriptive.filter(d => !isIdentifierVariable(d.variable));
+          if (filtered.length > 0) {
+            if (y > 200) { doc.addPage(); y = 20; }
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${tableLabel} ${tableNum}: ${t.descriptiveStats}`, 14, y);
+            y += 6;
+            autoTable(doc, {
+              startY: y,
+              head: [descHeaders],
+              body: filtered.map(r => [r.variable, r.n, r.mean, r.std, r.min, r.q1, r.median, r.q3, r.max]),
+              theme: "grid",
+              headStyles: { fillColor: [37, 99, 235], fontSize: 8 },
+              styles: { fontSize: 8 },
+              margin: { left: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 4;
+            addPdfInterp(result);
+            tableNum++;
+            y += 4;
+          }
+        }
+
+        // Frequencies (per-analysis)
+        if (result.frequencies && result.frequencies.length > 0) {
+          const filtered = result.frequencies.filter(f => !isIdentifierVariable(f.variable));
+          for (const freq of filtered) {
+            if (y > 200) { doc.addPage(); y = 20; }
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${tableLabel} ${tableNum}: ${freqHeaders.value} — ${freq.variable}`, 14, y);
+            y += 6;
+            autoTable(doc, {
+              startY: y,
+              head: [[freqHeaders.value, freqHeaders.count, freqHeaders.pct]],
+              body: freq.categories.map(c => [c.value, c.count, `${c.pct}%`]),
+              theme: "grid",
+              headStyles: { fillColor: [37, 99, 235] },
+              margin: { left: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 8;
+            tableNum++;
+          }
+        }
         // Chi-square with contingency table
         if (result.chiSquares) {
           for (const chi of result.chiSquares) {
@@ -1345,7 +1450,9 @@ export function exportPdf(data: ExportData, content: ExportContent) {
             body: result.correlations.map(c => [`${c.var1} × ${c.var2}`, c.r.toFixed(3), c.pValue.toFixed(4), String(c.n)]),
             theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
           });
-          y = (doc as any).lastAutoTable.finalY + 8;
+          y = (doc as any).lastAutoTable.finalY + 4;
+          addPdfInterp(result);
+          y += 4;
           tableNum++;
         }
 
@@ -1364,7 +1471,9 @@ export function exportPdf(data: ExportData, content: ExportContent) {
               startY: y, head: [["Group", "Mean"]], body: rows,
               theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
             });
-            y = (doc as any).lastAutoTable.finalY + 8;
+            y = (doc as any).lastAutoTable.finalY + 4;
+            addPdfInterp(result);
+            y += 4;
             tableNum++;
           }
         }
@@ -1384,7 +1493,9 @@ export function exportPdf(data: ExportData, content: ExportContent) {
               startY: y, head: [["Group", "N", "Mean", "Std. Dev."]], body: rows,
               theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
             });
-            y = (doc as any).lastAutoTable.finalY + 8;
+            y = (doc as any).lastAutoTable.finalY + 4;
+            addPdfInterp(result);
+            y += 4;
             tableNum++;
           }
         }
@@ -1409,6 +1520,7 @@ export function exportPdf(data: ExportData, content: ExportContent) {
             doc.text(formatRSquared(reg.rSquared, reg.adjustedR2, opts), 14, y);
             y += 5;
             doc.setFont("helvetica", "normal");
+            addPdfInterp(result);
             y += 4;
           tableNum++;
           }
