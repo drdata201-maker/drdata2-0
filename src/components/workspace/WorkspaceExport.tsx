@@ -248,7 +248,7 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
                 <Eye className="mr-1 h-3 w-3" />
                 {t("export.preview") || "Preview"}
               </Button>
-              {(["docx", "pdf", ...(content === "full" || content === "results" ? ["xlsx"] : [])] as FormatType[]).map(format => {
+              {(["docx", "pdf", ...((content === "full" || content === "results") && !level.includes("license") ? ["xlsx"] : [])] as FormatType[]).map(format => {
                 const key = `${content}-${format}`;
                 const isLoading = loading === key;
                 return (
