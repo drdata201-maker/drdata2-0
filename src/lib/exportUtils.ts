@@ -4,7 +4,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { dataUrlToUint8Array } from "./chartImageRenderer";
-import { getTableLabel, getFigureLabel, generateTableInterpretation, generateFigureInterpretation, getDescriptiveHeaders } from "./academicFormatter";
+import { getTableLabel, getFigureLabel, generateTableInterpretation, generateFigureInterpretation, getDescriptiveHeaders, getFrequencyHeaders, isIdentifierVariable } from "./academicFormatter";
 import type { AnalysisResultItem } from "./statsEngine";
 import { stripLatex } from "./latexSanitizer";
 import { formatChiSquare, formatTTest, formatAnova, formatCorrelation, formatRSquared, formatPValue, type StatSoftware } from "./softwareFormatter";
