@@ -1450,7 +1450,9 @@ export function exportPdf(data: ExportData, content: ExportContent) {
             body: result.correlations.map(c => [`${c.var1} × ${c.var2}`, c.r.toFixed(3), c.pValue.toFixed(4), String(c.n)]),
             theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
           });
-          y = (doc as any).lastAutoTable.finalY + 8;
+          y = (doc as any).lastAutoTable.finalY + 4;
+          addPdfInterp(result);
+          y += 4;
           tableNum++;
         }
 
@@ -1469,7 +1471,9 @@ export function exportPdf(data: ExportData, content: ExportContent) {
               startY: y, head: [["Group", "Mean"]], body: rows,
               theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
             });
-            y = (doc as any).lastAutoTable.finalY + 8;
+            y = (doc as any).lastAutoTable.finalY + 4;
+            addPdfInterp(result);
+            y += 4;
             tableNum++;
           }
         }
