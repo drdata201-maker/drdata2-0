@@ -729,6 +729,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
               spacing: { before: 60, after: 120 },
               children: [new TextRun({ text: formatRSquared(reg.rSquared, reg.adjustedR2, opts), italics: true, size: 20 })],
             }));
+            addInterpretation(result);
             tableNum++;
             sections.push(new Paragraph({ children: [] }));
           }
