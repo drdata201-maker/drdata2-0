@@ -1493,7 +1493,9 @@ export function exportPdf(data: ExportData, content: ExportContent) {
               startY: y, head: [["Group", "N", "Mean", "Std. Dev."]], body: rows,
               theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },
             });
-            y = (doc as any).lastAutoTable.finalY + 8;
+            y = (doc as any).lastAutoTable.finalY + 4;
+            addPdfInterp(result);
+            y += 4;
             tableNum++;
           }
         }
