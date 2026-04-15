@@ -656,6 +656,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
             columnWidths: [3120, 6240],
             rows: [makeTableHeader(["Variables", "Result"]), ...corrRows],
           }));
+          addInterpretation(result);
           tableNum++;
           sections.push(new Paragraph({ children: [] }));
         }
@@ -677,6 +678,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
               columnWidths: [4680, 4680],
               rows: [makeTableHeader(["Group", "Mean"]), ...rows],
             }));
+            addInterpretation(result);
             tableNum++;
             sections.push(new Paragraph({ children: [] }));
           }
@@ -699,6 +701,7 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
               columnWidths: [2340, 2340, 2340, 2340],
               rows: [makeTableHeader(["Group", "N", "Mean", "Std. Dev."]), ...rows],
             }));
+            addInterpretation(result);
             tableNum++;
             sections.push(new Paragraph({ children: [] }));
           }
