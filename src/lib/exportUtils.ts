@@ -1520,6 +1520,7 @@ export function exportPdf(data: ExportData, content: ExportContent) {
             doc.text(formatRSquared(reg.rSquared, reg.adjustedR2, opts), 14, y);
             y += 5;
             doc.setFont("helvetica", "normal");
+            addPdfInterp(result);
             y += 4;
           tableNum++;
           }
