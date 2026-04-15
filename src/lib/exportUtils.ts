@@ -1295,57 +1295,102 @@ export function exportPdf(data: ExportData, content: ExportContent) {
     }
     y += 2;
 
-    addH2(t.descriptiveStats);
+    addH2(t.statsResults);
 
     const tableLabel = getTableLabel(data.lang);
+    const freqHeaders = getFrequencyHeaders(data.lang);
     
     let tableNum = 1;
 
-    // Academic table title
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text(`${tableLabel} ${tableNum}: ${t.descriptiveStats}`, 14, y);
-    y += 6;
+    // Standalone descriptive fallback (only if no per-analysis results)
+    if ((!data.analysisResults || data.analysisResults.length === 0) && data.statsTable.length > 0) {
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.text(`${tableLabel} ${tableNum}: ${t.descriptiveStats}`, 14, y);
+      y += 6;
 
-    const descHeaders = getDescriptiveHeaders(data.lang);
-    autoTable(doc, {
-      startY: y,
-      head: [descHeaders],
-      body: data.statsTable.map(r => [r.variable, r.n, r.mean, r.std, r.min, r.q1, r.median, r.q3, r.max]),
-      theme: "grid",
-      headStyles: { fillColor: [37, 99, 235], fontSize: 8 },
-      styles: { fontSize: 8 },
-      margin: { left: 14 },
-    });
-    y = (doc as any).lastAutoTable.finalY + 4;
-
-    y += 4;
-
-    // Interpretation
-    if (data.analysisResults) {
-      const descResult = data.analysisResults.find(r => r.descriptive && r.descriptive.length > 0);
-      if (descResult) {
-        const interp = generateTableInterpretation(descResult, data.lang, data.level);
-        if (interp) {
-          if (y > 250) { doc.addPage(); y = 20; }
-          doc.setFontSize(9);
-          doc.setFont("helvetica", "italic");
-          const interpLines = doc.splitTextToSize(interp, 180);
-          doc.text(interpLines, 14, y);
-          y += interpLines.length * 5 + 4;
-        }
-      }
+      const descHeaders = getDescriptiveHeaders(data.lang);
+      autoTable(doc, {
+        startY: y,
+        head: [descHeaders],
+        body: data.statsTable.map(r => [r.variable, r.n, r.mean, r.std, r.min, r.q1, r.median, r.q3, r.max]),
+        theme: "grid",
+        headStyles: { fillColor: [37, 99, 235], fontSize: 8 },
+        styles: { fontSize: 8 },
+        margin: { left: 14 },
+      });
+      y = (doc as any).lastAutoTable.finalY + 4;
+      tableNum++;
+      y += 4;
     }
-    doc.setFont("helvetica", "normal");
-    tableNum++;
-    y += 4;
+
+    // Helper to add interpretation
+    const addPdfInterp = (result: AnalysisResultItem) => {
+      const interp = generateTableInterpretation(result, data.lang, data.level);
+      if (interp) {
+        if (y > 250) { doc.addPage(); y = 20; }
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "italic");
+        const interpLines = doc.splitTextToSize(interp, 180);
+        doc.text(interpLines, 14, y);
+        y += interpLines.length * 5 + 4;
+        doc.setFont("helvetica", "normal");
+      }
+    };
 
     // Per-analysis sequential tables (matching Word structure)
     if (data.analysisResults && data.analysisResults.length > 0) {
       const sw = data.software || "" as StatSoftware;
       const opts = { software: sw };
+      const descHeaders = getDescriptiveHeaders(data.lang);
 
       for (const result of data.analysisResults) {
+        // Descriptive stats (per-analysis)
+        if (result.descriptive && result.descriptive.length > 0) {
+          const filtered = result.descriptive.filter(d => !isIdentifierVariable(d.variable));
+          if (filtered.length > 0) {
+            if (y > 200) { doc.addPage(); y = 20; }
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${tableLabel} ${tableNum}: ${t.descriptiveStats}`, 14, y);
+            y += 6;
+            autoTable(doc, {
+              startY: y,
+              head: [descHeaders],
+              body: filtered.map(r => [r.variable, r.n, r.mean, r.std, r.min, r.q1, r.median, r.q3, r.max]),
+              theme: "grid",
+              headStyles: { fillColor: [37, 99, 235], fontSize: 8 },
+              styles: { fontSize: 8 },
+              margin: { left: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 4;
+            addPdfInterp(result);
+            tableNum++;
+            y += 4;
+          }
+        }
+
+        // Frequencies (per-analysis)
+        if (result.frequencies && result.frequencies.length > 0) {
+          const filtered = result.frequencies.filter(f => !isIdentifierVariable(f.variable));
+          for (const freq of filtered) {
+            if (y > 200) { doc.addPage(); y = 20; }
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text(`${tableLabel} ${tableNum}: ${freqHeaders.value} — ${freq.variable}`, 14, y);
+            y += 6;
+            autoTable(doc, {
+              startY: y,
+              head: [[freqHeaders.value, freqHeaders.count, freqHeaders.pct]],
+              body: freq.categories.map(c => [c.value, c.count, `${c.pct}%`]),
+              theme: "grid",
+              headStyles: { fillColor: [37, 99, 235] },
+              margin: { left: 14 },
+            });
+            y = (doc as any).lastAutoTable.finalY + 8;
+            tableNum++;
+          }
+        }
         // Chi-square with contingency table
         if (result.chiSquares) {
           for (const chi of result.chiSquares) {
