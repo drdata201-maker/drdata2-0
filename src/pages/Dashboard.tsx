@@ -12,7 +12,9 @@ import { ThesisAssistantSection } from "@/components/dashboard/ThesisAssistantSe
 import { StatsSection } from "@/components/dashboard/StatsSection";
 import { QuickGuideSection } from "@/components/dashboard/QuickGuideSection";
 import { SettingsView } from "@/components/dashboard/SettingsView";
-import { StudentNewProjectPage } from "@/components/student/StudentNewProjectPage";
+import { LicenceNewProjectPage } from "@/components/student/LicenceNewProjectPage";
+import { MasterNewProjectPage } from "@/components/student/MasterNewProjectPage";
+import { DoctorateNewProjectPage } from "@/components/student/DoctorateNewProjectPage";
 import { StudentProjectsPage } from "@/components/student/StudentProjectsPage";
 import { StudentAnalysisPage } from "@/components/student/StudentAnalysisPage";
 import { StudentHistoryPage } from "@/components/student/StudentHistoryPage";
@@ -88,23 +90,14 @@ export default function Dashboard() {
 
   const headerTitle = t(headerTitleMap[subPage] || "dashboard.dashboard");
 
-  const knownSubPages = new Set(["", "settings", "new-project", "projects", "quick-analysis", "history", "usage-stats", "memory-assistant"]);
-
   const renderContent = () => {
-    if (subPage && !knownSubPages.has(subPage)) {
-      return (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="text-lg font-semibold text-foreground mb-2">{t("notFound.pageUnavailable") !== "notFound.pageUnavailable" ? t("notFound.pageUnavailable") : "Page unavailable"}</p>
-          <p className="text-sm text-muted-foreground mb-4">{t("notFound.tryAgain") !== "notFound.tryAgain" ? t("notFound.tryAgain") : "This page doesn't exist. Please try again."}</p>
-          <button onClick={() => navigate(baseRoute)} className="text-primary underline text-sm">{t("dashboard.dashboard")}</button>
-        </div>
-      );
-    }
     switch (subPage) {
       case "settings":
         return <SettingsView userName={userName} userEmail={userEmail} userLevel={userLevel} userCountry={userCountry} onLogout={handleLogout} />;
       case "new-project":
-        return <StudentNewProjectPage baseRoute={baseRoute} userType={userType} />;
+        if (routeUserType === "student_doctorate") return <DoctorateNewProjectPage baseRoute={baseRoute} />;
+        if (routeUserType === "student_master") return <MasterNewProjectPage baseRoute={baseRoute} />;
+        return <LicenceNewProjectPage baseRoute={baseRoute} />;
       case "projects":
         return <StudentProjectsPage baseRoute={baseRoute} userType={userType} />;
       case "quick-analysis":
