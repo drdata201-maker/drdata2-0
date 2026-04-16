@@ -9,6 +9,8 @@ import {
   Clock,
   Settings,
   BarChart3,
+  BookOpen,
+  LogOut,
 } from "lucide-react";
 
 interface DashboardSidebarProps {
@@ -21,6 +23,7 @@ const sidebarItems = [
   { key: "new-project", icon: FolderPlus, label: "dashboard.newProject" },
   { key: "projects", icon: FolderOpen, label: "dashboard.myProjects" },
   { key: "quick-analysis", icon: Zap, label: "dashboard.quickAnalysis" },
+  { key: "memory-assistant", icon: BookOpen, label: "memoryAssistant.title" },
   { key: "history", icon: Clock, label: "dashboard.history" },
   { key: "usage-stats", icon: BarChart3, label: "dashboard.usageStats" },
   { key: "settings", icon: Settings, label: "dashboard.settings" },
