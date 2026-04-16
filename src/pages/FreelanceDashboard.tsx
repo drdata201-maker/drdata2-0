@@ -61,7 +61,18 @@ export default function FreelanceDashboard() {
 
   const headerTitle = t(headerTitleMap[subPage] || "dashboard.dashboard");
 
+  const knownSubPages = new Set(["", "settings", "clients", "projects", "new-project", "reports", "history", "analysis"]);
+
   const renderContent = () => {
+    if (subPage && !knownSubPages.has(subPage)) {
+      return (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <p className="text-lg font-semibold text-foreground mb-2">Page unavailable</p>
+          <p className="text-sm text-muted-foreground mb-4">This page doesn't exist. Please try again.</p>
+          <button onClick={() => navigate(BASE)} className="text-primary underline text-sm">{t("dashboard.dashboard")}</button>
+        </div>
+      );
+    }
     switch (subPage) {
       case "settings":
         return <FreelanceSettingsView userName={userName} userEmail={userEmail} userCountry={userCountry} freelanceDomain={freelanceDomain} onLogout={handleLogout} />;

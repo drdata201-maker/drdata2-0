@@ -71,7 +71,18 @@ export default function EnterpriseDashboard() {
 
   const headerTitle = t(headerTitleMap[subPage] || "enterprise.sidebar.dashboard");
 
+  const knownSubPages = new Set(["", "settings", "departments", "teams", "projects", "new-analysis", "charts", "reports", "history", "advanced-analytics"]);
+
   const renderContent = () => {
+    if (subPage && !knownSubPages.has(subPage)) {
+      return (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <p className="text-lg font-semibold text-foreground mb-2">Page unavailable</p>
+          <p className="text-sm text-muted-foreground mb-4">This page doesn't exist. Please try again.</p>
+          <button onClick={() => navigate(BASE)} className="text-primary underline text-sm">{t("enterprise.sidebar.dashboard")}</button>
+        </div>
+      );
+    }
     switch (subPage) {
       case "settings":
         return <EnterpriseSettingsView companyName={companyName} userEmail={userEmail} userCountry={userCountry} industry={industry} companySize={companySize} onLogout={handleLogout} />;
