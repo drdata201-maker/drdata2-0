@@ -80,7 +80,18 @@ export default function PmeDashboard() {
 
   const headerTitle = t(headerTitleMap[subPage] || "pme.sidebar.dashboard");
 
+  const knownSubPages = new Set(["", "settings", "new-analysis", "projects", "charts", "reports", "history"]);
+
   const renderContent = () => {
+    if (subPage && !knownSubPages.has(subPage)) {
+      return (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <p className="text-lg font-semibold text-foreground mb-2">Page unavailable</p>
+          <p className="text-sm text-muted-foreground mb-4">This page doesn't exist. Please try again.</p>
+          <button onClick={() => navigate(BASE)} className="text-primary underline text-sm">{t("pme.sidebar.dashboard")}</button>
+        </div>
+      );
+    }
     switch (subPage) {
       case "settings":
         return (
