@@ -12,9 +12,7 @@ import { ThesisAssistantSection } from "@/components/dashboard/ThesisAssistantSe
 import { StatsSection } from "@/components/dashboard/StatsSection";
 import { QuickGuideSection } from "@/components/dashboard/QuickGuideSection";
 import { SettingsView } from "@/components/dashboard/SettingsView";
-import { LicenceNewProjectPage } from "@/components/student/LicenceNewProjectPage";
-import { MasterNewProjectPage } from "@/components/student/MasterNewProjectPage";
-import { DoctorateNewProjectPage } from "@/components/student/DoctorateNewProjectPage";
+import { StudentNewProjectPage } from "@/components/student/StudentNewProjectPage";
 import { StudentProjectsPage } from "@/components/student/StudentProjectsPage";
 import { StudentAnalysisPage } from "@/components/student/StudentAnalysisPage";
 import { StudentHistoryPage } from "@/components/student/StudentHistoryPage";
@@ -106,9 +104,7 @@ export default function Dashboard() {
       case "settings":
         return <SettingsView userName={userName} userEmail={userEmail} userLevel={userLevel} userCountry={userCountry} onLogout={handleLogout} />;
       case "new-project":
-        if (routeUserType === "student_doctorate") return <DoctorateNewProjectPage baseRoute={baseRoute} />;
-        if (routeUserType === "student_master") return <MasterNewProjectPage baseRoute={baseRoute} />;
-        return <LicenceNewProjectPage baseRoute={baseRoute} />;
+        return <StudentNewProjectPage baseRoute={baseRoute} userType={userType} />;
       case "projects":
         return <StudentProjectsPage baseRoute={baseRoute} userType={userType} />;
       case "quick-analysis":
