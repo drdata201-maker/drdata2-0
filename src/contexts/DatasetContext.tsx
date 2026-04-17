@@ -499,7 +499,19 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    setAnalysisResults(prev => [...prev, ...newResults]);
+    // BLOCK 6 — Deduplicate: drop new analyses whose signature (type + dep + ind) already exists.
+    const sigOf = (r: AnalysisResultItem, dep?: string, inds?: string[]) =>
+      `${r.type}::${dep || ""}::${(inds || []).slice().sort().join("|")}`;
+    setAnalysisResults(prev => {
+      const existing = new Set(prev.map(r => sigOf(r, depVar, indVars)));
+      const filtered = newResults.filter(r => {
+        const sig = sigOf(r, depVar, indVars);
+        if (existing.has(sig)) return false;
+        existing.add(sig);
+        return true;
+      });
+      return [...prev, ...filtered];
+    });
 
     // Create notification for completed analysis
     (async () => {
