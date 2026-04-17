@@ -467,10 +467,15 @@ Keep under 80 words.`;
   };
 
   // Check if any selected analysis needs variable selection
+  // BLOCK 3 — At Licence level, descriptive_full also requires manual variable picking
+  const isLicence = !level.includes("master") && !level.includes("doctor");
   const needsVariableSelection = useMemo(() => {
     const expanded = expandAnalysisKeys(selectedAnalyses);
+    if (isLicence && (selectedAnalyses.includes("descriptive_full") || expanded.includes("descriptive_stats") || expanded.includes("frequencies"))) {
+      return true;
+    }
     return expanded.some(a => VARIABLE_REQUIRING[a]);
-  }, [selectedAnalyses]);
+  }, [selectedAnalyses, isLicence]);
 
   const numericVars = useMemo(() =>
     dataset?.variables.filter(v => v.type === "numeric").map(v => v.name) || [],
@@ -1127,8 +1132,52 @@ Keep under 120 words. Use academic language.`);
               </div>
             )}
 
+            {/* BLOCK 3 — Licence descriptive: separate qualitative + quantitative pickers */}
+            {isLicence && selectedAnalyses.includes("descriptive_full") && !selectedAnalyses.some(a => VARIABLE_REQUIRING[a]) && (
+              <>
+                {numericVars.length > 0 && (
+                  <div className="space-y-1.5 rounded-lg border border-border bg-muted/20 p-3">
+                    <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                      🔢 {t("joel.varQuantitative") || "Quantitative variables"}
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {numericVars.map(v => {
+                        const isSelected = selectedIndVars.includes(v);
+                        return (
+                          <Button key={v} variant={isSelected ? "default" : "outline"} size="sm"
+                            className="h-auto py-1.5 px-2.5 text-xs gap-1.5" onClick={() => toggleIndVar(v)}>
+                            {v}
+                            <Badge variant={isSelected ? "secondary" : "outline"} className="text-[9px] px-1 py-0 h-4">N</Badge>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {categoricalVars.length > 0 && (
+                  <div className="space-y-1.5 rounded-lg border border-border bg-muted/20 p-3">
+                    <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                      🏷️ {t("joel.varQualitative") || "Qualitative variables"}
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {categoricalVars.map(v => {
+                        const isSelected = selectedIndVars.includes(v);
+                        return (
+                          <Button key={v} variant={isSelected ? "default" : "outline"} size="sm"
+                            className="h-auto py-1.5 px-2.5 text-xs gap-1.5" onClick={() => toggleIndVar(v)}>
+                            {v}
+                            <Badge variant={isSelected ? "secondary" : "outline"} className="text-[9px] px-1 py-0 h-4">C</Badge>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
             {/* Confirm variables */}
-            {(selectedDepVar || selectedIndVars.length >= 2 || (selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.independent) && selectedIndVars.length >= 1)) && (
+            {(selectedDepVar || selectedIndVars.length >= 2 || (selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.independent) && selectedIndVars.length >= 1) || (isLicence && selectedAnalyses.includes("descriptive_full") && selectedIndVars.length >= 1)) && (
               <Button size="sm" className="w-full gap-1.5" onClick={confirmVariablesAndRun}>
                 <Sparkles className="h-3.5 w-3.5" />
                 {t("joel.runWithVariables")}

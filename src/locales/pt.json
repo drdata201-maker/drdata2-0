@@ -686,6 +686,8 @@
   "joel.varSelect2": "Selecionar variáveis",
   "joel.varSelectPlaceholder": "Selecionar variável...",
   "joel.varSelected": "Variáveis selecionadas",
+  "joel.varQuantitative": "Variáveis quantitativas",
+  "joel.varQualitative": "Variáveis qualitativas",
   "joel.runWithVariables": "Executar análise",
   "joel.varSuggestion": "Variável dependente sugerida",
   "joel.varDepHint": "A variável que você está tentando explicar ou prever",
