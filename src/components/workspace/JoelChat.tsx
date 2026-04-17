@@ -467,10 +467,15 @@ Keep under 80 words.`;
   };
 
   // Check if any selected analysis needs variable selection
+  // BLOCK 3 — At Licence level, descriptive_full also requires manual variable picking
+  const isLicence = !level.includes("master") && !level.includes("doctor");
   const needsVariableSelection = useMemo(() => {
     const expanded = expandAnalysisKeys(selectedAnalyses);
+    if (isLicence && (selectedAnalyses.includes("descriptive_full") || expanded.includes("descriptive_stats") || expanded.includes("frequencies"))) {
+      return true;
+    }
     return expanded.some(a => VARIABLE_REQUIRING[a]);
-  }, [selectedAnalyses]);
+  }, [selectedAnalyses, isLicence]);
 
   const numericVars = useMemo(() =>
     dataset?.variables.filter(v => v.type === "numeric").map(v => v.name) || [],
