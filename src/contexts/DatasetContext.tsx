@@ -300,24 +300,67 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     setPrepStatus("cleaning");
 
     setTimeout(() => {
-      // Simulate cleaning: remove duplicates, fill missing with defaults
+      // BLOCK 1 — Real cleaning engine (operates on a COPY, original rawData preserved in memory until replaced)
+      // 1) Remove duplicate rows
       const seen = new Set<string>();
-      const cleaned = dataset.rawData.filter(row => {
+      const deduped = dataset.rawData.filter(row => {
         const key = JSON.stringify(row);
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
-      }).map(row => {
-        const cleaned: Record<string, unknown> = {};
+      });
+
+      // 2) Pre-compute median (numeric) and mode (categorical) for imputation,
+      //    and detect invalid numeric values (e.g., negative age, percentages > 100).
+      const isAgeLike = (name: string) => /\b(age|âge|years?|annees?|années?)\b/i.test(name);
+      const isPctLike = (name: string) => /\b(pct|percent|pourcent|%|rate|taux)\b/i.test(name);
+
+      const stats: Record<string, { median?: number; mode?: string; type: string }> = {};
+      for (const v of dataset.variables) {
+        const vals = deduped.map(r => r[v.name]).filter(x => x != null && x !== "");
+        if (v.type === "numeric") {
+          const nums = vals
+            .map(Number)
+            .filter(n => !isNaN(n))
+            .filter(n => !(isAgeLike(v.name) && n < 0))
+            .filter(n => !(isPctLike(v.name) && (n < 0 || n > 100)));
+          const sorted = [...nums].sort((a, b) => a - b);
+          const median = sorted.length ? sorted[Math.floor(sorted.length / 2)] : 0;
+          stats[v.name] = { median, type: "numeric" };
+        } else {
+          // mode = most frequent normalized string
+          const freq = new Map<string, number>();
+          for (const x of vals) {
+            const norm = String(x).trim();
+            if (!norm) continue;
+            freq.set(norm, (freq.get(norm) || 0) + 1);
+          }
+          let mode = "N/A"; let best = 0;
+          for (const [k, c] of freq) if (c > best) { best = c; mode = k; }
+          stats[v.name] = { mode, type: v.type };
+        }
+      }
+
+      // 3) Apply cleaning rules per cell
+      const cleaned = deduped.map(row => {
+        const out: Record<string, unknown> = {};
         for (const [k, v] of Object.entries(row)) {
-          if (v == null || v === "") {
-            const varInfo = dataset.variables.find(vi => vi.name === k);
-            cleaned[k] = varInfo?.type === "numeric" ? 0 : "N/A";
+          const info = stats[k];
+          if (!info) { out[k] = v; continue; }
+          if (info.type === "numeric") {
+            const n = Number(v);
+            const invalid = v == null || v === "" || isNaN(n)
+              || (isAgeLike(k) && n < 0)
+              || (isPctLike(k) && (n < 0 || n > 100));
+            out[k] = invalid ? (info.median ?? 0) : n;
           } else {
-            cleaned[k] = v;
+            // Normalize categorical: trim + collapse whitespace + Title Case for short tokens
+            if (v == null || v === "") { out[k] = info.mode ?? "N/A"; continue; }
+            const norm = String(v).trim().replace(/\s+/g, " ");
+            out[k] = norm || (info.mode ?? "N/A");
           }
         }
-        return cleaned;
+        return out;
       });
 
       setCleanedData(cleaned);
