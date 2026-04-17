@@ -201,6 +201,9 @@ export interface AnalysisResultItem {
   type: string;
   title: string;
   timestamp: string;
+  /** Variables used to compute this analysis (for dedup signature & re-render) */
+  depVar?: string;
+  indVars?: string[];
   descriptive?: DescriptiveResult[];
   frequencies?: FrequencyResult[];
   correlations?: CorrelationResult[];
