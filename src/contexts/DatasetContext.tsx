@@ -400,7 +400,14 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
 
     for (const key of analysisKeys) {
       const analysisName = key.startsWith("custom:") ? key.slice(7) : key;
-      const result: AnalysisResultItem = { id: crypto.randomUUID(), type: analysisName, title: analysisName, timestamp: ts };
+      const result: AnalysisResultItem = {
+        id: crypto.randomUUID(),
+        type: analysisName,
+        title: analysisName,
+        timestamp: ts,
+        depVar: depVar,
+        indVars: indVars ? [...indVars] : undefined,
+      };
 
       if (key === "descriptive_stats" || key === "frequencies" || key.startsWith("custom:")) {
         // BLOCK 3/4 — Honor user-selected variables when provided; partition by detected type
@@ -499,19 +506,32 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // BLOCK 6 — Deduplicate: drop new analyses whose signature (type + dep + ind) already exists.
-    const sigOf = (r: AnalysisResultItem, dep?: string, inds?: string[]) =>
-      `${r.type}::${dep || ""}::${(inds || []).slice().sort().join("|")}`;
+    // BLOCK 1 — Replace-on-match dedup: if a previous analysis has the same signature
+    // (type + dep + sorted inds), replace it in place to preserve user execution order.
+    // Otherwise, append. This avoids stale duplicates and reflects re-runs immediately.
+    const sigOf = (r: AnalysisResultItem) =>
+      `${r.type}::${r.depVar || ""}::${(r.indVars || []).slice().sort().join("|")}`;
     setAnalysisResults(prev => {
-      const existing = new Set(prev.map(r => sigOf(r, depVar, indVars)));
-      const filtered = newResults.filter(r => {
-        const sig = sigOf(r, depVar, indVars);
-        if (existing.has(sig)) return false;
-        existing.add(sig);
-        return true;
-      });
-      return [...prev, ...filtered];
+      const next = [...prev];
+      for (const fresh of newResults) {
+        const sig = sigOf(fresh);
+        const idx = next.findIndex(r => sigOf(r) === sig);
+        if (idx >= 0) {
+          // Preserve original id so cached overrides (titles/charts) stay attached
+          next[idx] = { ...fresh, id: next[idx].id };
+        } else {
+          next.push(fresh);
+        }
+      }
+      return next;
     });
+
+    // BLOCK 2 — Real-time sync: invalidate derived state so charts & document
+    // regenerate from the latest results without requiring a manual refresh.
+    if (newResults.length > 0) {
+      setCachedCharts(null);
+      setInterpretationData(null);
+    }
 
     // Create notification for completed analysis
     (async () => {
