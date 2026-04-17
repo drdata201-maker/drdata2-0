@@ -1177,7 +1177,7 @@ Keep under 120 words. Use academic language.`);
             )}
 
             {/* Confirm variables */}
-            {(selectedDepVar || selectedIndVars.length >= 2 || (selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.independent) && selectedIndVars.length >= 1)) && (
+            {(selectedDepVar || selectedIndVars.length >= 2 || (selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.independent) && selectedIndVars.length >= 1) || (isLicence && selectedAnalyses.includes("descriptive_full") && selectedIndVars.length >= 1)) && (
               <Button size="sm" className="w-full gap-1.5" onClick={confirmVariablesAndRun}>
                 <Sparkles className="h-3.5 w-3.5" />
                 {t("joel.runWithVariables")}
