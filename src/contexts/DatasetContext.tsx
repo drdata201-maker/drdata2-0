@@ -403,11 +403,17 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
       const result: AnalysisResultItem = { id: crypto.randomUUID(), type: analysisName, title: analysisName, timestamp: ts };
 
       if (key === "descriptive_stats" || key === "frequencies" || key.startsWith("custom:")) {
-        if (numVars.length) result.descriptive = computeDescriptive(rows, numVars);
-        if (catVars.length) result.frequencies = computeFrequencies(rows, catVars);
+        // BLOCK 3/4 — Honor user-selected variables when provided; partition by detected type
+        const userVars = (indVars && indVars.length > 0) ? indVars : null;
+        const numForDesc = userVars ? userVars.filter(v => numVars.includes(v)) : numVars;
+        const catForDesc = userVars ? userVars.filter(v => catVars.includes(v)) : catVars;
+        if (numForDesc.length) result.descriptive = computeDescriptive(rows, numForDesc);
+        if (catForDesc.length) result.frequencies = computeFrequencies(rows, catForDesc);
       }
       if (key === "frequencies") {
-        result.frequencies = computeFrequencies(rows, catVars.length ? catVars : numVars.slice(0, 3));
+        const userVars = (indVars && indVars.length > 0) ? indVars : null;
+        const catForFreq = userVars ? userVars.filter(v => catVars.includes(v) || numVars.includes(v)) : (catVars.length ? catVars : numVars.slice(0, 3));
+        result.frequencies = computeFrequencies(rows, catForFreq);
       }
       if (key === "correlation") {
         const corrVars = indVars && indVars.length >= 2 ? indVars.filter(v => numVars.includes(v)) : numVars;
