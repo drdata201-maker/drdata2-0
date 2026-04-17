@@ -570,7 +570,14 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     const effectiveDepVar = depVar || numVars[0];
     const effectiveIndVars = indVars && indVars.length > 0 ? indVars : numVars.slice(1);
     const analysisName = analysisKey.startsWith("custom:") ? analysisKey.slice(7) : analysisKey;
-    const result: AnalysisResultItem = { id, type: analysisName, title: analysisName, timestamp: new Date().toISOString() };
+    const result: AnalysisResultItem = {
+      id,
+      type: analysisName,
+      title: analysisName,
+      timestamp: new Date().toISOString(),
+      depVar,
+      indVars: indVars ? [...indVars] : undefined,
+    };
 
     // Reuse the same analysis logic from runAnalyses for a single key
     if (analysisKey === "descriptive_stats" || analysisKey === "frequencies" || analysisKey.startsWith("custom:")) {
