@@ -1154,5 +1154,15 @@
   "varDiag.sub.date": "Data",
   "varDiag.sub.text": "Texto",
   "prepValidation.empty": "O conjunto preparado está vazio. Revise suas transformações.",
-  "prepValidation.noVariables": "Nenhuma variável disponível para análise — todas foram excluídas."
+  "prepValidation.noVariables": "Nenhuma variável disponível para análise — todas foram excluídas.",
+  "varStudio.group.suggested": "Método sugerido",
+  "varStudio.group.suggestSymmetric": "Distribuição simétrica — a largura igual preserva a leitura intuitiva dos intervalos",
+  "varStudio.group.suggestSkewed": "Distribuição assimétrica — os quantis equilibram os efetivos por classe",
+  "varStudio.group.useSuggestion": "Usar sugestão",
+  "varStudio.group.skewness": "assimetria",
+  "varStudio.group.manual": "Limiares manuais",
+  "varStudio.group.thresholds": "Limiares (separados por vírgulas)",
+  "varStudio.group.thresholdsHint": "Insira os pontos de corte em ordem crescente",
+  "varStudio.group.cuts": "corte(s)",
+  "varStudio.group.classes": "classes"
 }
