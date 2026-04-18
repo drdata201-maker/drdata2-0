@@ -443,14 +443,19 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
 
   const runAnalyses = useCallback((analysisKeys: string[], software: string, depVar?: string, indVars?: string[]) => {
     if (!dataset) return;
-    const rows = cleanedData || dataset.rawData;
-    // Filter out identifier/technical variables before any analysis
-    const numVars = dataset.variables
-      .filter(v => v.type === "numeric" && !isIdentifierVariable(v.name, rows))
-      .map(v => v.name);
-    const catVars = dataset.variables
-      .filter(v => (v.type === "categorical" || v.type === "ordinal") && !isIdentifierVariable(v.name, rows))
-      .map(v => v.name);
+    // BLOCK 14 — analyses use the prepared dataset (cleaned + transformed + non-excluded).
+    const rows = preparedData || cleanedData || dataset.rawData;
+    const excludedSet = new Set(excludedVariables);
+    // Detect var types from the actual prepared rows (so transformed columns are picked up correctly).
+    const sampleRow = rows[0] || {};
+    const allCols = Object.keys(sampleRow);
+    const isNumericCol = (c: string) => {
+      const sample = rows.slice(0, 50).map(r => r[c]).filter(v => v != null && v !== "");
+      if (!sample.length) return false;
+      return sample.filter(v => typeof v === "number" || (!isNaN(Number(v)) && String(v).trim() !== "")).length / sample.length > 0.8;
+    };
+    const numVars = allCols.filter(c => !excludedSet.has(c) && !isIdentifierVariable(c, rows) && isNumericCol(c));
+    const catVars = allCols.filter(c => !excludedSet.has(c) && !isIdentifierVariable(c, rows) && !isNumericCol(c));
     const newResults: AnalysisResultItem[] = [];
     const ts = new Date().toISOString();
 
@@ -624,9 +629,16 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
 
   const replaceAnalysis = useCallback((id: string, analysisKey: string, software: string, depVar?: string, indVars?: string[]) => {
     if (!dataset) return;
-    const rows = cleanedData || dataset.rawData;
-    const numVars = dataset.variables.filter(v => v.type === "numeric" && !isIdentifierVariable(v.name, rows)).map(v => v.name);
-    const catVars = dataset.variables.filter(v => (v.type === "categorical" || v.type === "ordinal") && !isIdentifierVariable(v.name, rows)).map(v => v.name);
+    const rows = preparedData || cleanedData || dataset.rawData;
+    const excludedSet = new Set(excludedVariables);
+    const allCols = Object.keys(rows[0] || {});
+    const isNumericCol = (c: string) => {
+      const sample = rows.slice(0, 50).map(r => r[c]).filter(v => v != null && v !== "");
+      if (!sample.length) return false;
+      return sample.filter(v => typeof v === "number" || (!isNaN(Number(v)) && String(v).trim() !== "")).length / sample.length > 0.8;
+    };
+    const numVars = allCols.filter(c => !excludedSet.has(c) && !isIdentifierVariable(c, rows) && isNumericCol(c));
+    const catVars = allCols.filter(c => !excludedSet.has(c) && !isIdentifierVariable(c, rows) && !isNumericCol(c));
     const effectiveDepVar = depVar || numVars[0];
     const effectiveIndVars = indVars && indVars.length > 0 ? indVars : numVars.slice(1);
     const analysisName = analysisKey.startsWith("custom:") ? analysisKey.slice(7) : analysisKey;
@@ -711,7 +723,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     // Invalidate cached charts and interpretation so they regenerate
     setCachedCharts(null);
     setInterpretationData(null);
-  }, [dataset, cleanedData]);
+  }, [dataset, cleanedData, preparedData, excludedVariables]);
 
   const reset = useCallback(() => {
     setDataset(null);
@@ -721,6 +733,8 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     setAnalysisResults([]);
     setInterpretationData(null);
     setCachedCharts(null);
+    setVariableTransforms({});
+    setExcludedVariables([]);
   }, []);
 
   const restoreState = useCallback((results: AnalysisResultItem[], interpretation: InterpretationData | null) => {
