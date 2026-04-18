@@ -2,11 +2,12 @@ import { useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset } from "@/contexts/DatasetContext";
 import { isIdentifierVariable } from "@/lib/academicFormatter";
+import { VariableStudio } from "@/components/workspace/VariableStudio";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Database, AlertTriangle, CheckCircle, Sparkles, ArrowRight, Settings2, Upload, Loader2, FileSpreadsheet, ShieldOff } from "lucide-react";
+import { Database, AlertTriangle, CheckCircle, Sparkles, ArrowRight, Settings2, Upload, Loader2, FileSpreadsheet, ShieldOff, Layers } from "lucide-react";
 
 export function WorkspaceDataPrep() {
   const { t } = useLanguage();
@@ -150,36 +151,23 @@ export function WorkspaceDataPrep() {
 
           <div className="mt-4">
             <p className="mb-2 text-sm font-medium text-foreground">{t("dataPrep.variableList")}</p>
-            <div className="space-y-1.5 max-h-64 overflow-y-auto">
-              {dataset.variables.map(v => {
-                const isExcluded = excludedVars.some(e => e.name === v.name);
-                return (
-                  <div key={v.name} className={`flex items-center justify-between rounded border px-3 py-1.5 text-sm ${isExcluded ? "border-destructive/20 bg-destructive/5 opacity-60" : "border-border/50"}`}>
-                    <div className="flex items-center gap-2">
-                      <span className={`font-medium ${isExcluded ? "line-through text-muted-foreground" : "text-foreground"}`}>{v.name}</span>
-                      <Badge variant="outline" className="text-xs">{t(`dataPrep.type.${v.type}`)}</Badge>
-                      {isExcluded ? (
-                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
-                          <ShieldOff className="h-2.5 w-2.5 mr-0.5" />
-                          {t("dataPrep.identifier") || "Identifiant"}
-                        </Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">{v.uniqueValues} unique</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {!isExcluded && v.missing > 0 && (
-                        <span className="text-xs text-amber-600">{v.missingPct}% {t("dataPrep.missing")}</span>
-                      )}
-                      {!isExcluded && v.outliers > 0 && (
-                        <span className="text-xs text-orange-600">{v.outliers} outliers</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Variable Studio (Preparation V2) — collapsible per-variable diagnostics + actions */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Layers className="h-4 w-4 text-primary" />
+            {t("varStudio.title")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-xs text-muted-foreground mb-2">{t("varStudio.subtitle")}</p>
+          {dataset.variables.map(v => (
+            <VariableStudio key={v.name} variable={v} />
+          ))}
         </CardContent>
       </Card>
 
