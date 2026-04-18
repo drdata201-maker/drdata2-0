@@ -2,10 +2,10 @@
 // Per-variable collapsible card showing diagnostics, suggestions and reversible actions.
 // All labels go through i18n; nothing is auto-applied silently.
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset, type VariableInfo } from "@/contexts/DatasetContext";
-import { buildVarMeta, type Transformation } from "@/lib/varDiagnostics";
+import { buildVarMeta, suggestGroupingMode, type Transformation } from "@/lib/varDiagnostics";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
