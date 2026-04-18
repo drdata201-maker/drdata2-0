@@ -612,7 +612,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
         }
       } catch (_) { /* silent */ }
     })();
-  }, [dataset, cleanedData]);
+  }, [dataset, cleanedData, preparedData, excludedVariables]);
 
   const deleteAnalysis = useCallback((id: string) => {
     setAnalysisResults(prev => {
