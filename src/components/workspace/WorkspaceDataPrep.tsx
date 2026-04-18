@@ -2,11 +2,12 @@ import { useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset } from "@/contexts/DatasetContext";
 import { isIdentifierVariable } from "@/lib/academicFormatter";
+import { VariableStudio } from "@/components/workspace/VariableStudio";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Database, AlertTriangle, CheckCircle, Sparkles, ArrowRight, Settings2, Upload, Loader2, FileSpreadsheet, ShieldOff } from "lucide-react";
+import { Database, AlertTriangle, CheckCircle, Sparkles, ArrowRight, Settings2, Upload, Loader2, FileSpreadsheet, ShieldOff, Layers } from "lucide-react";
 
 export function WorkspaceDataPrep() {
   const { t } = useLanguage();
