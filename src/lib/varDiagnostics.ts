@@ -221,6 +221,63 @@ export function groupQuantile(values: number[], bins: number): { labels: string[
   return { labels, assign };
 }
 
+/** Manual binning with user-provided sorted ascending thresholds (cut points).
+ *  N thresholds → N+1 classes: (-∞, t1], (t1, t2], ..., (tN, +∞). */
+export function groupManual(thresholds: number[]): { labels: string[]; assign: (v: number) => string } {
+  const sorted = [...thresholds].filter(n => typeof n === "number" && !isNaN(n)).sort((a, b) => a - b);
+  if (!sorted.length) return { labels: ["all"], assign: () => "all" };
+  const labels: string[] = [];
+  labels.push(`≤ ${formatNum(sorted[0])}`);
+  for (let i = 1; i < sorted.length; i++) {
+    labels.push(`(${formatNum(sorted[i - 1])} - ${formatNum(sorted[i])}]`);
+  }
+  labels.push(`> ${formatNum(sorted[sorted.length - 1])}`);
+  const assign = (v: number) => {
+    if (v == null || isNaN(v)) return "N/A";
+    for (let i = 0; i < sorted.length; i++) if (v <= sorted[i]) return labels[i];
+    return labels[labels.length - 1];
+  };
+  return { labels, assign };
+}
+
+/** Sample skewness (Fisher-Pearson, bias-corrected). Returns 0 for tiny samples. */
+export function computeSkewness(values: number[]): number {
+  const v = values.filter(x => typeof x === "number" && !isNaN(x));
+  const n = v.length;
+  if (n < 3) return 0;
+  const mean = v.reduce((s, x) => s + x, 0) / n;
+  let m2 = 0, m3 = 0;
+  for (const x of v) {
+    const d = x - mean;
+    m2 += d * d;
+    m3 += d * d * d;
+  }
+  m2 /= n;
+  m3 /= n;
+  const sd = Math.sqrt(m2);
+  if (sd === 0) return 0;
+  const g1 = m3 / (sd * sd * sd);
+  // Bias correction
+  return Math.sqrt(n * (n - 1)) / (n - 2) * g1;
+}
+
+/** Suggest the best grouping mode based on distribution shape.
+ *  |skew| < 0.5 → roughly symmetric → equal_width
+ *  |skew| ≥ 0.5 → skewed → quantile (preserves balanced class counts) */
+export function suggestGroupingMode(values: number[]): {
+  mode: "equal_width" | "quantile";
+  skewness: number;
+  reasonKey: string;
+} {
+  const skew = computeSkewness(values);
+  const symmetric = Math.abs(skew) < 0.5;
+  return {
+    mode: symmetric ? "equal_width" : "quantile",
+    skewness: Math.round(skew * 100) / 100,
+    reasonKey: symmetric ? "varStudio.group.suggestSymmetric" : "varStudio.group.suggestSkewed",
+  };
+}
+
 /** Score categorization with explicit thresholds. */
 export function categorizeScore(thresholds: number[], labels: string[]): (v: number) => string {
   return (v: number) => {
@@ -245,9 +302,14 @@ export function applyTransformation(
 
     case "group_intervals": {
       const nums = colVals.map(v => Number(v)).filter(n => !isNaN(n));
-      const fn = transformation.mode === "quantile"
-        ? groupQuantile(nums, transformation.bins).assign
-        : groupEqualWidth(nums, transformation.bins).assign;
+      let fn: (n: number) => string;
+      if (transformation.mode === "manual" && transformation.thresholds && transformation.thresholds.length) {
+        fn = groupManual(transformation.thresholds).assign;
+      } else if (transformation.mode === "quantile") {
+        fn = groupQuantile(nums, transformation.bins).assign;
+      } else {
+        fn = groupEqualWidth(nums, transformation.bins).assign;
+      }
       return { name: newName, values: colVals.map(v => v == null || v === "" ? null : fn(Number(v))) };
     }
 

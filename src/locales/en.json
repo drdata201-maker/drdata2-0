@@ -1154,5 +1154,15 @@
   "varDiag.sub.date": "Date",
   "varDiag.sub.text": "Text",
   "prepValidation.empty": "The prepared dataset is empty. Review your transformations.",
-  "prepValidation.noVariables": "No variables available for analysis — all are excluded."
+  "prepValidation.noVariables": "No variables available for analysis — all are excluded.",
+  "varStudio.group.suggested": "Suggested method",
+  "varStudio.group.suggestSymmetric": "Symmetric distribution — equal width preserves intuitive interval reading",
+  "varStudio.group.suggestSkewed": "Skewed distribution — quantiles balance class counts",
+  "varStudio.group.useSuggestion": "Use suggestion",
+  "varStudio.group.skewness": "skewness",
+  "varStudio.group.manual": "Manual thresholds",
+  "varStudio.group.thresholds": "Thresholds (comma-separated)",
+  "varStudio.group.thresholdsHint": "Enter cut points in ascending order",
+  "varStudio.group.cuts": "cut(s)",
+  "varStudio.group.classes": "classes"
 }

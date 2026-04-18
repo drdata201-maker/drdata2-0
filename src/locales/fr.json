@@ -1154,5 +1154,15 @@
   "varDiag.sub.date": "Date",
   "varDiag.sub.text": "Texte",
   "prepValidation.empty": "Le jeu de données préparé est vide. Vérifiez vos transformations.",
-  "prepValidation.noVariables": "Aucune variable disponible pour l'analyse — toutes ont été exclues."
+  "prepValidation.noVariables": "Aucune variable disponible pour l'analyse — toutes ont été exclues.",
+  "varStudio.group.suggested": "Méthode suggérée",
+  "varStudio.group.suggestSymmetric": "Distribution symétrique — la largeur égale conserve la lecture intuitive des intervalles",
+  "varStudio.group.suggestSkewed": "Distribution asymétrique — les quantiles équilibrent les effectifs par classe",
+  "varStudio.group.useSuggestion": "Utiliser la suggestion",
+  "varStudio.group.skewness": "asymétrie",
+  "varStudio.group.manual": "Seuils manuels",
+  "varStudio.group.thresholds": "Seuils (séparés par des virgules)",
+  "varStudio.group.thresholdsHint": "Saisissez les points de coupe en ordre croissant",
+  "varStudio.group.cuts": "coupure(s)",
+  "varStudio.group.classes": "classes"
 }

@@ -1154,5 +1154,15 @@
   "varDiag.sub.date": "Fecha",
   "varDiag.sub.text": "Texto",
   "prepValidation.empty": "El conjunto preparado está vacío. Revise sus transformaciones.",
-  "prepValidation.noVariables": "Ninguna variable disponible para el análisis — todas están excluidas."
+  "prepValidation.noVariables": "Ninguna variable disponible para el análisis — todas están excluidas.",
+  "varStudio.group.suggested": "Método sugerido",
+  "varStudio.group.suggestSymmetric": "Distribución simétrica — el ancho igual conserva la lectura intuitiva",
+  "varStudio.group.suggestSkewed": "Distribución sesgada — los cuantiles equilibran los efectivos por clase",
+  "varStudio.group.useSuggestion": "Usar sugerencia",
+  "varStudio.group.skewness": "asimetría",
+  "varStudio.group.manual": "Umbrales manuales",
+  "varStudio.group.thresholds": "Umbrales (separados por comas)",
+  "varStudio.group.thresholdsHint": "Introduzca los puntos de corte en orden ascendente",
+  "varStudio.group.cuts": "corte(s)",
+  "varStudio.group.classes": "clases"
 }

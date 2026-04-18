@@ -2,10 +2,10 @@
 // Per-variable collapsible card showing diagnostics, suggestions and reversible actions.
 // All labels go through i18n; nothing is auto-applied silently.
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDataset, type VariableInfo } from "@/contexts/DatasetContext";
-import { buildVarMeta, type Transformation } from "@/lib/varDiagnostics";
+import { buildVarMeta, suggestGroupingMode, type Transformation } from "@/lib/varDiagnostics";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -168,6 +168,9 @@ export function VariableStudio({ variable }: Props) {
             {actionMode === "group" && (
               <GroupPanel
                 variableName={variable.name}
+                values={(dataset?.rawData || []).map(r => Number(r[variable.name])).filter(n => !isNaN(n))}
+                min={meta.min}
+                max={meta.max}
                 onApply={(transformation, newName) => {
                   setVariableTransform(variable.name, transformation, newName);
                   setVariableExcluded(variable.name, true); // auto-exclude original per UX choice
@@ -210,39 +213,109 @@ export function VariableStudio({ variable }: Props) {
 // ---------- Sub-panels ----------
 
 function GroupPanel({
-  variableName, onApply, onCancel,
+  variableName, values, min, max, onApply, onCancel,
 }: {
   variableName: string;
+  values: number[];
+  min?: number;
+  max?: number;
   onApply: (t: Transformation, newName: string) => void;
   onCancel: () => void;
 }) {
   const { t } = useLanguage();
-  const [mode, setMode] = useState<"equal_width" | "quantile">("equal_width");
+  // BLOCK — auto-suggest grouping mode based on distribution skewness
+  const suggestion = useMemo(() => suggestGroupingMode(values), [values]);
+  const [mode, setMode] = useState<"equal_width" | "quantile" | "manual">(suggestion.mode);
   const [bins, setBins] = useState(5);
+  const [thresholdsText, setThresholdsText] = useState(() => {
+    if (min !== undefined && max !== undefined) {
+      const step = (max - min) / 3;
+      return `${Number((min + step).toFixed(1))}, ${Number((min + 2 * step).toFixed(1))}`;
+    }
+    return "";
+  });
   const newName = `${variableName}_grouped`;
+
+  // Re-sync mode if values change (rare, but safe for live updates)
+  useEffect(() => { setMode(suggestion.mode); }, [suggestion.mode]);
+
+  const parsedThresholds = thresholdsText
+    .split(/[,;\s]+/)
+    .map(s => Number(s.trim()))
+    .filter(n => !isNaN(n));
+
+  const buildTransformation = (): Transformation => ({
+    kind: "group_intervals",
+    mode,
+    bins,
+    thresholds: mode === "manual" ? parsedThresholds : undefined,
+  });
+
+  const canApply = mode !== "manual" || parsedThresholds.length >= 1;
 
   return (
     <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-3">
       <p className="text-sm font-medium text-foreground">{t("varStudio.group.title")}</p>
+
+      {/* Auto suggestion banner */}
+      <div className="flex items-start gap-2 rounded-md border border-primary/20 bg-background/50 px-2.5 py-2 text-xs">
+        <Sparkles className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+        <div className="flex-1">
+          <p className="text-foreground">
+            <span className="font-medium">{t("varStudio.group.suggested")}: </span>
+            {t(suggestion.mode === "equal_width" ? "varStudio.group.equalWidth" : "varStudio.group.quantile")}
+          </p>
+          <p className="text-muted-foreground mt-0.5">
+            {t(suggestion.reasonKey)} ({t("varStudio.group.skewness")}: {suggestion.skewness})
+          </p>
+        </div>
+        {mode !== suggestion.mode && (
+          <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setMode(suggestion.mode)}>
+            {t("varStudio.group.useSuggestion")}
+          </Button>
+        )}
+      </div>
+
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">{t("varStudio.group.mode")}</label>
-          <Select value={mode} onValueChange={(v) => setMode(v as "equal_width" | "quantile")}>
+          <Select value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
             <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="equal_width">{t("varStudio.group.equalWidth")}</SelectItem>
               <SelectItem value="quantile">{t("varStudio.group.quantile")}</SelectItem>
+              <SelectItem value="manual">{t("varStudio.group.manual")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <div>
-          <label className="text-xs text-muted-foreground mb-1 block">{t("varStudio.group.bins")}</label>
-          <Input type="number" min={2} max={20} value={bins} onChange={e => setBins(Math.max(2, Math.min(20, Number(e.target.value) || 5)))} className="h-8" />
-        </div>
+        {mode !== "manual" ? (
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">{t("varStudio.group.bins")}</label>
+            <Input type="number" min={2} max={20} value={bins} onChange={e => setBins(Math.max(2, Math.min(20, Number(e.target.value) || 5)))} className="h-8" />
+          </div>
+        ) : (
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">{t("varStudio.group.thresholds")}</label>
+            <Input
+              type="text"
+              value={thresholdsText}
+              onChange={e => setThresholdsText(e.target.value)}
+              placeholder="e.g. 18, 35, 60"
+              className="h-8"
+            />
+          </div>
+        )}
       </div>
+
+      {mode === "manual" && (
+        <p className="text-xs text-muted-foreground">
+          {t("varStudio.group.thresholdsHint")} — {parsedThresholds.length} {t("varStudio.group.cuts")} → {parsedThresholds.length + 1} {t("varStudio.group.classes")}
+        </p>
+      )}
+
       <p className="text-xs text-muted-foreground">{t("varStudio.group.preview")}: <span className="font-mono text-foreground">{newName}</span></p>
       <div className="flex gap-2">
-        <Button size="sm" onClick={() => onApply({ kind: "group_intervals", mode, bins }, newName)}>
+        <Button size="sm" disabled={!canApply} onClick={() => onApply(buildTransformation(), newName)}>
           {t("varStudio.apply")}
         </Button>
         <Button size="sm" variant="ghost" onClick={onCancel}>{t("varStudio.cancel")}</Button>
