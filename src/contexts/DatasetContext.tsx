@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useCallback, ReactNode } from "rea
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { isIdentifierVariable } from "@/lib/academicFormatter";
+import { applyTransformation as applyVarTransformation, type PreparedVariableSpec, type Transformation } from "@/lib/varDiagnostics";
 import {
   AnalysisResultItem,
   computeDescriptive,
@@ -95,6 +96,18 @@ interface DatasetContextType {
   prepStatus: PrepStatus;
   prepError: string | null;
   cleanedData: Record<string, unknown>[] | null;
+  /** Map of variableName -> transformation spec applied in the analysis layer. */
+  variableTransforms: Record<string, PreparedVariableSpec>;
+  /** Set of variable names excluded from analyses. */
+  excludedVariables: string[];
+  /** Apply (or update) a transformation for a source variable; creates a derived column. */
+  setVariableTransform: (sourceName: string, transformation: Transformation, newName?: string) => void;
+  /** Remove a previously applied transformation. */
+  clearVariableTransform: (sourceName: string) => void;
+  /** Toggle exclude/include for analysis. */
+  setVariableExcluded: (variableName: string, excluded: boolean) => void;
+  /** The dataset rows actually used by analyses (cleaned + transformed columns appended, excluded removed). */
+  preparedData: Record<string, unknown>[] | null;
   analysisResults: AnalysisResultItem[];
   interpretationData: InterpretationData | null;
   setInterpretationData: (data: InterpretationData | null) => void;
