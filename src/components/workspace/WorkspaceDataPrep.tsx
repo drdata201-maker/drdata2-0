@@ -168,6 +168,8 @@ export function WorkspaceDataPrep() {
           {dataset.variables.map(v => (
             <VariableStudio key={v.name} variable={v} />
           ))}
+        </CardContent>
+      </Card>
 
       {/* Data Quality */}
       <Card>
