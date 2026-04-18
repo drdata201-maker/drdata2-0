@@ -282,7 +282,7 @@ function ScorePanel({
         </div>
       </div>
       <div className="text-xs text-muted-foreground">
-        ≤ {t1}: <span className="text-foreground font-medium">{labels[0]}</span> · ≤ {t2}: <span className="text-foreground font-medium">{labels[1]}</span> · > {t2}: <span className="text-foreground font-medium">{labels[2]}</span>
+        ≤ {t1}: <span className="text-foreground font-medium">{labels[0]}</span> · ≤ {t2}: <span className="text-foreground font-medium">{labels[1]}</span> · {">"} {t2}: <span className="text-foreground font-medium">{labels[2]}</span>
       </div>
       <div className="flex gap-2">
         <Button size="sm" onClick={() => onApply({ kind: "categorize_score", thresholds: [t1, t2], labels }, newName)}>
