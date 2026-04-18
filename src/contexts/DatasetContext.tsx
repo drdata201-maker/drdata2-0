@@ -276,6 +276,53 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   const [chatState, setChatState] = useState<ChatState>(DEFAULT_CHAT_STATE);
   const [tableOverrides, setTableOverrides] = useState<ContentOverrides>({});
   const [chartOverrides, setChartOverrides] = useState<ContentOverrides>({});
+  // BLOCK 5/6/10 — Preparation V2: per-variable transformations and exclusions.
+  const [variableTransforms, setVariableTransforms] = useState<Record<string, PreparedVariableSpec>>({});
+  const [excludedVariables, setExcludedVariables] = useState<string[]>([]);
+
+  const setVariableTransform = useCallback((sourceName: string, transformation: Transformation, newName?: string) => {
+    setVariableTransforms(prev => ({
+      ...prev,
+      [sourceName]: { sourceName, newName: newName || `${sourceName}_t`, transformation },
+    }));
+    setCachedCharts(null);
+    setInterpretationData(null);
+  }, []);
+
+  const clearVariableTransform = useCallback((sourceName: string) => {
+    setVariableTransforms(prev => { const n = { ...prev }; delete n[sourceName]; return n; });
+    setCachedCharts(null);
+    setInterpretationData(null);
+  }, []);
+
+  const setVariableExcluded = useCallback((variableName: string, excluded: boolean) => {
+    setExcludedVariables(prev => {
+      if (excluded) return prev.includes(variableName) ? prev : [...prev, variableName];
+      return prev.filter(v => v !== variableName);
+    });
+    setCachedCharts(null);
+    setInterpretationData(null);
+  }, []);
+
+  // BLOCK 10 — Derived prepared dataset (cleaned + transformed + excluded). Originals untouched.
+  const preparedData = (() => {
+    const base = cleanedData || dataset?.rawData || null;
+    if (!base) return null;
+    const excludedSet = new Set(excludedVariables);
+    const specs = Object.values(variableTransforms);
+    if (specs.length === 0 && excludedSet.size === 0) return base;
+    const derivedCols = specs
+      .filter(s => s.transformation.kind !== "exclude" && s.transformation.kind !== "keep")
+      .map(s => applyVarTransformation(s, base));
+    return base.map((row, i) => {
+      const next: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(row)) {
+        if (!excludedSet.has(k)) next[k] = v;
+      }
+      for (const dc of derivedCols) next[dc.name] = dc.values[i];
+      return next;
+    });
+  })();
 
   const updateTableOverride = useCallback((id: string, field: "title" | "interpretation", value: string) => {
     setTableOverrides(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
