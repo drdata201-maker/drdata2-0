@@ -228,7 +228,7 @@ async function streamChat({
 
 export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, projectObjective, level, onAnalysisComplete, projectMetadata }: JoelChatProps) {
   const { t, lang } = useLanguage();
-  const { processFile, dataset, runAnalyses, analysisResults, chatState, setChatState, interpretationData, setInterpretationData, activeVariables, getDisplayLabel } = useDataset();
+  const { processFile, dataset, runAnalyses, analysisResults, chatState, setChatState, interpretationData, setInterpretationData, activeVariables, getDisplayLabel, resolveAnalysisVar, preparedData } = useDataset();
 
   // Destructure persisted state
   const messages = chatState.messages;
