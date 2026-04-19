@@ -1169,5 +1169,20 @@
   "varStudio.group.thresholds": "Umbrales (separados por comas)",
   "varStudio.group.thresholdsHint": "Introduzca los puntos de corte en orden ascendente",
   "varStudio.group.cuts": "corte(s)",
-  "varStudio.group.classes": "clases"
+  "varStudio.group.classes": "clases",
+  "joel.reco.recommended": "Análisis recomendado",
+  "joel.reco.useIt": "Usar este análisis",
+  "joel.reco.notSuitable": "Esta combinación no es adecuada",
+  "joel.reco.alternative": "Alternativa sugerida",
+  "joel.reco.none": "Ninguno",
+  "joel.reco.reason.none": "Seleccione al menos una variable.",
+  "joel.reco.reason.descriptive": "Una sola variable: análisis descriptivo (frecuencias o medias según el tipo).",
+  "joel.reco.reason.chi_square": "Dos variables categóricas: prueba Chi-cuadrado para estudiar su asociación.",
+  "joel.reco.reason.correlation": "Dos variables numéricas: correlación de Pearson para medir la relación lineal.",
+  "joel.reco.reason.t_test": "Una variable numérica y un factor de 2 grupos: prueba t de Student.",
+  "joel.reco.reason.anova": "Una variable numérica y un factor con más de 2 grupos: ANOVA de un factor.",
+  "joel.reco.reason.singleGroup": "La variable categórica contiene un solo grupo.",
+  "joel.reco.reason.invalid": "Combinación de tipos no estándar para nivel Licenciatura.",
+  "joel.reco.alt.singleGroup": "Elija una variable categórica con al menos 2 categorías.",
+  "joel.reco.alt.invalid": "Seleccione 2 variables: 2 numéricas, 2 categóricas o 1 numérica + 1 categórica."
 }

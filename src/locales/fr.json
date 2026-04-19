@@ -1169,5 +1169,20 @@
   "varStudio.group.thresholds": "Seuils (séparés par des virgules)",
   "varStudio.group.thresholdsHint": "Saisissez les points de coupe en ordre croissant",
   "varStudio.group.cuts": "coupure(s)",
-  "varStudio.group.classes": "classes"
+  "varStudio.group.classes": "classes",
+  "joel.reco.recommended": "Analyse recommandée",
+  "joel.reco.useIt": "Utiliser cette analyse",
+  "joel.reco.notSuitable": "Cette combinaison n'est pas adaptée",
+  "joel.reco.alternative": "Alternative suggérée",
+  "joel.reco.none": "Aucune",
+  "joel.reco.reason.none": "Sélectionnez au moins une variable.",
+  "joel.reco.reason.descriptive": "Une seule variable : analyse descriptive (effectifs ou moyennes selon le type).",
+  "joel.reco.reason.chi_square": "Deux variables qualitatives : test du Khi² pour étudier leur association.",
+  "joel.reco.reason.correlation": "Deux variables numériques : corrélation (Pearson) pour mesurer la relation linéaire.",
+  "joel.reco.reason.t_test": "Une variable numérique et un facteur à 2 groupes : test t de Student.",
+  "joel.reco.reason.anova": "Une variable numérique et un facteur à plus de 2 groupes : ANOVA à un facteur.",
+  "joel.reco.reason.singleGroup": "La variable qualitative ne contient qu'un seul groupe.",
+  "joel.reco.reason.invalid": "Combinaison de types non standard pour le niveau Licence.",
+  "joel.reco.alt.singleGroup": "Choisissez une variable catégorielle avec au moins 2 modalités.",
+  "joel.reco.alt.invalid": "Sélectionnez 2 variables : 2 numériques, 2 catégorielles, ou 1 numérique + 1 catégorielle."
 }

@@ -1169,5 +1169,20 @@
   "varStudio.group.thresholds": "Thresholds (comma-separated)",
   "varStudio.group.thresholdsHint": "Enter cut points in ascending order",
   "varStudio.group.cuts": "cut(s)",
-  "varStudio.group.classes": "classes"
+  "varStudio.group.classes": "classes",
+  "joel.reco.recommended": "Recommended analysis",
+  "joel.reco.useIt": "Use this analysis",
+  "joel.reco.notSuitable": "This combination is not suitable",
+  "joel.reco.alternative": "Suggested alternative",
+  "joel.reco.none": "None",
+  "joel.reco.reason.none": "Select at least one variable.",
+  "joel.reco.reason.descriptive": "Single variable: descriptive analysis (frequencies or means depending on type).",
+  "joel.reco.reason.chi_square": "Two categorical variables: Chi-square test to study their association.",
+  "joel.reco.reason.correlation": "Two numeric variables: Pearson correlation to measure the linear relationship.",
+  "joel.reco.reason.t_test": "One numeric variable and a 2-group factor: Student's t-test.",
+  "joel.reco.reason.anova": "One numeric variable and a factor with more than 2 groups: one-way ANOVA.",
+  "joel.reco.reason.singleGroup": "The categorical variable contains only one group.",
+  "joel.reco.reason.invalid": "Variable type combination not standard for Licence level.",
+  "joel.reco.alt.singleGroup": "Pick a categorical variable with at least 2 categories.",
+  "joel.reco.alt.invalid": "Select 2 variables: 2 numeric, 2 categorical, or 1 numeric + 1 categorical."
 }
