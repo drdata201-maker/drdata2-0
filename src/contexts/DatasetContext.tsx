@@ -273,6 +273,7 @@ const DEFAULT_CHAT_STATE: ChatState = {
 };
 
 export function DatasetProvider({ children }: { children: ReactNode }) {
+  const { t } = useLanguage();
   const [dataset, setDataset] = useState<DatasetSummary | null>(null);
   const [prepStatus, setPrepStatus] = useState<PrepStatus>("idle");
   const [prepError, setPrepError] = useState<string | null>(null);
