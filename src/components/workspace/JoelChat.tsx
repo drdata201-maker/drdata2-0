@@ -1044,12 +1044,12 @@ Keep under 120 words. Use academic language.`);
                   </SelectTrigger>
                   <SelectContent>
                     {allVarNames.map(v => {
-                      const varInfo = dataset.variables.find(dv => dv.name === v);
+                      const varInfo = activeVariables.find(dv => dv.name === v);
                       const isNum = varInfo?.type === "numeric";
                       return (
                         <SelectItem key={v} value={v} className="text-xs">
                           <span className="flex items-center gap-2">
-                            {v}
+                            {getDisplayLabel(v)}
                             <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
                               {isNum ? t("joel.varNumeric") : t("joel.varCategorical")}
                             </Badge>
@@ -1071,7 +1071,7 @@ Keep under 120 words. Use academic language.`);
                 <p className="text-[10px] text-muted-foreground mb-1.5">{t("joel.varIndHint")}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {allVarNames.filter(v => v !== selectedDepVar).map(v => {
-                    const varInfo = dataset.variables.find(dv => dv.name === v);
+                    const varInfo = activeVariables.find(dv => dv.name === v);
                     const isNum = varInfo?.type === "numeric";
                     const isSelected = selectedIndVars.includes(v);
                     return (
@@ -1082,7 +1082,7 @@ Keep under 120 words. Use academic language.`);
                         className="h-auto py-1.5 px-2.5 text-xs gap-1.5"
                         onClick={() => toggleIndVar(v)}
                       >
-                        {v}
+                        {getDisplayLabel(v)}
                         <Badge
                           variant={isSelected ? "secondary" : "outline"}
                           className="text-[9px] px-1 py-0 h-4"
@@ -1109,7 +1109,7 @@ Keep under 120 words. Use academic language.`);
                 </label>
                 <div className="flex flex-wrap gap-1.5">
                   {allVarNames.map(v => {
-                    const varInfo = dataset.variables.find(dv => dv.name === v);
+                    const varInfo = activeVariables.find(dv => dv.name === v);
                     const isNum = varInfo?.type === "numeric";
                     const isSelected = selectedIndVars.includes(v);
                     return (
@@ -1120,7 +1120,7 @@ Keep under 120 words. Use academic language.`);
                         className="h-auto py-1.5 px-2.5 text-xs gap-1.5"
                         onClick={() => toggleIndVar(v)}
                       >
-                        {v}
+                        {getDisplayLabel(v)}
                         <Badge
                           variant={isSelected ? "secondary" : "outline"}
                           className="text-[9px] px-1 py-0 h-4"
