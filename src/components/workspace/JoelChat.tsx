@@ -228,7 +228,7 @@ async function streamChat({
 
 export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, projectObjective, level, onAnalysisComplete, projectMetadata }: JoelChatProps) {
   const { t, lang } = useLanguage();
-  const { processFile, dataset, runAnalyses, analysisResults, chatState, setChatState, interpretationData, setInterpretationData } = useDataset();
+  const { processFile, dataset, runAnalyses, analysisResults, chatState, setChatState, interpretationData, setInterpretationData, activeVariables, getDisplayLabel } = useDataset();
 
   // Destructure persisted state
   const messages = chatState.messages;
@@ -477,19 +477,21 @@ Keep under 80 words.`;
     return expanded.some(a => VARIABLE_REQUIRING[a]);
   }, [selectedAnalyses, isLicence]);
 
+  // BLOCK 2/3 — Use activeVariables (raw replaced by derived, excluded hidden) so the
+  // selection UI never offers a stale or excluded variable.
   const numericVars = useMemo(() =>
-    dataset?.variables.filter(v => v.type === "numeric").map(v => v.name) || [],
-    [dataset]
+    activeVariables.filter(v => v.type === "numeric").map(v => v.name),
+    [activeVariables]
   );
 
   const categoricalVars = useMemo(() =>
-    dataset?.variables.filter(v => v.type === "categorical" || v.type === "ordinal").map(v => v.name) || [],
-    [dataset]
+    activeVariables.filter(v => v.type === "categorical" || v.type === "ordinal").map(v => v.name),
+    [activeVariables]
   );
 
   const allVarNames = useMemo(() =>
-    dataset?.variables.map(v => v.name) || [],
-    [dataset]
+    activeVariables.map(v => v.name),
+    [activeVariables]
   );
 
   const toggleIndVar = (varName: string) => {
