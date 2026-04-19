@@ -332,6 +332,76 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     });
   })();
 
+  // BLOCK 2/3 — Variable resolution & visibility.
+  // Map raw variable name -> derived variable name (when a transform exists and produced a new column).
+  const transformByOriginal = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const spec of Object.values(variableTransforms)) {
+      if (spec.transformation.kind !== "exclude" && spec.transformation.kind !== "keep" && spec.newName !== spec.sourceName) {
+        map[spec.sourceName] = spec.newName;
+      }
+    }
+    return map;
+  }, [variableTransforms]);
+
+  const resolveAnalysisVar = useCallback(
+    (name: string) => transformByOriginal[name] || name,
+    [transformByOriginal],
+  );
+
+  // Localized suffix derived from the transform kind / newName convention.
+  const labelForDerived = useCallback((derivedName: string): string => {
+    if (derivedName.endsWith("_grouped")) return `${derivedName.slice(0, -8)} (${t("varStudio.label.grouped")})`;
+    if (derivedName.endsWith("_level")) return `${derivedName.slice(0, -6)} (${t("varStudio.label.categorized")})`;
+    if (derivedName.endsWith("_merged")) return `${derivedName.slice(0, -7)} (${t("varStudio.label.merged")})`;
+    if (derivedName.endsWith("_recoded")) return `${derivedName.slice(0, -8)} (${t("varStudio.label.recoded")})`;
+    if (derivedName.endsWith("_t")) return `${derivedName.slice(0, -2)} (${t("varStudio.label.transformed")})`;
+    return derivedName;
+  }, [t]);
+
+  const getDisplayLabel = useCallback((name: string): string => {
+    const target = transformByOriginal[name] || name;
+    if (target !== name) return labelForDerived(target);
+    if (/(_grouped|_level|_merged|_recoded|_t)$/.test(target)) return labelForDerived(target);
+    return name;
+  }, [transformByOriginal, labelForDerived]);
+
+  // BLOCK 3 — activeVariables: hides raw variables whose transform produced a derived column,
+  // hides excluded ones, and appends derived columns as new VariableInfo entries.
+  const activeVariables = useMemo<VariableInfo[]>(() => {
+    if (!dataset) return [];
+    const excludedSet = new Set(excludedVariables);
+    const replacedRaw = new Set(Object.keys(transformByOriginal));
+    const rows = preparedData || dataset.rawData;
+
+    const baseVars: VariableInfo[] = dataset.variables
+      .filter(v => !excludedSet.has(v.name) && !replacedRaw.has(v.name))
+      .map(v => ({ ...v }));
+
+    const known = new Set(baseVars.map(v => v.name));
+    for (const spec of Object.values(variableTransforms)) {
+      if (spec.transformation.kind === "exclude" || spec.transformation.kind === "keep") continue;
+      if (known.has(spec.newName)) continue;
+      const colVals = rows.map(r => r[spec.newName]);
+      const nonNull = colVals.filter(v => v != null && v !== "");
+      const type: VariableInfo["type"] =
+        spec.transformation.kind === "group_intervals" || spec.transformation.kind === "categorize_score" || spec.transformation.kind === "merge_rare" || spec.transformation.kind === "recode"
+          ? "categorical"
+          : detectType(colVals);
+      baseVars.push({
+        name: spec.newName,
+        type,
+        missing: colVals.length - nonNull.length,
+        missingPct: colVals.length ? Math.round(((colVals.length - nonNull.length) / colVals.length) * 1000) / 10 : 0,
+        outliers: 0,
+        uniqueValues: new Set(nonNull.map(String)).size,
+        sample: nonNull.slice(0, 5).map(v => v as string | number | null),
+      });
+      known.add(spec.newName);
+    }
+    return baseVars;
+  }, [dataset, preparedData, variableTransforms, excludedVariables, transformByOriginal]);
+
   const updateTableOverride = useCallback((id: string, field: "title" | "interpretation", value: string) => {
     setTableOverrides(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
   }, []);
