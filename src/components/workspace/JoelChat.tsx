@@ -1148,7 +1148,7 @@ Keep under 120 words. Use academic language.`);
                         return (
                           <Button key={v} variant={isSelected ? "default" : "outline"} size="sm"
                             className="h-auto py-1.5 px-2.5 text-xs gap-1.5" onClick={() => toggleIndVar(v)}>
-                            {v}
+                            {getDisplayLabel(v)}
                             <Badge variant={isSelected ? "secondary" : "outline"} className="text-[9px] px-1 py-0 h-4">N</Badge>
                           </Button>
                         );
@@ -1167,7 +1167,7 @@ Keep under 120 words. Use academic language.`);
                         return (
                           <Button key={v} variant={isSelected ? "default" : "outline"} size="sm"
                             className="h-auto py-1.5 px-2.5 text-xs gap-1.5" onClick={() => toggleIndVar(v)}>
-                            {v}
+                            {getDisplayLabel(v)}
                             <Badge variant={isSelected ? "secondary" : "outline"} className="text-[9px] px-1 py-0 h-4">C</Badge>
                           </Button>
                         );
