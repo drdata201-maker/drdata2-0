@@ -962,12 +962,14 @@ function EditAnalysisPanel({
   onCancel: () => void;
 }) {
   const { t } = useLanguage();
+  const { activeVariables, getDisplayLabel } = useDataset();
   const [analysisKey, setAnalysisKey] = useState(result.type);
   const [depVar, setDepVar] = useState("");
   const [indVars, setIndVars] = useState<string[]>([]);
 
-  const numVars = dataset.variables.filter(v => v.type === "numeric").map(v => v.name);
-  const catVars = dataset.variables.filter(v => v.type === "categorical" || v.type === "ordinal").map(v => v.name);
+  // BLOCK 3/5 — Selection UI uses activeVariables (raw replaced by derived, excluded hidden).
+  const numVars = activeVariables.filter(v => v.type === "numeric").map(v => v.name);
+  const catVars = activeVariables.filter(v => v.type === "categorical" || v.type === "ordinal").map(v => v.name);
   const allVars = [...numVars, ...catVars];
 
   const toggleIndVar = useCallback((v: string) => {
@@ -992,7 +994,7 @@ function EditAnalysisPanel({
             <Select value={depVar} onValueChange={setDepVar}>
               <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="—" /></SelectTrigger>
               <SelectContent>
-                {allVars.map(v => <SelectItem key={v} value={v} className="text-xs">{v}</SelectItem>)}
+                {allVars.map(v => <SelectItem key={v} value={v} className="text-xs">{getDisplayLabel(v)}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -1002,7 +1004,7 @@ function EditAnalysisPanel({
               {allVars.filter(v => v !== depVar).map(v => (
                 <Badge key={v} variant={indVars.includes(v) ? "default" : "outline"}
                   className="cursor-pointer text-[10px]" onClick={() => toggleIndVar(v)}>
-                  {v}
+                  {getDisplayLabel(v)}
                 </Badge>
               ))}
             </div>

@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, ReactNode, useMemo } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { isIdentifierVariable } from "@/lib/academicFormatter";
@@ -108,6 +109,12 @@ interface DatasetContextType {
   setVariableExcluded: (variableName: string, excluded: boolean) => void;
   /** The dataset rows actually used by analyses (cleaned + transformed columns appended, excluded removed). */
   preparedData: Record<string, unknown>[] | null;
+  /** Variables exposed to selection UIs (Joel, Charts, Edit). Hides raw variables that have a derived version, hides excluded ones, and adds derived columns as new entries. */
+  activeVariables: VariableInfo[];
+  /** Returns a localized human label for a variable name (e.g. "age (grouped)"). Falls back to the raw name. */
+  getDisplayLabel: (name: string) => string;
+  /** If the user picked a raw variable that has a transform, returns the derived column name; otherwise returns the input unchanged. */
+  resolveAnalysisVar: (name: string) => string;
   analysisResults: AnalysisResultItem[];
   interpretationData: InterpretationData | null;
   setInterpretationData: (data: InterpretationData | null) => void;
@@ -266,6 +273,7 @@ const DEFAULT_CHAT_STATE: ChatState = {
 };
 
 export function DatasetProvider({ children }: { children: ReactNode }) {
+  const { t } = useLanguage();
   const [dataset, setDataset] = useState<DatasetSummary | null>(null);
   const [prepStatus, setPrepStatus] = useState<PrepStatus>("idle");
   const [prepError, setPrepError] = useState<string | null>(null);
@@ -323,6 +331,76 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
       return next;
     });
   })();
+
+  // BLOCK 2/3 — Variable resolution & visibility.
+  // Map raw variable name -> derived variable name (when a transform exists and produced a new column).
+  const transformByOriginal = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const spec of Object.values(variableTransforms)) {
+      if (spec.transformation.kind !== "exclude" && spec.transformation.kind !== "keep" && spec.newName !== spec.sourceName) {
+        map[spec.sourceName] = spec.newName;
+      }
+    }
+    return map;
+  }, [variableTransforms]);
+
+  const resolveAnalysisVar = useCallback(
+    (name: string) => transformByOriginal[name] || name,
+    [transformByOriginal],
+  );
+
+  // Localized suffix derived from the transform kind / newName convention.
+  const labelForDerived = useCallback((derivedName: string): string => {
+    if (derivedName.endsWith("_grouped")) return `${derivedName.slice(0, -8)} (${t("varStudio.label.grouped")})`;
+    if (derivedName.endsWith("_level")) return `${derivedName.slice(0, -6)} (${t("varStudio.label.categorized")})`;
+    if (derivedName.endsWith("_merged")) return `${derivedName.slice(0, -7)} (${t("varStudio.label.merged")})`;
+    if (derivedName.endsWith("_recoded")) return `${derivedName.slice(0, -8)} (${t("varStudio.label.recoded")})`;
+    if (derivedName.endsWith("_t")) return `${derivedName.slice(0, -2)} (${t("varStudio.label.transformed")})`;
+    return derivedName;
+  }, [t]);
+
+  const getDisplayLabel = useCallback((name: string): string => {
+    const target = transformByOriginal[name] || name;
+    if (target !== name) return labelForDerived(target);
+    if (/(_grouped|_level|_merged|_recoded|_t)$/.test(target)) return labelForDerived(target);
+    return name;
+  }, [transformByOriginal, labelForDerived]);
+
+  // BLOCK 3 — activeVariables: hides raw variables whose transform produced a derived column,
+  // hides excluded ones, and appends derived columns as new VariableInfo entries.
+  const activeVariables = useMemo<VariableInfo[]>(() => {
+    if (!dataset) return [];
+    const excludedSet = new Set(excludedVariables);
+    const replacedRaw = new Set(Object.keys(transformByOriginal));
+    const rows = preparedData || dataset.rawData;
+
+    const baseVars: VariableInfo[] = dataset.variables
+      .filter(v => !excludedSet.has(v.name) && !replacedRaw.has(v.name))
+      .map(v => ({ ...v }));
+
+    const known = new Set(baseVars.map(v => v.name));
+    for (const spec of Object.values(variableTransforms)) {
+      if (spec.transformation.kind === "exclude" || spec.transformation.kind === "keep") continue;
+      if (known.has(spec.newName)) continue;
+      const colVals = rows.map(r => r[spec.newName]);
+      const nonNull = colVals.filter(v => v != null && v !== "");
+      const type: VariableInfo["type"] =
+        spec.transformation.kind === "group_intervals" || spec.transformation.kind === "categorize_score" || spec.transformation.kind === "merge_rare" || spec.transformation.kind === "recode"
+          ? "categorical"
+          : detectType(colVals);
+      baseVars.push({
+        name: spec.newName,
+        type,
+        missing: colVals.length - nonNull.length,
+        missingPct: colVals.length ? Math.round(((colVals.length - nonNull.length) / colVals.length) * 1000) / 10 : 0,
+        outliers: 0,
+        uniqueValues: new Set(nonNull.map(String)).size,
+        sample: nonNull.slice(0, 5).map(v => v as string | number | null),
+      });
+      known.add(spec.newName);
+    }
+    return baseVars;
+  }, [dataset, preparedData, variableTransforms, excludedVariables, transformByOriginal]);
 
   const updateTableOverride = useCallback((id: string, field: "title" | "interpretation", value: string) => {
     setTableOverrides(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
@@ -441,8 +519,11 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     }, 2000);
   }, [dataset]);
 
-  const runAnalyses = useCallback((analysisKeys: string[], software: string, depVar?: string, indVars?: string[]) => {
+  const runAnalyses = useCallback((analysisKeys: string[], software: string, depVarRaw?: string, indVarsRaw?: string[]) => {
     if (!dataset) return;
+    // BLOCK 2 — Auto-resolve raw variable names to their derived/transformed versions.
+    const depVar = depVarRaw ? (transformByOriginal[depVarRaw] || depVarRaw) : depVarRaw;
+    const indVars = indVarsRaw ? indVarsRaw.map(v => transformByOriginal[v] || v) : indVarsRaw;
     // BLOCK 14 — analyses use the prepared dataset (cleaned + transformed + non-excluded).
     const rows = preparedData || cleanedData || dataset.rawData;
     const excludedSet = new Set(excludedVariables);
@@ -612,7 +693,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
         }
       } catch (_) { /* silent */ }
     })();
-  }, [dataset, cleanedData, preparedData, excludedVariables]);
+  }, [dataset, cleanedData, preparedData, excludedVariables, transformByOriginal]);
 
   const deleteAnalysis = useCallback((id: string) => {
     setAnalysisResults(prev => {
@@ -627,8 +708,10 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     setCachedCharts(null);
   }, []);
 
-  const replaceAnalysis = useCallback((id: string, analysisKey: string, software: string, depVar?: string, indVars?: string[]) => {
+  const replaceAnalysis = useCallback((id: string, analysisKey: string, software: string, depVarRaw?: string, indVarsRaw?: string[]) => {
     if (!dataset) return;
+    const depVar = depVarRaw ? (transformByOriginal[depVarRaw] || depVarRaw) : depVarRaw;
+    const indVars = indVarsRaw ? indVarsRaw.map(v => transformByOriginal[v] || v) : indVarsRaw;
     const rows = preparedData || cleanedData || dataset.rawData;
     const excludedSet = new Set(excludedVariables);
     const allCols = Object.keys(rows[0] || {});
@@ -723,7 +806,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     // Invalidate cached charts and interpretation so they regenerate
     setCachedCharts(null);
     setInterpretationData(null);
-  }, [dataset, cleanedData, preparedData, excludedVariables]);
+  }, [dataset, cleanedData, preparedData, excludedVariables, transformByOriginal]);
 
   const reset = useCallback(() => {
     setDataset(null);
@@ -748,7 +831,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, variableTransforms, excludedVariables, setVariableTransform, clearVariableTransform, setVariableExcluded, preparedData, analysisResults, interpretationData, setInterpretationData, cachedCharts, setCachedCharts, tableOverrides, chartOverrides, updateTableOverride, updateChartOverride, processFile, runCleaning, runAnalyses, deleteAnalysis, replaceAnalysis, reset, restoreState, restoreDatasetSummary, chatState, setChatState }}>
+    <DatasetContext.Provider value={{ dataset, prepStatus, prepError, cleanedData, variableTransforms, excludedVariables, setVariableTransform, clearVariableTransform, setVariableExcluded, preparedData, activeVariables, getDisplayLabel, resolveAnalysisVar, analysisResults, interpretationData, setInterpretationData, cachedCharts, setCachedCharts, tableOverrides, chartOverrides, updateTableOverride, updateChartOverride, processFile, runCleaning, runAnalyses, deleteAnalysis, replaceAnalysis, reset, restoreState, restoreDatasetSummary, chatState, setChatState }}>
       {children}
     </DatasetContext.Provider>
   );

@@ -228,7 +228,7 @@ async function streamChat({
 
 export function JoelChat({ projectId, projectTitle, projectType, projectDomain, projectDescription, projectObjective, level, onAnalysisComplete, projectMetadata }: JoelChatProps) {
   const { t, lang } = useLanguage();
-  const { processFile, dataset, runAnalyses, analysisResults, chatState, setChatState, interpretationData, setInterpretationData } = useDataset();
+  const { processFile, dataset, runAnalyses, analysisResults, chatState, setChatState, interpretationData, setInterpretationData, activeVariables, getDisplayLabel, resolveAnalysisVar, preparedData } = useDataset();
 
   // Destructure persisted state
   const messages = chatState.messages;
@@ -477,19 +477,21 @@ Keep under 80 words.`;
     return expanded.some(a => VARIABLE_REQUIRING[a]);
   }, [selectedAnalyses, isLicence]);
 
+  // BLOCK 2/3 — Use activeVariables (raw replaced by derived, excluded hidden) so the
+  // selection UI never offers a stale or excluded variable.
   const numericVars = useMemo(() =>
-    dataset?.variables.filter(v => v.type === "numeric").map(v => v.name) || [],
-    [dataset]
+    activeVariables.filter(v => v.type === "numeric").map(v => v.name),
+    [activeVariables]
   );
 
   const categoricalVars = useMemo(() =>
-    dataset?.variables.filter(v => v.type === "categorical" || v.type === "ordinal").map(v => v.name) || [],
-    [dataset]
+    activeVariables.filter(v => v.type === "categorical" || v.type === "ordinal").map(v => v.name),
+    [activeVariables]
   );
 
   const allVarNames = useMemo(() =>
-    dataset?.variables.map(v => v.name) || [],
-    [dataset]
+    activeVariables.map(v => v.name),
+    [activeVariables]
   );
 
   const toggleIndVar = (varName: string) => {
@@ -524,25 +526,28 @@ Keep under 80 words.`;
     setMessages(prev => [...prev, { role: "user", content: `📊 ${varInfo}` }]);
     scrollToBottom();
 
-    // Run assumption validation before executing
-    if (dataset?.rawData) {
+    // Run assumption validation before executing — use preparedData (transformed) and resolved names.
+    const validationRows = (preparedData || dataset?.rawData) as Record<string, unknown>[] | undefined;
+    if (validationRows && validationRows.length) {
       const results: ValidationResult[] = [];
       const expanded = expandAnalysisKeys(selectedAnalyses);
+      const dep = selectedDepVar ? resolveAnalysisVar(selectedDepVar) : "";
+      const inds = selectedIndVars.map(v => resolveAnalysisVar(v));
 
       for (const analysis of expanded) {
         try {
-          if ((analysis === "t_test") && selectedDepVar && selectedIndVars.length > 0) {
-            results.push(validateTTest(dataset.rawData as Record<string, unknown>[], selectedDepVar, selectedIndVars[0]));
-          } else if ((analysis === "anova" || analysis === "anova_basic") && selectedDepVar && selectedIndVars.length > 0) {
-            results.push(validateAnova(dataset.rawData as Record<string, unknown>[], selectedDepVar, selectedIndVars[0]));
-          } else if (analysis === "correlation" && selectedIndVars.length >= 2) {
-            results.push(validateCorrelation(dataset.rawData as Record<string, unknown>[], selectedIndVars[0], selectedIndVars[1]));
-          } else if ((analysis === "simple_regression" || analysis === "multiple_regression" || analysis === "logistic_regression") && selectedDepVar) {
-            results.push(validateRegression(dataset.rawData as Record<string, unknown>[], selectedDepVar, selectedIndVars));
-          } else if ((analysis === "chi_square" || analysis === "crosstab") && selectedDepVar && selectedIndVars.length > 0) {
-            results.push(validateChiSquare(dataset.rawData as Record<string, unknown>[], selectedDepVar, selectedIndVars[0]));
-          } else if ((analysis === "pca" || analysis === "factor_analysis") && selectedIndVars.length >= 2) {
-            results.push(validatePCA(dataset.rawData as Record<string, unknown>[], selectedIndVars));
+          if ((analysis === "t_test") && dep && inds.length > 0) {
+            results.push(validateTTest(validationRows, dep, inds[0]));
+          } else if ((analysis === "anova" || analysis === "anova_basic") && dep && inds.length > 0) {
+            results.push(validateAnova(validationRows, dep, inds[0]));
+          } else if (analysis === "correlation" && inds.length >= 2) {
+            results.push(validateCorrelation(validationRows, inds[0], inds[1]));
+          } else if ((analysis === "simple_regression" || analysis === "multiple_regression" || analysis === "logistic_regression") && dep) {
+            results.push(validateRegression(validationRows, dep, inds));
+          } else if ((analysis === "chi_square" || analysis === "crosstab") && dep && inds.length > 0) {
+            results.push(validateChiSquare(validationRows, dep, inds[0]));
+          } else if ((analysis === "pca" || analysis === "factor_analysis") && inds.length >= 2) {
+            results.push(validatePCA(validationRows, inds));
           }
         } catch { /* validation failed silently — proceed anyway */ }
       }
@@ -1042,12 +1047,12 @@ Keep under 120 words. Use academic language.`);
                   </SelectTrigger>
                   <SelectContent>
                     {allVarNames.map(v => {
-                      const varInfo = dataset.variables.find(dv => dv.name === v);
+                      const varInfo = activeVariables.find(dv => dv.name === v);
                       const isNum = varInfo?.type === "numeric";
                       return (
                         <SelectItem key={v} value={v} className="text-xs">
                           <span className="flex items-center gap-2">
-                            {v}
+                            {getDisplayLabel(v)}
                             <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
                               {isNum ? t("joel.varNumeric") : t("joel.varCategorical")}
                             </Badge>
@@ -1069,7 +1074,7 @@ Keep under 120 words. Use academic language.`);
                 <p className="text-[10px] text-muted-foreground mb-1.5">{t("joel.varIndHint")}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {allVarNames.filter(v => v !== selectedDepVar).map(v => {
-                    const varInfo = dataset.variables.find(dv => dv.name === v);
+                    const varInfo = activeVariables.find(dv => dv.name === v);
                     const isNum = varInfo?.type === "numeric";
                     const isSelected = selectedIndVars.includes(v);
                     return (
@@ -1080,7 +1085,7 @@ Keep under 120 words. Use academic language.`);
                         className="h-auto py-1.5 px-2.5 text-xs gap-1.5"
                         onClick={() => toggleIndVar(v)}
                       >
-                        {v}
+                        {getDisplayLabel(v)}
                         <Badge
                           variant={isSelected ? "secondary" : "outline"}
                           className="text-[9px] px-1 py-0 h-4"
@@ -1107,7 +1112,7 @@ Keep under 120 words. Use academic language.`);
                 </label>
                 <div className="flex flex-wrap gap-1.5">
                   {allVarNames.map(v => {
-                    const varInfo = dataset.variables.find(dv => dv.name === v);
+                    const varInfo = activeVariables.find(dv => dv.name === v);
                     const isNum = varInfo?.type === "numeric";
                     const isSelected = selectedIndVars.includes(v);
                     return (
@@ -1118,7 +1123,7 @@ Keep under 120 words. Use academic language.`);
                         className="h-auto py-1.5 px-2.5 text-xs gap-1.5"
                         onClick={() => toggleIndVar(v)}
                       >
-                        {v}
+                        {getDisplayLabel(v)}
                         <Badge
                           variant={isSelected ? "secondary" : "outline"}
                           className="text-[9px] px-1 py-0 h-4"
@@ -1146,7 +1151,7 @@ Keep under 120 words. Use academic language.`);
                         return (
                           <Button key={v} variant={isSelected ? "default" : "outline"} size="sm"
                             className="h-auto py-1.5 px-2.5 text-xs gap-1.5" onClick={() => toggleIndVar(v)}>
-                            {v}
+                            {getDisplayLabel(v)}
                             <Badge variant={isSelected ? "secondary" : "outline"} className="text-[9px] px-1 py-0 h-4">N</Badge>
                           </Button>
                         );
@@ -1165,7 +1170,7 @@ Keep under 120 words. Use academic language.`);
                         return (
                           <Button key={v} variant={isSelected ? "default" : "outline"} size="sm"
                             className="h-auto py-1.5 px-2.5 text-xs gap-1.5" onClick={() => toggleIndVar(v)}>
-                            {v}
+                            {getDisplayLabel(v)}
                             <Badge variant={isSelected ? "secondary" : "outline"} className="text-[9px] px-1 py-0 h-4">C</Badge>
                           </Button>
                         );
