@@ -189,7 +189,7 @@ function SingleChart({ chart, colors, barRadius, showGrid, showLabels }: {
 
 export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectContext } = {}) {
   const { t, lang } = useLanguage();
-  const { dataset, analysisResults, cachedCharts, setCachedCharts, chartOverrides, updateChartOverride, chatState } = useDataset();
+  const { dataset, analysisResults, cachedCharts, setCachedCharts, chartOverrides, updateChartOverride, chatState, preparedData, activeVariables } = useDataset();
   const { settings } = useChartStyle();
   const [retryKeys, setRetryKeys] = useState<Record<string, number>>({});
   const graphMode = chatState.analyticalGraphMode;
@@ -199,17 +199,19 @@ export function WorkspaceCharts({ projectContext }: { projectContext?: ProjectCo
 
   const charts = useMemo(() => {
     if (!dataset) return [];
-    // Only build from rawData if we have actual data rows
-    if (!dataset.rawData || dataset.rawData.length === 0) {
-      return [];
-    }
-    const allCharts = buildChartData(dataset.rawData, dataset.variables, analysisResults, t);
+    // BLOCK 5/6 — Always feed charts from preparedData + activeVariables so transformed/excluded vars stay in sync.
+    const rows = (preparedData && preparedData.length > 0)
+      ? preparedData
+      : (dataset.rawData && dataset.rawData.length > 0 ? dataset.rawData : null);
+    if (!rows) return [];
+    const vars = activeVariables.length > 0 ? activeVariables : dataset.variables;
+    const allCharts = buildChartData(rows, vars, analysisResults, t);
     // In standard mode, filter out analytical/bivariate charts (keep only descriptive)
     if (graphMode === "standard") {
       return allCharts.filter(c => c.analysisType === "descriptive" || c.analysisType === "frequency" || !c.analysisType);
     }
     return allCharts;
-  }, [dataset, analysisResults, t, graphMode]);
+  }, [dataset, preparedData, activeVariables, analysisResults, t, graphMode]);
 
   // Use cached charts as fallback when rawData is unavailable
   const displayCharts = charts.length > 0 ? charts : (cachedCharts as ChartItem[] || []);
