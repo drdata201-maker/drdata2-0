@@ -1169,5 +1169,20 @@
   "varStudio.group.thresholds": "Limiares (separados por vírgulas)",
   "varStudio.group.thresholdsHint": "Insira os pontos de corte em ordem crescente",
   "varStudio.group.cuts": "corte(s)",
-  "varStudio.group.classes": "classes"
+  "varStudio.group.classes": "classes",
+  "joel.reco.recommended": "Análise recomendada",
+  "joel.reco.useIt": "Usar esta análise",
+  "joel.reco.notSuitable": "Esta combinação não é adequada",
+  "joel.reco.alternative": "Alternativa sugerida",
+  "joel.reco.none": "Nenhuma",
+  "joel.reco.reason.none": "Selecione pelo menos uma variável.",
+  "joel.reco.reason.descriptive": "Uma única variável: análise descritiva (frequências ou médias conforme o tipo).",
+  "joel.reco.reason.chi_square": "Duas variáveis categóricas: teste Qui-quadrado para estudar a associação.",
+  "joel.reco.reason.correlation": "Duas variáveis numéricas: correlação de Pearson para medir a relação linear.",
+  "joel.reco.reason.t_test": "Uma variável numérica e um fator com 2 grupos: teste t de Student.",
+  "joel.reco.reason.anova": "Uma variável numérica e um fator com mais de 2 grupos: ANOVA de um fator.",
+  "joel.reco.reason.singleGroup": "A variável categórica contém apenas um grupo.",
+  "joel.reco.reason.invalid": "Combinação de tipos não padrão para o nível Licenciatura.",
+  "joel.reco.alt.singleGroup": "Escolha uma variável categórica com pelo menos 2 categorias.",
+  "joel.reco.alt.invalid": "Selecione 2 variáveis: 2 numéricas, 2 categóricas ou 1 numérica + 1 categórica."
 }

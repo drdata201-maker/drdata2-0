@@ -1169,5 +1169,20 @@
   "varStudio.group.thresholds": "Schwellenwerte (kommagetrennt)",
   "varStudio.group.thresholdsHint": "Schnittpunkte in aufsteigender Reihenfolge eingeben",
   "varStudio.group.cuts": "Schnitt(e)",
-  "varStudio.group.classes": "Klassen"
+  "varStudio.group.classes": "Klassen",
+  "joel.reco.recommended": "Empfohlene Analyse",
+  "joel.reco.useIt": "Diese Analyse verwenden",
+  "joel.reco.notSuitable": "Diese Kombination ist ungeeignet",
+  "joel.reco.alternative": "Vorgeschlagene Alternative",
+  "joel.reco.none": "Keine",
+  "joel.reco.reason.none": "Wählen Sie mindestens eine Variable aus.",
+  "joel.reco.reason.descriptive": "Einzelne Variable: deskriptive Analyse (Häufigkeiten oder Mittelwerte je nach Typ).",
+  "joel.reco.reason.chi_square": "Zwei kategoriale Variablen: Chi-Quadrat-Test zur Untersuchung der Assoziation.",
+  "joel.reco.reason.correlation": "Zwei numerische Variablen: Pearson-Korrelation zur Messung des linearen Zusammenhangs.",
+  "joel.reco.reason.t_test": "Eine numerische Variable und ein Faktor mit 2 Gruppen: Student-t-Test.",
+  "joel.reco.reason.anova": "Eine numerische Variable und ein Faktor mit mehr als 2 Gruppen: einfaktorielle ANOVA.",
+  "joel.reco.reason.singleGroup": "Die kategoriale Variable enthält nur eine Gruppe.",
+  "joel.reco.reason.invalid": "Variablen-Typ-Kombination ist auf Bachelor-Niveau nicht standardmäßig.",
+  "joel.reco.alt.singleGroup": "Wählen Sie eine kategoriale Variable mit mindestens 2 Kategorien.",
+  "joel.reco.alt.invalid": "Wählen Sie 2 Variablen: 2 numerisch, 2 kategorial oder 1 numerisch + 1 kategorial."
 }

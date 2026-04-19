@@ -16,6 +16,7 @@ import {
   validatePCA,
   type ValidationResult,
 } from "@/lib/assumptionValidator";
+import { recommendAnalysis, type VarRef } from "@/lib/analysisRecommender";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import joelLicence from "@/assets/assistant_joel_license.png";
 import joelMaster from "@/assets/assistant_joel_master.png";
@@ -1034,7 +1035,58 @@ Keep under 120 words. Use academic language.`);
               return null;
             })()}
 
-            {/* Dependent variable selector — for dep/ind analyses */}
+            {/* BLOCK 3 — Smart analysis recommendation (Licence) based on chosen variables */}
+            {isLicence && (() => {
+              const picked: string[] = [];
+              if (selectedDepVar) picked.push(selectedDepVar);
+              for (const v of selectedIndVars) if (v !== selectedDepVar) picked.push(v);
+              if (picked.length < 1) return null;
+              const refs: VarRef[] = picked.map(name => {
+                const info = activeVariables.find(v => v.name === name);
+                const type: "numeric" | "categorical" = info?.type === "numeric" ? "numeric" : "categorical";
+                return { name, type };
+              });
+              const rec = recommendAnalysis(refs, (preparedData || dataset?.rawData || []) as Record<string, unknown>[]);
+              if (rec.invalid) {
+                return (
+                  <div className="rounded-md border border-yellow-500/30 bg-yellow-500/5 px-3 py-2 text-xs text-foreground space-y-1">
+                    <div className="flex items-center gap-1.5">
+                      <AlertTriangle className="h-3.5 w-3.5 text-yellow-600" />
+                      <strong>{t("joel.reco.notSuitable")}</strong>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">{t(rec.reasonKey)}</p>
+                    {rec.alternativeKey && (
+                      <p className="text-[11px] text-foreground"><strong>{t("joel.reco.alternative")}:</strong> {t(rec.alternativeKey)}</p>
+                    )}
+                  </div>
+                );
+              }
+              if (!rec.analysis) return null;
+              const recKey = rec.analysis;
+              const alreadyPicked = selectedAnalyses.includes(recKey);
+              return (
+                <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-foreground flex items-start justify-between gap-2">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-primary" />
+                      <strong>{t("joel.reco.recommended")}:</strong>
+                      <span>{t(rec.analysisLabelKey)}</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">{t(rec.reasonKey)}</p>
+                  </div>
+                  {!alreadyPicked && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 text-[10px] px-2 shrink-0"
+                      onClick={() => setSelectedAnalyses(prev => prev.includes(recKey) ? prev : [...prev, recKey])}
+                    >
+                      {t("joel.reco.useIt")}
+                    </Button>
+                  )}
+                </div>
+              );
+            })()}
             {selectedAnalyses.some(a => VARIABLE_REQUIRING[a]?.dependent) && (
               <div className="space-y-1.5 rounded-lg border border-primary/30 bg-primary/5 p-3">
                 <label className="text-xs font-semibold text-primary flex items-center gap-1.5">
