@@ -108,6 +108,12 @@ interface DatasetContextType {
   setVariableExcluded: (variableName: string, excluded: boolean) => void;
   /** The dataset rows actually used by analyses (cleaned + transformed columns appended, excluded removed). */
   preparedData: Record<string, unknown>[] | null;
+  /** Variables exposed to selection UIs (Joel, Charts, Edit). Hides raw variables that have a derived version, hides excluded ones, and adds derived columns as new entries. */
+  activeVariables: VariableInfo[];
+  /** Returns a localized human label for a variable name (e.g. "age (grouped)"). Falls back to the raw name. */
+  getDisplayLabel: (name: string) => string;
+  /** If the user picked a raw variable that has a transform, returns the derived column name; otherwise returns the input unchanged. */
+  resolveAnalysisVar: (name: string) => string;
   analysisResults: AnalysisResultItem[];
   interpretationData: InterpretationData | null;
   setInterpretationData: (data: InterpretationData | null) => void;
