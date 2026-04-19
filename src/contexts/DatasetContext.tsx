@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, ReactNode, useMemo } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { isIdentifierVariable } from "@/lib/academicFormatter";
