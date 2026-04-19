@@ -80,7 +80,7 @@ export function recommendAnalysis(
   if (usable.length === 1) {
     return {
       analysis: "descriptive_full",
-      analysisLabelKey: "analysis.descriptive_full",
+      analysisLabelKey: "student.analysis.descriptive_full",
       reasonKey: "joel.reco.reason.descriptive",
     };
   }
@@ -96,7 +96,7 @@ export function recommendAnalysis(
   if (catCount === 2 && numCount === 0) {
     return {
       analysis: "chi_square",
-      analysisLabelKey: "analysis.chi_square",
+      analysisLabelKey: "student.analysis.chi_square",
       reasonKey: "joel.reco.reason.chi_square",
     };
   }
@@ -105,7 +105,7 @@ export function recommendAnalysis(
   if (numCount >= 2 && catCount === 0) {
     return {
       analysis: "correlation",
-      analysisLabelKey: "analysis.correlation",
+      analysisLabelKey: "student.analysis.correlation",
       reasonKey: "joel.reco.reason.correlation",
     };
   }
@@ -126,13 +126,13 @@ export function recommendAnalysis(
     if (groups === 2) {
       return {
         analysis: "t_test",
-        analysisLabelKey: "analysis.t_test",
+        analysisLabelKey: "student.analysis.t_test",
         reasonKey: "joel.reco.reason.t_test",
       };
     }
     return {
       analysis: "anova_basic",
-      analysisLabelKey: "analysis.anova_basic",
+      analysisLabelKey: "student.analysis.anova_basic",
       reasonKey: "joel.reco.reason.anova",
     };
   }
