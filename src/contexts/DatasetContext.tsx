@@ -519,8 +519,11 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     }, 2000);
   }, [dataset]);
 
-  const runAnalyses = useCallback((analysisKeys: string[], software: string, depVar?: string, indVars?: string[]) => {
+  const runAnalyses = useCallback((analysisKeys: string[], software: string, depVarRaw?: string, indVarsRaw?: string[]) => {
     if (!dataset) return;
+    // BLOCK 2 — Auto-resolve raw variable names to their derived/transformed versions.
+    const depVar = depVarRaw ? (transformByOriginal[depVarRaw] || depVarRaw) : depVarRaw;
+    const indVars = indVarsRaw ? indVarsRaw.map(v => transformByOriginal[v] || v) : indVarsRaw;
     // BLOCK 14 — analyses use the prepared dataset (cleaned + transformed + non-excluded).
     const rows = preparedData || cleanedData || dataset.rawData;
     const excludedSet = new Set(excludedVariables);
@@ -705,8 +708,10 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     setCachedCharts(null);
   }, []);
 
-  const replaceAnalysis = useCallback((id: string, analysisKey: string, software: string, depVar?: string, indVars?: string[]) => {
+  const replaceAnalysis = useCallback((id: string, analysisKey: string, software: string, depVarRaw?: string, indVarsRaw?: string[]) => {
     if (!dataset) return;
+    const depVar = depVarRaw ? (transformByOriginal[depVarRaw] || depVarRaw) : depVarRaw;
+    const indVars = indVarsRaw ? indVarsRaw.map(v => transformByOriginal[v] || v) : indVarsRaw;
     const rows = preparedData || cleanedData || dataset.rawData;
     const excludedSet = new Set(excludedVariables);
     const allCols = Object.keys(rows[0] || {});
