@@ -16,6 +16,7 @@ import {
   validatePCA,
   type ValidationResult,
 } from "@/lib/assumptionValidator";
+import { recommendAnalysis, type VarRef } from "@/lib/analysisRecommender";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import joelLicence from "@/assets/assistant_joel_license.png";
 import joelMaster from "@/assets/assistant_joel_master.png";
