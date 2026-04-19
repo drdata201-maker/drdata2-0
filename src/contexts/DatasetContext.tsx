@@ -693,7 +693,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
         }
       } catch (_) { /* silent */ }
     })();
-  }, [dataset, cleanedData, preparedData, excludedVariables]);
+  }, [dataset, cleanedData, preparedData, excludedVariables, transformByOriginal]);
 
   const deleteAnalysis = useCallback((id: string) => {
     setAnalysisResults(prev => {
@@ -806,7 +806,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     // Invalidate cached charts and interpretation so they regenerate
     setCachedCharts(null);
     setInterpretationData(null);
-  }, [dataset, cleanedData, preparedData, excludedVariables]);
+  }, [dataset, cleanedData, preparedData, excludedVariables, transformByOriginal]);
 
   const reset = useCallback(() => {
     setDataset(null);
