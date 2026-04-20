@@ -83,6 +83,22 @@ function DescriptiveTable({ data }: { data: NonNullable<AnalysisResultItem["desc
   );
 }
 
+// BLOCK 7 — sort categories of grouped variables ascending by leading numeric token
+function isGroupedVarLabel(name: string): boolean {
+  return /_(grouped|categorized|binned|category|recoded)$/i.test(name);
+}
+function sortGroupedFreqCats<T extends { value: string }>(cats: T[]): T[] {
+  const num = (s: string) => {
+    const m = s.match(/-?\d+(?:\.\d+)?/);
+    return m ? parseFloat(m[0]) : Number.POSITIVE_INFINITY;
+  };
+  return [...cats].sort((a, b) => {
+    const an = num(String(a.value));
+    const bn = num(String(b.value));
+    return an !== bn ? an - bn : String(a.value).localeCompare(String(b.value));
+  });
+}
+
 function FrequencyTable({ data }: { data: NonNullable<AnalysisResultItem["frequencies"]> }) {
   const { t, lang } = useLanguage();
   const h = getFrequencyHeaders(lang);
@@ -90,7 +106,11 @@ function FrequencyTable({ data }: { data: NonNullable<AnalysisResultItem["freque
   if (filtered.length === 0) return null;
   return (
     <>
-      {filtered.map(freq => (
+      {filtered.map(freq => {
+        const cats = isGroupedVarLabel(freq.variable)
+          ? sortGroupedFreqCats(freq.categories)
+          : freq.categories;
+        return (
         <Card key={freq.variable}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">{t("results.frequency")}: {freq.variable}</CardTitle>
@@ -105,7 +125,7 @@ function FrequencyTable({ data }: { data: NonNullable<AnalysisResultItem["freque
                 </tr>
               </thead>
               <tbody>
-                {freq.categories.map(cat => (
+                {cats.map(cat => (
                   <tr key={cat.value} className="border-b border-border/50">
                     <td className="px-2 py-1.5 text-foreground">{cat.value}</td>
                     <td className="px-2 py-1.5 text-right font-mono text-foreground">{cat.count}</td>
@@ -116,7 +136,8 @@ function FrequencyTable({ data }: { data: NonNullable<AnalysisResultItem["freque
             </table>
           </CardContent>
         </Card>
-      ))}
+        );
+      })}
     </>
   );
 }
