@@ -588,6 +588,16 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
               columnWidths: [3120, 3120, 3120],
               rows: [makeTableHeader([freqHeaders.value, freqHeaders.count, freqHeaders.pct]), ...fRows],
             }));
+            // BLOCK 3 — methodology traceability under grouped variables
+            if (data.variableTransforms && data.tFn) {
+              const m = getMethodologyForColumn(freq.variable, data.variableTransforms, data.tFn);
+              if (m) {
+                sections.push(new Paragraph({
+                  spacing: { before: 40, after: 80 },
+                  children: [new TextRun({ text: m.label, italics: true, size: 18, color: "666666" })],
+                }));
+              }
+            }
             tableNum++;
             sections.push(new Paragraph({ children: [] }));
           }
