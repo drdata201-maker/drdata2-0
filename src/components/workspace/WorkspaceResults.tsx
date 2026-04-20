@@ -16,6 +16,7 @@ import {
   type ProjectContext,
 } from "@/lib/academicFormatter";
 import { formatPCell } from "@/lib/pValueFormatter";
+import { getMethodologyForColumn } from "@/lib/groupingMethodology";
 
 function SignificanceBadge({ p }: { p: number }) {
   if (p < 0.001) return <Badge className="bg-green-600 text-white">p &lt; 0.001 ***</Badge>;
@@ -101,6 +102,7 @@ function sortGroupedFreqCats<T extends { value: string }>(cats: T[]): T[] {
 
 function FrequencyTable({ data }: { data: NonNullable<AnalysisResultItem["frequencies"]> }) {
   const { t, lang } = useLanguage();
+  const { variableTransforms } = useDataset();
   const h = getFrequencyHeaders(lang);
   const filtered = data.filter(freq => !isIdentifierVariable(freq.variable));
   if (filtered.length === 0) return null;
@@ -110,6 +112,7 @@ function FrequencyTable({ data }: { data: NonNullable<AnalysisResultItem["freque
         const cats = isGroupedVarLabel(freq.variable)
           ? sortGroupedFreqCats(freq.categories)
           : freq.categories;
+        const methodology = getMethodologyForColumn(freq.variable, variableTransforms, t);
         return (
         <Card key={freq.variable}>
           <CardHeader className="pb-2">
@@ -134,6 +137,11 @@ function FrequencyTable({ data }: { data: NonNullable<AnalysisResultItem["freque
                 ))}
               </tbody>
             </table>
+            {methodology && (
+              <p className="mt-2 text-xs italic text-muted-foreground">
+                {methodology.label}
+              </p>
+            )}
           </CardContent>
         </Card>
         );
