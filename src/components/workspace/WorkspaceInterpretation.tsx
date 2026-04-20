@@ -122,8 +122,14 @@ export function WorkspaceInterpretation({ level, projectTitle, projectType, proj
     const updated = { ...data, sections: data.sections.map(s => ({ ...s })) };
 
     if (typeof editing === "string") {
-      if (editing === "globalConclusion") updated.globalConclusion = editValue;
-      else updated.globalRecommendations = editValue;
+      // BLOCK 12 — flag user edits on global blocks so AI re-runs never overwrite them.
+      if (editing === "globalConclusion") {
+        updated.globalConclusion = editValue;
+        updated.userEditedGlobalConclusion = true;
+      } else {
+        updated.globalRecommendations = editValue;
+        updated.userEditedGlobalRecommendations = true;
+      }
     } else {
       const s = updated.sections[editing.section];
       if (editing.field === "interpretation") s.interpretation = editValue;
