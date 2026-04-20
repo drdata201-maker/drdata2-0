@@ -7,6 +7,9 @@
  * Returns i18n keys (not literal text) so the UI can localize them.
  */
 
+import { validateChiSquare } from "./assumptionValidator";
+
+
 export type SimpleVarType = "numeric" | "categorical";
 
 export interface VarRef {
