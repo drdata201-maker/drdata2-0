@@ -1403,7 +1403,19 @@ export function exportPdf(data: ExportData, content: ExportContent) {
               headStyles: { fillColor: [37, 99, 235] },
               margin: { left: 14 },
             });
-            y = (doc as any).lastAutoTable.finalY + 8;
+            y = (doc as any).lastAutoTable.finalY + 4;
+            // BLOCK 3 — methodology traceability under grouped variables
+            if (data.variableTransforms && data.tFn) {
+              const m = getMethodologyForColumn(freq.variable, data.variableTransforms, data.tFn);
+              if (m) {
+                doc.setFontSize(8);
+                doc.setFont("helvetica", "italic");
+                doc.text(m.label, 14, y);
+                y += 5;
+                doc.setFont("helvetica", "normal");
+              }
+            }
+            y += 4;
             tableNum++;
           }
         }
