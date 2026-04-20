@@ -82,7 +82,7 @@ function MiniChart({ chart, colors, barRadius, showGrid, showLabels }: { chart: 
 export function WorkspaceExport({ projectTitle, projectType, projectDomain, projectDescription, level, projectContext }: WorkspaceExportProps) {
   const { t, lang } = useLanguage();
   const localizedProjectContext = useMemo(() => getLocalizedProjectContext(projectContext, t), [projectContext, t]);
-  const { dataset, analysisResults, interpretationData, cachedCharts, tableOverrides, chartOverrides, chatState } = useDataset();
+  const { dataset, analysisResults, interpretationData, cachedCharts, tableOverrides, chartOverrides, chatState, variableTransforms } = useDataset();
   const selectedSoftware = chatState?.selectedSoftware || "";
   const { settings: chartSettings } = useChartStyle();
   const [loading, setLoading] = useState<string | null>(null);
@@ -155,8 +155,10 @@ export function WorkspaceExport({ projectTitle, projectType, projectDomain, proj
       moderatorVars: localizedProjectContext?.moderatorVars,
       conceptualModel: localizedProjectContext?.conceptualModel,
       software: sw,
+      variableTransforms,
+      tFn: t,
     };
-  }, [dataset, analysisResults, interpretationData, projectTitle, projectType, projectDomain, projectDescription, level, lang, t, selectedSoftware]);
+  }, [dataset, analysisResults, interpretationData, projectTitle, projectType, projectDomain, projectDescription, level, lang, t, selectedSoftware, variableTransforms]);
 
   const handleExport = async (content: ContentType, format: FormatType) => {
     const key = `${content}-${format}`;
