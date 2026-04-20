@@ -63,6 +63,11 @@ export interface InterpretationData {
   sections: InterpretationSection[];
   globalConclusion: string;
   globalRecommendations: string;
+  /** BLOCK 12 — true when the user manually edited the global conclusion;
+   *  prevents AI re-runs from overwriting personal edits. */
+  userEditedGlobalConclusion?: boolean;
+  /** Same flag for global recommendations. */
+  userEditedGlobalRecommendations?: boolean;
   academicReport?: import("@/lib/academicFormatter").AcademicReport;
 }
 
