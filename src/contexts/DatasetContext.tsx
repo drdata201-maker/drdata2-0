@@ -293,20 +293,37 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   const [variableTransforms, setVariableTransforms] = useState<Record<string, PreparedVariableSpec>>({});
   const [excludedVariables, setExcludedVariables] = useState<string[]>([]);
 
+  // Helper: invalidate AI-generated sections but preserve user-edited global texts.
+  const invalidateInterpretationPreservingEdits = useCallback(() => {
+    setInterpretationData(prev => {
+      if (!prev) return null;
+      const keepConclusion = prev.userEditedGlobalConclusion;
+      const keepRecs = prev.userEditedGlobalRecommendations;
+      if (!keepConclusion && !keepRecs) return null;
+      return {
+        sections: [],
+        globalConclusion: keepConclusion ? prev.globalConclusion : "",
+        globalRecommendations: keepRecs ? prev.globalRecommendations : "",
+        userEditedGlobalConclusion: keepConclusion,
+        userEditedGlobalRecommendations: keepRecs,
+      };
+    });
+  }, []);
+
   const setVariableTransform = useCallback((sourceName: string, transformation: Transformation, newName?: string) => {
     setVariableTransforms(prev => ({
       ...prev,
       [sourceName]: { sourceName, newName: newName || `${sourceName}_t`, transformation },
     }));
     setCachedCharts(null);
-    setInterpretationData(null);
-  }, []);
+    invalidateInterpretationPreservingEdits();
+  }, [invalidateInterpretationPreservingEdits]);
 
   const clearVariableTransform = useCallback((sourceName: string) => {
     setVariableTransforms(prev => { const n = { ...prev }; delete n[sourceName]; return n; });
     setCachedCharts(null);
-    setInterpretationData(null);
-  }, []);
+    invalidateInterpretationPreservingEdits();
+  }, [invalidateInterpretationPreservingEdits]);
 
   const setVariableExcluded = useCallback((variableName: string, excluded: boolean) => {
     setExcludedVariables(prev => {
@@ -314,8 +331,8 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
       return prev.filter(v => v !== variableName);
     });
     setCachedCharts(null);
-    setInterpretationData(null);
-  }, []);
+    invalidateInterpretationPreservingEdits();
+  }, [invalidateInterpretationPreservingEdits]);
 
   // BLOCK 10 — Derived prepared dataset (cleaned + transformed + excluded). Originals untouched.
   const preparedData = (() => {
