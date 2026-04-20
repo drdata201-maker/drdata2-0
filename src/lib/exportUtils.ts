@@ -1610,7 +1610,7 @@ export function exportPdf(data: ExportData, content: ExportContent) {
             doc.text(`${tableLabel} ${tableNum}: Kruskal-Wallis — ${kw.dependent}`, 14, y);
             y += 6;
             const rows = kw.groups.map(g => [g.name, g.meanRank.toFixed(2)]);
-            rows.push(["Result", `H(${kw.df}) = ${kw.H.toFixed(3)}, p = ${kw.pValue.toFixed(4)}`]);
+            rows.push(["Result", `H(${kw.df}) = ${kw.H.toFixed(3)}, ${formatPValue(kw.pValue, opts)}`]);
             autoTable(doc, {
               startY: y, head: [["Group", "Mean Rank"]], body: rows,
               theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },

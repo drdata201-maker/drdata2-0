@@ -13,12 +13,15 @@ interface StatFormatOptions {
 /** Format a p-value according to software convention */
 export function formatPValue(p: number, opts: StatFormatOptions): string {
   const { software } = opts;
+  // BLOCK 11 — Academic rule: never display "p = 0" / "p = 0.000".
+  // All software branches collapse to the universally accepted "p < 0.001" notation
+  // when the value is below the displayable threshold (preserves UI = Document = Export).
   if (p < 0.001) {
     switch (software) {
       case "spss": return "p < .001";
-      case "stata": return "p = 0.000";
-      case "r": return "p < 2.2e-16";
+      case "r": return "p < 0.001";
       case "python": return "p < 0.001";
+      case "stata": return "p < 0.001";
       default: return "p < 0.001";
     }
   }
