@@ -15,6 +15,7 @@ import {
   isIdentifierVariable,
   type ProjectContext,
 } from "@/lib/academicFormatter";
+import { formatPCell } from "@/lib/pValueFormatter";
 
 function SignificanceBadge({ p }: { p: number }) {
   if (p < 0.001) return <Badge className="bg-green-600 text-white">p &lt; 0.001 ***</Badge>;
