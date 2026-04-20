@@ -8,6 +8,8 @@ import { getTableLabel, getFigureLabel, generateTableInterpretation, generateFig
 import type { AnalysisResultItem } from "./statsEngine";
 import { stripLatex } from "./latexSanitizer";
 import { formatChiSquare, formatTTest, formatAnova, formatCorrelation, formatRSquared, formatPValue, type StatSoftware } from "./softwareFormatter";
+import type { PreparedVariableSpec } from "./varDiagnostics";
+import { getMethodologyForColumn } from "./groupingMethodology";
 
 export interface ChartImage {
   title: string;
@@ -52,6 +54,10 @@ export interface ExportData {
   moderatorVars?: string;
   conceptualModel?: string;
   software?: StatSoftware;
+  /** BLOCK 3 — methodology traceability for grouped/derived variables. */
+  variableTransforms?: Record<string, PreparedVariableSpec>;
+  /** Translator for methodology labels and any other localized export strings. */
+  tFn?: (key: string) => string;
 }
 
 /** Format test results with software-adaptive notation */
