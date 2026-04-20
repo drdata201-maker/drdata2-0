@@ -150,7 +150,7 @@ function CorrelationTable({ data }: { data: NonNullable<AnalysisResultItem["corr
                 <td className="px-2 py-1.5 text-foreground">{c.var1}</td>
                 <td className="px-2 py-1.5 text-foreground">{c.var2}</td>
                 <td className="px-2 py-1.5 text-right font-mono text-foreground">{c.r}</td>
-                <td className="px-2 py-1.5 text-right font-mono text-foreground">{c.pValue}</td>
+                <td className="px-2 py-1.5 text-right font-mono text-foreground">{formatPCell(c.pValue, t)}</td>
                 <td className="px-2 py-1.5 text-right text-foreground">{c.n}</td>
                 <td className="px-2 py-1.5 text-right"><SignificanceBadge p={c.pValue} /></td>
               </tr>
@@ -306,7 +306,7 @@ function ChiSquareTable({ data, level }: { data: NonNullable<AnalysisResultItem[
                 </div>
                 <div className="flex justify-between pl-4">
                   <span className="text-muted-foreground stat-notation">p</span>
-                  <span className="font-mono text-foreground">= {c.pValue}</span>
+                  <span className="font-mono text-foreground">= {formatPCell(c.pValue, t)}</span>
                 </div>
               </div>
               <div className="flex justify-between">
@@ -680,7 +680,7 @@ function SpearmanTable({ data }: { data: NonNullable<AnalysisResultItem["spearma
                 <td className="px-2 py-1.5 text-foreground">{s.var1}</td>
                 <td className="px-2 py-1.5 text-foreground">{s.var2}</td>
                 <td className="px-2 py-1.5 text-right font-mono text-foreground">{s.rho}</td>
-                <td className="px-2 py-1.5 text-right font-mono text-foreground">{s.pValue}</td>
+                <td className="px-2 py-1.5 text-right font-mono text-foreground">{formatPCell(s.pValue, t)}</td>
                 <td className="px-2 py-1.5 text-right text-foreground">{s.n}</td>
                 <td className="px-2 py-1.5 text-right"><SignificanceBadge p={s.pValue} /></td>
               </tr>
@@ -720,7 +720,7 @@ function KendallTable({ data }: { data: NonNullable<AnalysisResultItem["kendallC
                 <td className="px-2 py-1.5 text-foreground">{k.var1}</td>
                 <td className="px-2 py-1.5 text-foreground">{k.var2}</td>
                 <td className="px-2 py-1.5 text-right font-mono text-foreground">{k.tau}</td>
-                <td className="px-2 py-1.5 text-right font-mono text-foreground">{k.pValue}</td>
+                <td className="px-2 py-1.5 text-right font-mono text-foreground">{formatPCell(k.pValue, t)}</td>
                 <td className="px-2 py-1.5 text-right text-foreground">{k.n}</td>
                 <td className="px-2 py-1.5 text-right"><SignificanceBadge p={k.pValue} /></td>
               </tr>
