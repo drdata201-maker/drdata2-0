@@ -34,6 +34,28 @@ function buildHistogram(values: number[], bins = 10): { name: string; value: num
   }));
 }
 
+/**
+ * BLOCK 7 — Detect grouped variables (suffix _grouped, _categorized, _binned, _category)
+ * and sort their category labels in ascending order based on the first numeric token,
+ * falling back to a stable string sort. Pure helper, no impact on raw frequencies.
+ */
+function isGroupedVarName(name: string): boolean {
+  return /_(grouped|categorized|binned|category|recoded)$/i.test(name);
+}
+
+function sortGroupedCategories<T extends { name?: string; value?: number }>(cats: T[]): T[] {
+  const extractNum = (label: string): number => {
+    const m = label.match(/-?\d+(?:\.\d+)?/);
+    return m ? parseFloat(m[0]) : Number.POSITIVE_INFINITY;
+  };
+  return [...cats].sort((a, b) => {
+    const an = extractNum(String(a.name ?? ""));
+    const bn = extractNum(String(b.name ?? ""));
+    if (an !== bn) return an - bn;
+    return String(a.name ?? "").localeCompare(String(b.name ?? ""));
+  });
+}
+
 export function buildChartData(
   rows: Record<string, unknown>[],
   variables: VariableInfo[],
