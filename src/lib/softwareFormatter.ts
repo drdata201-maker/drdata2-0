@@ -39,7 +39,7 @@ export function formatChiSquare(chi2: number, df: number, p: number, opts: StatF
   const pStr = formatPValue(p, opts);
   switch (opts.software) {
     case "spss": return `χ²(${df}) = ${chi2.toFixed(3)}, ${pStr}`;
-    case "stata": return `Pearson chi2(${df}) = ${chi2.toFixed(4)}, Pr = ${p.toFixed(3)}`;
+    case "stata": return `Pearson chi2(${df}) = ${chi2.toFixed(4)}, ${p < 0.001 ? "Pr < 0.001" : `Pr = ${p.toFixed(3)}`}`;
     case "r": return `X-squared = ${chi2.toFixed(4)}, df = ${df}, ${pStr}`;
     case "python": return `chi2=${chi2.toFixed(4)}, dof=${df}, ${pStr}`;
     default: return `χ²(${df}) = ${chi2.toFixed(3)}, ${pStr}`;
