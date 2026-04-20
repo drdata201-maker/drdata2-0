@@ -15,6 +15,7 @@ import {
   isIdentifierVariable,
   type ProjectContext,
 } from "@/lib/academicFormatter";
+import { formatPCell } from "@/lib/pValueFormatter";
 
 function SignificanceBadge({ p }: { p: number }) {
   if (p < 0.001) return <Badge className="bg-green-600 text-white">p &lt; 0.001 ***</Badge>;
@@ -82,6 +83,22 @@ function DescriptiveTable({ data }: { data: NonNullable<AnalysisResultItem["desc
   );
 }
 
+// BLOCK 7 — sort categories of grouped variables ascending by leading numeric token
+function isGroupedVarLabel(name: string): boolean {
+  return /_(grouped|categorized|binned|category|recoded)$/i.test(name);
+}
+function sortGroupedFreqCats<T extends { value: string }>(cats: T[]): T[] {
+  const num = (s: string) => {
+    const m = s.match(/-?\d+(?:\.\d+)?/);
+    return m ? parseFloat(m[0]) : Number.POSITIVE_INFINITY;
+  };
+  return [...cats].sort((a, b) => {
+    const an = num(String(a.value));
+    const bn = num(String(b.value));
+    return an !== bn ? an - bn : String(a.value).localeCompare(String(b.value));
+  });
+}
+
 function FrequencyTable({ data }: { data: NonNullable<AnalysisResultItem["frequencies"]> }) {
   const { t, lang } = useLanguage();
   const h = getFrequencyHeaders(lang);
@@ -89,7 +106,11 @@ function FrequencyTable({ data }: { data: NonNullable<AnalysisResultItem["freque
   if (filtered.length === 0) return null;
   return (
     <>
-      {filtered.map(freq => (
+      {filtered.map(freq => {
+        const cats = isGroupedVarLabel(freq.variable)
+          ? sortGroupedFreqCats(freq.categories)
+          : freq.categories;
+        return (
         <Card key={freq.variable}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">{t("results.frequency")}: {freq.variable}</CardTitle>
@@ -104,7 +125,7 @@ function FrequencyTable({ data }: { data: NonNullable<AnalysisResultItem["freque
                 </tr>
               </thead>
               <tbody>
-                {freq.categories.map(cat => (
+                {cats.map(cat => (
                   <tr key={cat.value} className="border-b border-border/50">
                     <td className="px-2 py-1.5 text-foreground">{cat.value}</td>
                     <td className="px-2 py-1.5 text-right font-mono text-foreground">{cat.count}</td>
@@ -115,7 +136,8 @@ function FrequencyTable({ data }: { data: NonNullable<AnalysisResultItem["freque
             </table>
           </CardContent>
         </Card>
-      ))}
+        );
+      })}
     </>
   );
 }
@@ -149,7 +171,7 @@ function CorrelationTable({ data }: { data: NonNullable<AnalysisResultItem["corr
                 <td className="px-2 py-1.5 text-foreground">{c.var1}</td>
                 <td className="px-2 py-1.5 text-foreground">{c.var2}</td>
                 <td className="px-2 py-1.5 text-right font-mono text-foreground">{c.r}</td>
-                <td className="px-2 py-1.5 text-right font-mono text-foreground">{c.pValue}</td>
+                <td className="px-2 py-1.5 text-right font-mono text-foreground">{formatPCell(c.pValue, t)}</td>
                 <td className="px-2 py-1.5 text-right text-foreground">{c.n}</td>
                 <td className="px-2 py-1.5 text-right"><SignificanceBadge p={c.pValue} /></td>
               </tr>
@@ -305,7 +327,7 @@ function ChiSquareTable({ data, level }: { data: NonNullable<AnalysisResultItem[
                 </div>
                 <div className="flex justify-between pl-4">
                   <span className="text-muted-foreground stat-notation">p</span>
-                  <span className="font-mono text-foreground">= {c.pValue}</span>
+                  <span className="font-mono text-foreground">= {formatPCell(c.pValue, t)}</span>
                 </div>
               </div>
               <div className="flex justify-between">
@@ -679,7 +701,7 @@ function SpearmanTable({ data }: { data: NonNullable<AnalysisResultItem["spearma
                 <td className="px-2 py-1.5 text-foreground">{s.var1}</td>
                 <td className="px-2 py-1.5 text-foreground">{s.var2}</td>
                 <td className="px-2 py-1.5 text-right font-mono text-foreground">{s.rho}</td>
-                <td className="px-2 py-1.5 text-right font-mono text-foreground">{s.pValue}</td>
+                <td className="px-2 py-1.5 text-right font-mono text-foreground">{formatPCell(s.pValue, t)}</td>
                 <td className="px-2 py-1.5 text-right text-foreground">{s.n}</td>
                 <td className="px-2 py-1.5 text-right"><SignificanceBadge p={s.pValue} /></td>
               </tr>
@@ -719,7 +741,7 @@ function KendallTable({ data }: { data: NonNullable<AnalysisResultItem["kendallC
                 <td className="px-2 py-1.5 text-foreground">{k.var1}</td>
                 <td className="px-2 py-1.5 text-foreground">{k.var2}</td>
                 <td className="px-2 py-1.5 text-right font-mono text-foreground">{k.tau}</td>
-                <td className="px-2 py-1.5 text-right font-mono text-foreground">{k.pValue}</td>
+                <td className="px-2 py-1.5 text-right font-mono text-foreground">{formatPCell(k.pValue, t)}</td>
                 <td className="px-2 py-1.5 text-right text-foreground">{k.n}</td>
                 <td className="px-2 py-1.5 text-right"><SignificanceBadge p={k.pValue} /></td>
               </tr>
