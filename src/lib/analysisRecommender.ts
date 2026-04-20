@@ -7,6 +7,9 @@
  * Returns i18n keys (not literal text) so the UI can localize them.
  */
 
+import { validateChiSquare } from "./assumptionValidator";
+
+
 export type SimpleVarType = "numeric" | "categorical";
 
 export interface VarRef {
@@ -33,6 +36,8 @@ export interface RecommendationResult {
   invalid?: boolean;
   /** When invalid, an i18n key suggesting a fallback */
   alternativeKey?: string;
+  /** Optional secondary advisory note (e.g., "prefer Fisher's exact when cells are sparse") */
+  noteKey?: string;
 }
 
 /**
@@ -94,6 +99,27 @@ export function recommendAnalysis(
 
   // 2 categorical
   if (catCount === 2 && numCount === 0) {
+    // Reuse assumption validator: if >20% of cells have expected count < 5,
+    // recommend Fisher's exact instead of Chi-square.
+    let preferFisher = false;
+    try {
+      const validation = validateChiSquare(rows, a.name, b.name);
+      const expectedCheck = validation.checks.find(c => c.assumption === "min_expected_5");
+      if (expectedCheck && !expectedCheck.passed) preferFisher = true;
+    } catch {
+      // If validation fails (e.g., empty rows), fall back to chi-square default
+    }
+
+    if (preferFisher) {
+      return {
+        // Keep runnable analysis as chi_square (engine handles it; UI surfaces Fisher hint)
+        analysis: "chi_square",
+        analysisLabelKey: "student.analysis.fisher_exact",
+        reasonKey: "joel.reco.reason.fisher_exact",
+        noteKey: "joel.reco.note.fisher_sparse",
+      };
+    }
+
     return {
       analysis: "chi_square",
       analysisLabelKey: "student.analysis.chi_square",

@@ -519,6 +519,7 @@
   "student.analysis.simple_correlation": "Correlação simples",
   "student.analysis.t_test": "Teste T",
   "student.analysis.chi_square": "Qui-quadrado",
+  "student.analysis.fisher_exact": "Teste exato de Fisher",
   "student.analysis.crosstab": "Tabela cruzada",
   "student.analysis.histogram": "Histograma",
   "student.analysis.simple_charts": "Gráficos simples",
@@ -1188,5 +1189,7 @@
   "joel.reco.reason.singleGroup": "A variável categórica contém apenas um grupo.",
   "joel.reco.reason.invalid": "Combinação de tipos não padrão para o nível Licenciatura.",
   "joel.reco.alt.singleGroup": "Escolha uma variável categórica com pelo menos 2 categorias.",
-  "joel.reco.alt.invalid": "Selecione 2 variáveis: 2 numéricas, 2 categóricas ou 1 numérica + 1 categórica."
+  "joel.reco.alt.invalid": "Selecione 2 variáveis: 2 numéricas, 2 categóricas ou 1 numérica + 1 categórica.",
+  "joel.reco.reason.fisher_exact": "Duas variáveis categóricas com células esparsas: o teste exato de Fisher é mais confiável do que o Qui-quadrado.",
+  "joel.reco.note.fisher_sparse": "Mais de 20% das células têm contagem esperada inferior a 5 — o teste exato de Fisher é preferível."
 }

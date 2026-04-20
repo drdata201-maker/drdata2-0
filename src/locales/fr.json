@@ -519,6 +519,7 @@
   "student.analysis.simple_correlation": "Corrélation simple",
   "student.analysis.t_test": "Test T",
   "student.analysis.chi_square": "Chi carré",
+  "student.analysis.fisher_exact": "Test exact de Fisher",
   "student.analysis.crosstab": "Tableau croisé",
   "student.analysis.histogram": "Histogramme",
   "student.analysis.simple_charts": "Graphiques simples",
@@ -1188,5 +1189,7 @@
   "joel.reco.reason.singleGroup": "La variable qualitative ne contient qu'un seul groupe.",
   "joel.reco.reason.invalid": "Combinaison de types non standard pour le niveau Licence.",
   "joel.reco.alt.singleGroup": "Choisissez une variable catégorielle avec au moins 2 modalités.",
-  "joel.reco.alt.invalid": "Sélectionnez 2 variables : 2 numériques, 2 catégorielles, ou 1 numérique + 1 catégorielle."
+  "joel.reco.alt.invalid": "Sélectionnez 2 variables : 2 numériques, 2 catégorielles, ou 1 numérique + 1 catégorielle.",
+  "joel.reco.reason.fisher_exact": "Deux variables qualitatives avec effectifs faibles : le test exact de Fisher est plus fiable que le Khi².",
+  "joel.reco.note.fisher_sparse": "Plus de 20 % des cellules ont un effectif théorique inférieur à 5 — le test exact de Fisher est préférable."
 }

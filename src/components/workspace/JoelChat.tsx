@@ -1073,6 +1073,12 @@ Keep under 120 words. Use academic language.`);
                       <span>{t(rec.analysisLabelKey)}</span>
                     </div>
                     <p className="text-[11px] text-muted-foreground">{t(rec.reasonKey)}</p>
+                    {rec.noteKey && (
+                      <p className="text-[11px] text-yellow-700 dark:text-yellow-500 flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        {t(rec.noteKey)}
+                      </p>
+                    )}
                   </div>
                   {!alreadyPicked && (
                     <Button
