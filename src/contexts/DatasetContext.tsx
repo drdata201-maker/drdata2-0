@@ -694,11 +694,11 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
       return next;
     });
 
-    // BLOCK 2 — Real-time sync: invalidate derived state so charts & document
-    // regenerate from the latest results without requiring a manual refresh.
+    // BLOCK 2/12 — Real-time sync: invalidate derived state but preserve user-edited
+    // global interpretation so personal edits survive reruns/refresh/export.
     if (newResults.length > 0) {
       setCachedCharts(null);
-      setInterpretationData(null);
+      invalidateInterpretationPreservingEdits();
     }
 
     // Create notification for completed analysis
@@ -715,7 +715,7 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
         }
       } catch (_) { /* silent */ }
     })();
-  }, [dataset, cleanedData, preparedData, excludedVariables, transformByOriginal]);
+  }, [dataset, cleanedData, preparedData, excludedVariables, transformByOriginal, invalidateInterpretationPreservingEdits]);
 
   const deleteAnalysis = useCallback((id: string) => {
     setAnalysisResults(prev => {
@@ -825,10 +825,10 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     // Clear overrides for this analysis so auto-generated titles/interps refresh
     setTableOverrides(prev => { const n = { ...prev }; delete n[id]; return n; });
     setChartOverrides(prev => { const n = { ...prev }; delete n[id]; return n; });
-    // Invalidate cached charts and interpretation so they regenerate
+    // BLOCK 12 — Invalidate cached charts; preserve user-edited global interpretation.
     setCachedCharts(null);
-    setInterpretationData(null);
-  }, [dataset, cleanedData, preparedData, excludedVariables, transformByOriginal]);
+    invalidateInterpretationPreservingEdits();
+  }, [dataset, cleanedData, preparedData, excludedVariables, transformByOriginal, invalidateInterpretationPreservingEdits]);
 
   const reset = useCallback(() => {
     setDataset(null);
