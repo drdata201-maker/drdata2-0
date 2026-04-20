@@ -519,6 +519,7 @@
   "student.analysis.simple_correlation": "Simple Correlation",
   "student.analysis.t_test": "T-Test",
   "student.analysis.chi_square": "Chi-Square",
+  "student.analysis.fisher_exact": "Fisher's Exact Test",
   "student.analysis.crosstab": "Cross-Tabulation",
   "student.analysis.histogram": "Histogram",
   "student.analysis.simple_charts": "Simple Charts",
@@ -1188,5 +1189,7 @@
   "joel.reco.reason.singleGroup": "The categorical variable contains only one group.",
   "joel.reco.reason.invalid": "Variable type combination not standard for Licence level.",
   "joel.reco.alt.singleGroup": "Pick a categorical variable with at least 2 categories.",
-  "joel.reco.alt.invalid": "Select 2 variables: 2 numeric, 2 categorical, or 1 numeric + 1 categorical."
+  "joel.reco.alt.invalid": "Select 2 variables: 2 numeric, 2 categorical, or 1 numeric + 1 categorical.",
+  "joel.reco.reason.fisher_exact": "Two categorical variables with sparse cells: Fisher's exact test is more reliable than Chi-square.",
+  "joel.reco.note.fisher_sparse": "More than 20% of cells have an expected count below 5 — Fisher's exact test is preferred."
 }

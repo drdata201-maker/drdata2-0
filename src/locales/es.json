@@ -519,6 +519,7 @@
   "student.analysis.simple_correlation": "Correlación simple",
   "student.analysis.t_test": "Test T",
   "student.analysis.chi_square": "Chi cuadrado",
+  "student.analysis.fisher_exact": "Prueba exacta de Fisher",
   "student.analysis.crosstab": "Tabla cruzada",
   "student.analysis.histogram": "Histograma",
   "student.analysis.simple_charts": "Gráficos simples",
@@ -1188,5 +1189,7 @@
   "joel.reco.reason.singleGroup": "La variable categórica contiene un solo grupo.",
   "joel.reco.reason.invalid": "Combinación de tipos no estándar para nivel Licenciatura.",
   "joel.reco.alt.singleGroup": "Elija una variable categórica con al menos 2 categorías.",
-  "joel.reco.alt.invalid": "Seleccione 2 variables: 2 numéricas, 2 categóricas o 1 numérica + 1 categórica."
+  "joel.reco.alt.invalid": "Seleccione 2 variables: 2 numéricas, 2 categóricas o 1 numérica + 1 categórica.",
+  "joel.reco.reason.fisher_exact": "Dos variables categóricas con frecuencias bajas: la prueba exacta de Fisher es más fiable que Chi cuadrado.",
+  "joel.reco.note.fisher_sparse": "Más del 20 % de las celdas tienen una frecuencia esperada menor que 5 — se prefiere la prueba exacta de Fisher."
 }

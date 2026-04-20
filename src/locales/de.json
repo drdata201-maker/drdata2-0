@@ -519,6 +519,7 @@
   "student.analysis.simple_correlation": "Einfache Korrelation",
   "student.analysis.t_test": "T-Test",
   "student.analysis.chi_square": "Chi-Quadrat",
+  "student.analysis.fisher_exact": "Exakter Fisher-Test",
   "student.analysis.crosstab": "Kreuztabelle",
   "student.analysis.histogram": "Histogramm",
   "student.analysis.simple_charts": "Einfache Diagramme",
@@ -1188,5 +1189,7 @@
   "joel.reco.reason.singleGroup": "Die kategoriale Variable enthält nur eine Gruppe.",
   "joel.reco.reason.invalid": "Variablen-Typ-Kombination ist auf Bachelor-Niveau nicht standardmäßig.",
   "joel.reco.alt.singleGroup": "Wählen Sie eine kategoriale Variable mit mindestens 2 Kategorien.",
-  "joel.reco.alt.invalid": "Wählen Sie 2 Variablen: 2 numerisch, 2 kategorial oder 1 numerisch + 1 kategorial."
+  "joel.reco.alt.invalid": "Wählen Sie 2 Variablen: 2 numerisch, 2 kategorial oder 1 numerisch + 1 kategorial.",
+  "joel.reco.reason.fisher_exact": "Zwei kategoriale Variablen mit dünn besetzten Zellen: Der exakte Fisher-Test ist zuverlässiger als Chi-Quadrat.",
+  "joel.reco.note.fisher_sparse": "Mehr als 20 % der Zellen haben eine erwartete Häufigkeit unter 5 — der exakte Fisher-Test wird bevorzugt."
 }
