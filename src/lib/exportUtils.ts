@@ -8,6 +8,8 @@ import { getTableLabel, getFigureLabel, generateTableInterpretation, generateFig
 import type { AnalysisResultItem } from "./statsEngine";
 import { stripLatex } from "./latexSanitizer";
 import { formatChiSquare, formatTTest, formatAnova, formatCorrelation, formatRSquared, formatPValue, type StatSoftware } from "./softwareFormatter";
+import type { PreparedVariableSpec } from "./varDiagnostics";
+import { getMethodologyForColumn } from "./groupingMethodology";
 
 export interface ChartImage {
   title: string;
@@ -52,6 +54,10 @@ export interface ExportData {
   moderatorVars?: string;
   conceptualModel?: string;
   software?: StatSoftware;
+  /** BLOCK 3 — methodology traceability for grouped/derived variables. */
+  variableTransforms?: Record<string, PreparedVariableSpec>;
+  /** Translator for methodology labels and any other localized export strings. */
+  tFn?: (key: string) => string;
 }
 
 /** Format test results with software-adaptive notation */
@@ -582,6 +588,16 @@ export async function exportDocx(data: ExportData, content: ExportContent) {
               columnWidths: [3120, 3120, 3120],
               rows: [makeTableHeader([freqHeaders.value, freqHeaders.count, freqHeaders.pct]), ...fRows],
             }));
+            // BLOCK 3 — methodology traceability under grouped variables
+            if (data.variableTransforms && data.tFn) {
+              const m = getMethodologyForColumn(freq.variable, data.variableTransforms, data.tFn);
+              if (m) {
+                sections.push(new Paragraph({
+                  spacing: { before: 40, after: 80 },
+                  children: [new TextRun({ text: m.label, italics: true, size: 18, color: "666666" })],
+                }));
+              }
+            }
             tableNum++;
             sections.push(new Paragraph({ children: [] }));
           }
@@ -1387,7 +1403,19 @@ export function exportPdf(data: ExportData, content: ExportContent) {
               headStyles: { fillColor: [37, 99, 235] },
               margin: { left: 14 },
             });
-            y = (doc as any).lastAutoTable.finalY + 8;
+            y = (doc as any).lastAutoTable.finalY + 4;
+            // BLOCK 3 — methodology traceability under grouped variables
+            if (data.variableTransforms && data.tFn) {
+              const m = getMethodologyForColumn(freq.variable, data.variableTransforms, data.tFn);
+              if (m) {
+                doc.setFontSize(8);
+                doc.setFont("helvetica", "italic");
+                doc.text(m.label, 14, y);
+                y += 5;
+                doc.setFont("helvetica", "normal");
+              }
+            }
+            y += 4;
             tableNum++;
           }
         }
@@ -1610,7 +1638,7 @@ export function exportPdf(data: ExportData, content: ExportContent) {
             doc.text(`${tableLabel} ${tableNum}: Kruskal-Wallis — ${kw.dependent}`, 14, y);
             y += 6;
             const rows = kw.groups.map(g => [g.name, g.meanRank.toFixed(2)]);
-            rows.push(["Result", `H(${kw.df}) = ${kw.H.toFixed(3)}, p = ${kw.pValue.toFixed(4)}`]);
+            rows.push(["Result", `H(${kw.df}) = ${kw.H.toFixed(3)}, ${formatPValue(kw.pValue, opts)}`]);
             autoTable(doc, {
               startY: y, head: [["Group", "Mean Rank"]], body: rows,
               theme: "grid", headStyles: { fillColor: [37, 99, 235] }, margin: { left: 14 },

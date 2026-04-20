@@ -13,12 +13,15 @@ interface StatFormatOptions {
 /** Format a p-value according to software convention */
 export function formatPValue(p: number, opts: StatFormatOptions): string {
   const { software } = opts;
+  // BLOCK 11 — Academic rule: never display "p = 0" / "p = 0.000".
+  // All software branches collapse to the universally accepted "p < 0.001" notation
+  // when the value is below the displayable threshold (preserves UI = Document = Export).
   if (p < 0.001) {
     switch (software) {
       case "spss": return "p < .001";
-      case "stata": return "p = 0.000";
-      case "r": return "p < 2.2e-16";
+      case "r": return "p < 0.001";
       case "python": return "p < 0.001";
+      case "stata": return "p < 0.001";
       default: return "p < 0.001";
     }
   }
@@ -36,7 +39,7 @@ export function formatChiSquare(chi2: number, df: number, p: number, opts: StatF
   const pStr = formatPValue(p, opts);
   switch (opts.software) {
     case "spss": return `χ²(${df}) = ${chi2.toFixed(3)}, ${pStr}`;
-    case "stata": return `Pearson chi2(${df}) = ${chi2.toFixed(4)}, Pr = ${p.toFixed(3)}`;
+    case "stata": return `Pearson chi2(${df}) = ${chi2.toFixed(4)}, ${p < 0.001 ? "Pr < 0.001" : `Pr = ${p.toFixed(3)}`}`;
     case "r": return `X-squared = ${chi2.toFixed(4)}, df = ${df}, ${pStr}`;
     case "python": return `chi2=${chi2.toFixed(4)}, dof=${df}, ${pStr}`;
     default: return `χ²(${df}) = ${chi2.toFixed(3)}, ${pStr}`;

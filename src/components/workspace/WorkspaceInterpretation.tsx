@@ -80,13 +80,21 @@ export function WorkspaceInterpretation({ level, projectTitle, projectType, proj
 
     try {
       const respData = await callInterpret(analysisResults);
-      setInterpretationData(respData);
+      // BLOCK 12 — preserve user-edited global blocks when regenerating from AI.
+      const merged: InterpretationData = {
+        ...respData,
+        globalConclusion: data?.userEditedGlobalConclusion ? data.globalConclusion : respData.globalConclusion,
+        globalRecommendations: data?.userEditedGlobalRecommendations ? data.globalRecommendations : respData.globalRecommendations,
+        userEditedGlobalConclusion: data?.userEditedGlobalConclusion,
+        userEditedGlobalRecommendations: data?.userEditedGlobalRecommendations,
+      };
+      setInterpretationData(merged);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Interpretation error");
     } finally {
       setLoading(false);
     }
-  }, [analysisResults, level, language, projectTitle, projectType, projectDomain]);
+  }, [analysisResults, level, language, projectTitle, projectType, projectDomain, data]);
 
   const regenerateSection = useCallback(async (sectionIndex: number) => {
     if (!data || !analysisResults[sectionIndex]) return;
@@ -122,8 +130,14 @@ export function WorkspaceInterpretation({ level, projectTitle, projectType, proj
     const updated = { ...data, sections: data.sections.map(s => ({ ...s })) };
 
     if (typeof editing === "string") {
-      if (editing === "globalConclusion") updated.globalConclusion = editValue;
-      else updated.globalRecommendations = editValue;
+      // BLOCK 12 — flag user edits on global blocks so AI re-runs never overwrite them.
+      if (editing === "globalConclusion") {
+        updated.globalConclusion = editValue;
+        updated.userEditedGlobalConclusion = true;
+      } else {
+        updated.globalRecommendations = editValue;
+        updated.userEditedGlobalRecommendations = true;
+      }
     } else {
       const s = updated.sections[editing.section];
       if (editing.field === "interpretation") s.interpretation = editValue;
