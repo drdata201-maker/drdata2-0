@@ -33,6 +33,8 @@ export interface RecommendationResult {
   invalid?: boolean;
   /** When invalid, an i18n key suggesting a fallback */
   alternativeKey?: string;
+  /** Optional secondary advisory note (e.g., "prefer Fisher's exact when cells are sparse") */
+  noteKey?: string;
 }
 
 /**
