@@ -82,19 +82,24 @@ export function buildChartData(
 
     if (result.frequencies) {
       for (const freq of result.frequencies.filter(f => !isIdentifierVariable(f.variable, rows)).slice(0, 4)) {
+        // BLOCK 7 — grouped variables: sort categories ascending by numeric token
+        const orderedCats = isGroupedVarName(freq.variable)
+          ? sortGroupedCategories(freq.categories.map(c => ({ name: c.value, value: c.count })))
+          : freq.categories.slice(0, 8).map(c => ({ name: c.value, value: c.count }));
+
         items.push({
           key: `pie-${freq.variable}`,
           title: `${tFn("charts.pieChart")}: ${freq.variable}`,
           type: "pie",
           analysisType: "frequency",
-          data: freq.categories.slice(0, 8).map(c => ({ name: c.value, value: c.count })),
+          data: orderedCats.slice(0, 8),
         });
         items.push({
           key: `bar-${freq.variable}`,
           title: `${tFn("charts.barChart")}: ${freq.variable}`,
           type: "bar",
           analysisType: "frequency",
-          data: freq.categories.slice(0, 10).map(c => ({ name: c.value, value: c.count })),
+          data: orderedCats.slice(0, 10),
         });
       }
     }
